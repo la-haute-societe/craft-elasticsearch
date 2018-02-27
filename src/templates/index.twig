@@ -1,0 +1,52 @@
+{# @var craft \craft\web\twig\variables\CraftVariable #}
+{#
+/**
+ * Elasticsearch plugin for Craft CMS 3.x
+ *
+ * Elasticsearch index.twig
+ *
+ * @author    Alban Jubert
+ * @copyright Copyright (c) 2018 Alban Jubert
+ * @link      https://www.lahautesociete.com
+ * @package   Elasticsearch
+ * @since     1.0.0
+ */
+#}
+
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% do view.registerAssetBundle("lhs\\elasticsearch\\assetbundles\\elasticsearch\\ElasticsearchAsset") %}
+{% do view.registerAssetBundle("lhs\\elasticsearch\\assetbundles\\elasticsearchcpsection\\ElasticsearchCPSectionAsset") %}
+
+{# Link for the ? icon at the bottom of the page #}
+{% set docsUrl = "https://github.com/juban/elasticsearch/blob/master/README.md" %}
+
+{# The title of this CP section #}
+{% set title = "Elasticsearch" %}
+
+{# The URL to this plugin's base CP section #}
+{% set pluginCpUrl = url('elasticsearch') %}
+
+{% set pluginCpUrlTestConnection = url('elasticsearch/test-connection') %}
+{% set pluginCpUrlReindexAll = url('elasticsearch/reindex-all') %}
+
+{# Get a URL to an image in our AssetBundle #}
+{% set iconUrl = view.getAssetManager().getPublishedUrl('@lhs/elasticsearch/assetbundles/elasticsearchcpsection/dist', true) ~ '/img/icon.svg' %}
+
+{% block actionButton %}
+    <div class="buttons">
+        <a class="btn submit loading" href="{{ pluginCpUrlTestConnection }}">
+            {{ "Test connection"|t('elasticsearch') }}
+        </a>
+    </div>
+{% endblock %}
+
+{# The content of the CP Section#}
+{% set content %}
+    <div class="buttons">
+        <a class="btn submit loading" href="{{ pluginCpUrlReindexAll }}">
+            {{ "Reindex all"|t('elasticsearch') }}
+        </a>
+    </div>
+{% endset %}

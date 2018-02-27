@@ -1,0 +1,48 @@
+{# @var craft \craft\web\twig\variables\CraftVariable #}
+{#
+/**
+ * Elasticsearch plugin for Craft CMS 3.x
+ *
+ * Elasticsearch Settings.twig
+ *
+ * @author    Alban Jubert
+ * @copyright Copyright (c) 2018 Alban Jubert
+ * @link      https://www.lahautesociete.com
+ * @package   Elasticsearch
+ * @since     1.0.0
+ */
+#}
+
+{% import "_includes/forms" as forms %}
+
+{% do view.registerAssetBundle("lhs\\elasticsearch\\assetbundles\\elasticsearch\\ElasticsearchAsset") %}
+
+{{ forms.textField({
+    first: true,
+    label: 'Host'|t('elasticsearch'),
+    instructions: 'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)'|t('elasticsearch'),
+    placeholder: '127.0.0.1:9200',
+    id: 'http_address',
+    name: 'http_address',
+    value: settings['http_address'],
+    errors: settings.getErrors('http_address')}
+) }}
+
+<hr>
+
+{{ forms.textField({
+    label: 'Auth username'|t('elasticsearch'),
+    id: 'auth_username',
+    name: 'auth_username',
+    value: settings['auth_username'],
+    errors: settings.getErrors('auth_username')}
+) }}
+
+{{ forms.textField({
+    label: 'Auth password'|t('elasticsearch'),
+    id: 'auth_password',
+    name: 'auth_password',
+    value: settings['auth_password'],
+    errors: settings.getErrors('auth_password')}
+) }}
+

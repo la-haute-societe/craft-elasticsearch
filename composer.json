@@ -1,0 +1,47 @@
+{
+  "name": "la-haute-societe/craft-elasticsearch",
+  "description": "Bring the power of Elasticsearch to your Craft CMS projects.",
+  "type": "craft-plugin",
+  "version": "1.0.0",
+  "keywords": [
+    "craft",
+    "cms",
+    "craftcms",
+    "craft-plugin",
+    "elasticsearch"
+  ],
+  "support": {
+    "docs": "https://github.com/la-haute-societe/craft-elasticsearch/blob/master/README.md",
+    "issues": "https://github.com/la-haute-societe/craft-elasticsearch/issues"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "La Haute Société",
+      "homepage": "https://www.lahautesociete.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "craftcms/cms": "^3.0.0-RC1",
+    "yiisoft/yii2-elasticsearch": "^2.1.0-dev"
+  },
+  "autoload": {
+    "psr-4": {
+      "lhs\\elasticsearch\\": "src/"
+    }
+  },
+  "extra": {
+    "name": "Elasticsearch",
+    "handle": "elasticsearch",
+    "schemaVersion": "1.0.0",
+    "hasCpSettings": true,
+    "hasCpSection": true,
+    "changelogUrl": "https://raw.githubusercontent.com/la-haute-societe/craft-elasticsearch/master/CHANGELOG.md",
+    "components": {
+      "elasticsearch": "lhs\\elasticsearch\\services\\Elasticsearch"
+    },
+    "class": "lhs\\elasticsearch\\Elasticsearch"
+  }
+}
