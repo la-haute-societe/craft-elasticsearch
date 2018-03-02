@@ -10,10 +10,9 @@
 
 namespace lhs\elasticsearch\models;
 
-use lhs\elasticsearch\Elasticsearch;
-
 use Craft;
 use craft\base\Model;
+use lhs\elasticsearch\Elasticsearch;
 
 /**
  * Elasticsearch Settings Model
@@ -43,6 +42,7 @@ class Settings extends Model
     public $auth_username = 'elastic';
     public $auth_password = 'MagicWord';
     public $content_pattern;
+    public $highlight = [];
 
     // Public Methods
     // =========================================================================
@@ -66,5 +66,13 @@ class Settings extends Model
             [['auth_username', 'auth_password'], 'string'],
             [['auth_username', 'auth_password'], 'trim']
         ];
+    }
+
+    public function afterValidate()
+    {
+        if (Elasticsearch::$plugin->elasticsearch->testConnection() !== true) {
+            $this->addError('http_address', Craft::t('elasticsearch', 'Could not establish connection with {http_address}', ['http_address' => $this->http_address]));
+        }
+        parent::afterValidate();
     }
 }

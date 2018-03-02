@@ -7,6 +7,7 @@
 namespace lhs\elasticsearch\records;
 
 use Craft;
+use craft\helpers\ArrayHelper;
 use lhs\elasticsearch\Elasticsearch;
 use yii\base\InvalidConfigException;
 use yii\elasticsearch\ActiveRecord;
@@ -20,6 +21,96 @@ use yii\helpers\Json;
 class ElasticsearchRecord extends ActiveRecord
 {
     public static $siteId;
+
+    /**
+     * Return an array of Elasticsearch records for the given query
+     * @param $query
+     * @return array|ElasticsearchRecord[]
+     * @throws InvalidConfigException
+     * @throws \yii\elasticsearch\Exception
+     */
+    public static function search($query)
+    {
+        $queryParams = [
+            'query_string' => [
+                'fields'   => ['attachment.content', 'title'],
+                'query'    => $query,
+                'analyzer' => self::siteAnalyzer()
+            ]
+        ];
+
+        $highlightParams = ArrayHelper::merge(Elasticsearch::$plugin->settings->highlight, [
+            'fields'    => [
+                'title'              => (object)['type' => 'plain'],
+                'attachment.content' => (object)[]
+            ]
+        ]);
+        return self::find()->query($queryParams)->highlight($highlightParams)->limit(self::find()->count())->all();
+    }
+
+    /**
+     * Try to guess the best Elasticsearch analyze for the current site language
+     * @return string
+     * @throws InvalidConfigException
+     */
+    public static function siteAnalyzer()
+    {
+        if (null === static::$siteId) {
+            throw new InvalidConfigException('siteId was not set');
+        }
+        $analyzer = 'standard'; // Default analyzer
+        $availableAnalyzers = [
+            'ar'    => 'arabic',
+            'hy'    => 'armenian',
+            'eu'    => 'basque',
+            'bn'    => 'bengali',
+            'pt-BR' => 'brazilian',
+            'bg'    => 'bulgarian',
+            'ca'    => 'catalan',
+            'cs'    => 'czech',
+            'da'    => 'danish',
+            'nl'    => 'dutch',
+            'pl'    => 'stempel', // analysis-stempel plugin needed
+            'en'    => 'english',
+            'fi'    => 'finnish',
+            'fr'    => 'french',
+            'gl'    => 'galician',
+            'de'    => 'german',
+            'el'    => 'greek',
+            'hi'    => 'hindi',
+            'hu'    => 'hungarian',
+            'id'    => 'indonesian',
+            'ga'    => 'irish',
+            'it'    => 'italian',
+            'ja'    => 'cjk',
+            'ko'    => 'cjk',
+            'lv'    => 'latvian',
+            'lt'    => 'lithuanian',
+            'nb'    => 'norwegian',
+            'fa'    => 'persian',
+            'pt'    => 'portuguese',
+            'ro'    => 'romanian',
+            'ru'    => 'russian',
+            //sorani, Kurdish language is not part of the Craft locals...
+            // 'sk' no analyzer available at this time
+            'es'    => 'spanish',
+            'sv'    => 'swedish',
+            'tr'    => 'turkish',
+            'th'    => 'thai',
+            'zh'    => 'cjk' //Chinese
+        ];
+        $siteLanguage = Craft::$app->language;
+        if (array_key_exists($siteLanguage, $availableAnalyzers)) {
+            $analyzer = $availableAnalyzers[$siteLanguage];
+        } else {
+            $localParts = explode('-', Craft::$app->language);
+            $siteLanguage = $localParts[0];
+            if (array_key_exists($siteLanguage, $availableAnalyzers)) {
+                $analyzer = $availableAnalyzers[$siteLanguage];
+            }
+        }
+        return $analyzer;
+    }
 
     /**
      * @param bool $runValidation
@@ -160,71 +251,10 @@ class ElasticsearchRecord extends ActiveRecord
     }
 
     /**
-     * Try to guess the best Elasticsearch analyze for the current site language
-     * @return string
-     */
-    public static function siteAnalyzer()
-    {
-        $analyzer = 'standard'; // Default analyzer
-        $availableAnalyzers = [
-            'ar'    => 'arabic',
-            'hy'    => 'armenian',
-            'eu'    => 'basque',
-            'bn'    => 'bengali',
-            'pt-BR' => 'brazilian',
-            'bg'    => 'bulgarian',
-            'ca'    => 'catalan',
-            'cs'    => 'czech',
-            'da'    => 'danish',
-            'nl'    => 'dutch',
-            'pl'    => 'stempel', // analysis-stempel plugin needed
-            'en'    => 'english',
-            'fi'    => 'finnish',
-            'fr'    => 'french',
-            'gl'    => 'galician',
-            'de'    => 'german',
-            'el'    => 'greek',
-            'hi'    => 'hindi',
-            'hu'    => 'hungarian',
-            'id'    => 'indonesian',
-            'ga'    => 'irish',
-            'it'    => 'italian',
-            'ja'    => 'cjk',
-            'ko'    => 'cjk',
-            'lv'    => 'latvian',
-            'lt'    => 'lithuanian',
-            'nb'    => 'norwegian',
-            'fa'    => 'persian',
-            'pt'    => 'portuguese',
-            'ro'    => 'romanian',
-            'ru'    => 'russian',
-            //sorani, Kurdish language is not part of the Craft locals...
-            // 'sk' no analyzer available at this time
-            'es'    => 'spanish',
-            'sv'    => 'swedish',
-            'tr'    => 'turkish',
-            'th'    => 'thai',
-            'zh'    => 'cjk' //Chinese
-        ];
-        $siteLanguage = Craft::$app->language;
-        if (array_key_exists($siteLanguage, $availableAnalyzers)) {
-            $analyzer = $availableAnalyzers[$siteLanguage];
-        } else {
-            $localParts = explode('-', Craft::$app->language);
-            $siteLanguage = $localParts[0];
-            if (array_key_exists($siteLanguage, $availableAnalyzers)) {
-                $analyzer = $availableAnalyzers[$siteLanguage];
-            }
-        }
-        return $analyzer;
-    }
-
-    /**
      * @inheritdoc
      */
     public function attributes()
     {
         return ['title', 'url', 'section', 'content'];
     }
-
 }

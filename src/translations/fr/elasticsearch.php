@@ -21,15 +21,17 @@
  * @since     1.0.0
  */
 return [
-    'Host'                                               => 'Hôte',
-    'Auth username'                                      => 'Nom d\'utilisateur',
-    'Auth password'                                      => 'Mot de passe',
-    'Host'                                               => 'Hôte',
-    'Host is required'                                   => 'L\'hôte est obligatoire',
-    'Test connection'                                    => 'Tester la connexion',
-    'Reindex all'                                        => 'Tout réindexer',
-    'Successfully connected to {http_address}'           => 'Connecté à {http_address} avec succès',
-    'Could not establish connection with {http_address}' => 'Impossible d\'établir la connexion avec {http_address}',
-    'Index a page in Elasticsearch'                      => 'Indexation d\'une page dans Elasticsearch',
-    'Elasticsearch indexing in progress...'              => 'Indexation Elasticsearch en cours...'
+    'Host'                                                           => 'Hôte',
+    'Auth username'                                                  => 'Nom d\'utilisateur',
+    'Auth password'                                                  => 'Mot de passe',
+    'Host'                                                           => 'Hôte',
+    'Host is required'                                               => 'L\'hôte est obligatoire',
+    'Test connection'                                                => 'Tester la connexion',
+    'Reindex all'                                                    => 'Tout réindexer',
+    'Successfully connected to {http_address}'                       => 'Connecté à {http_address} avec succès',
+    'Could not establish connection with {http_address}'             => 'Impossible d\'établir la connexion avec {http_address}',
+    'Index a page in Elasticsearch'                                  => 'Indexation d\'une page dans Elasticsearch',
+    'Elasticsearch indexing in progress...'                          => 'Indexation Elasticsearch en cours...',
+    'Authorizations parameters (optional)'                           => 'Paramètres d\'autorisations (facultatif)',
+    'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)' => 'Nom d\'hôte ou IP et port de l\'instance Elasticsearch (ex. elasticsearch:9200)'
 ];

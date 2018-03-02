@@ -23,5 +23,9 @@
  */
 
 return [
-    'content_pattern' => '/<main id="content".*?>(.*?)<\/main>/s'
+    'content_pattern' => '/<main id="content".*?>(.*?)<\/main>/s',
+    'highlight'       => [
+        'pre_tags'  => '<strong>',
+        'post_tags' => '</strong>',
+    ]
 ];

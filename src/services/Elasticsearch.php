@@ -13,13 +13,14 @@ namespace lhs\elasticsearch\services;
 use Craft;
 use craft\base\Component;
 use craft\elements\Entry;
-use craft\records\Element;
 use craft\web\View;
 use DateTime;
 use lhs\elasticsearch\Elasticsearch as Es;
 use lhs\elasticsearch\jobs\IndexElement;
 use lhs\elasticsearch\records\ElasticsearchRecord;
+use yii\bootstrap\Carousel;
 use yii\elasticsearch\Exception;
+use yii\helpers\VarDumper;
 use yii\web\ServerErrorHttpException;
 
 /**
@@ -90,16 +91,35 @@ class Elasticsearch extends Component
         foreach (Entry::find()->each() as $element) {
             if ($element->enabled) {
                 Craft::$app->queue->push(new IndexElement([
-                    'siteId' => $siteId,
+                    'siteId'    => $siteId,
                     'elementId' => $element->id,
                 ]));
             }
         }
     }
 
-    public function search($query)
+    /**
+     * Search the given query in Elasticsearch index
+     * @param string $query String to search for
+     * @param null $siteId Site id to make the search
+     * @return array|ElasticsearchRecord[]
+     * @throws Exception
+     * @throws \craft\errors\SiteNotFoundException
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function search($query, $siteId = null)
     {
-
+        if(is_null($query)) {
+            return [];
+        }
+        if(is_null($siteId)) {
+            $siteId = Craft::$app->getSites()->getCurrentSite()->id;
+        }
+        $esClass = new ElasticsearchRecord();
+        $esClass::$siteId = $siteId;
+        $results = $esClass::search($query);
+        Craft::debug(VarDumper::dumpAsString($results), __METHOD__);
+        return $results;
     }
 
     /**

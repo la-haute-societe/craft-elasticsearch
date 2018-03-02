@@ -36,21 +36,17 @@ class ElasticsearchVariable
      * You can have as many variable functions as you want.  From any Twig template,
      * call it like this:
      *
-     *     {{ craft.elasticsearch.exampleVariable }}
+     *     {{ craft.elasticsearch.results }}
      *
      * Or, if your variable requires parameters from Twig:
      *
-     *     {{ craft.elasticsearch.exampleVariable(twigValue) }}
+     *     {{ craft.elasticsearch.results(twigValue) }}
      *
      * @param null $optional
      * @return string
      */
     public function results($query)
     {
-        $result = "And away we go to the Twig template...";
-        if ($optional) {
-            $result = "I'm feeling optional today...";
-        }
-        return $result;
+        return Elasticsearch::$plugin->elasticsearch->search($query);
     }
 }

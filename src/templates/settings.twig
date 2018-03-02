@@ -30,6 +30,8 @@
 
 <hr>
 
+<h2>{{ "Authorizations parameters (optional)"|t('elasticsearch') }}</h2>
+
 {{ forms.textField({
     label: 'Auth username'|t('elasticsearch'),
     id: 'auth_username',
@@ -38,7 +40,7 @@
     errors: settings.getErrors('auth_username')}
 ) }}
 
-{{ forms.textField({
+{{ forms.passwordField({
     label: 'Auth password'|t('elasticsearch'),
     id: 'auth_password',
     name: 'auth_password',

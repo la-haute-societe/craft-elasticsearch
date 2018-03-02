@@ -16,14 +16,17 @@ use craft\base\Plugin;
 use craft\console\Application as ConsoleApplication;
 use craft\elements\Entry;
 use craft\events\PluginEvent;
+use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\services\Plugins;
+use craft\services\Utilities;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use lhs\elasticsearch\jobs\DeleteElement;
 use lhs\elasticsearch\jobs\IndexElement;
 use lhs\elasticsearch\jobs\SomeJob;
 use lhs\elasticsearch\models\Settings;
+use lhs\elasticsearch\utilities\ElasticsearchUtilities;
 use lhs\elasticsearch\variables\ElasticsearchVariable;
 use yii\base\Event;
 use yii\elasticsearch\Connection;
@@ -59,7 +62,6 @@ class Elasticsearch extends Plugin
 
     // Static Properties
     // =========================================================================
-    public $hasCpSection = true;
 
     // Public Methods
     // =========================================================================
@@ -97,27 +99,8 @@ class Elasticsearch extends Plugin
 
         // Add in our console commands
         if (Craft::$app instanceof ConsoleApplication) {
-            $this->controllerNamespace = 'lahautesociete\elasticsearch\console\controllers';
+            $this->controllerNamespace = 'lhs\elasticsearch\console\controllers';
         }
-
-        // Register our site routes
-        //        Event::on(
-        //            UrlManager::class,
-        //            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-        //            function (RegisterUrlRulesEvent $event) {
-        //                $event->rules['siteActionTrigger1'] = 'elasticsearch/elasticsearch';
-        //            }
-        //        );
-
-        // Register our CP routes
-        Event::on(
-            UrlManager::class,
-            UrlManager::EVENT_REGISTER_CP_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
-                $event->rules['elasticsearch/test-connection'] = 'elasticsearch/elasticsearch/test-connection';
-                $event->rules['elasticsearch/reindex-all'] = 'elasticsearch/elasticsearch/reindex-all';
-            }
-        );
 
         // Register our variables
         Event::on(
@@ -140,7 +123,6 @@ class Elasticsearch extends Plugin
                 $element = $event->sender;
                 if ($element instanceof Entry) {
                     if ($element->enabled) {
-                        // Elasticsearch::$plugin->elasticsearch->indexEntry($element);
                         Craft::$app->queue->push(new IndexElement([
                             'siteId'    => $element->siteId,
                             'elementId' => $element->id
@@ -165,6 +147,14 @@ class Elasticsearch extends Plugin
             }
         );
 
+        Event::on(
+            Utilities::class,
+            Utilities::EVENT_REGISTER_UTILITY_TYPES,
+            function (RegisterComponentTypesEvent $event) {
+                $event->types[] = ElasticsearchUtilities::class;
+            }
+        );
+
         // Do something after we're installed
         Event::on(
             Plugins::class,
@@ -175,7 +165,6 @@ class Elasticsearch extends Plugin
                 }
             }
         );
-
 
         /**
          * Logging in Craft involves using one of the following methods:
@@ -223,6 +212,8 @@ class Elasticsearch extends Plugin
      * block on the settings page.
      *
      * @return string The rendered settings HTML
+     * @throws \Twig_Error_Loader
+     * @throws \yii\base\Exception
      */
     protected function settingsHtml(): string
     {
@@ -233,4 +224,5 @@ class Elasticsearch extends Plugin
             ]
         );
     }
+
 }
