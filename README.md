@@ -106,9 +106,6 @@ If your Elasticsearch index becomes out of sync with your sites contents, you ca
 
 ## Elasticsearch plugin Roadmap
 
-Some things to do, and ideas for potential features:
-
-* Release it
 * Handel dependencies update 
 * Handel multi-sites configurations
 * Detect need for re-indexation
