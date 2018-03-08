@@ -13,6 +13,7 @@ namespace lhs\elasticsearch\utilities;
 use Craft;
 use craft\base\Utility;
 use lhs\elasticsearch\assetbundles\elasticsearchutility\ElasticsearchUtilityAsset;
+use lhs\elasticsearch\Elasticsearch;
 
 /**
  * Elasticsearch Utility
@@ -78,14 +79,21 @@ class ElasticsearchUtilities extends Utility
      * Returns the utility's content HTML.
      *
      * @return string
+     * @throws \Twig_Error_Loader
+     * @throws \yii\base\Exception
+     * @throws \yii\base\InvalidConfigException
      */
     public static function contentHtml(): string
     {
         Craft::$app->getView()->registerAssetBundle(ElasticsearchUtilityAsset::class);
 
-        $someVar = 'Have a nice day!';
+        $inSync = Elasticsearch::$plugin->elasticsearch->isIndexInSync();
+
         return Craft::$app->getView()->renderTemplate(
-            'elasticsearch/_components/utilities/Elasticsearch_content'
+            'elasticsearch/_components/utilities/Elasticsearch_content',
+            [
+                'inSync' => $inSync
+            ]
         );
     }
 }

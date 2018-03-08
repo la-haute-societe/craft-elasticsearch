@@ -15,6 +15,10 @@
 
 {% set pluginCpUrlReindexAll = url('elasticsearch/reindex-all') %}
 
+{% if not inSync %}
+    <div class="alert">{{ "Elasticsearch index is out of sync!"|t('elasticsearch') }}</div>
+{% endif %}
+
 <div class="buttons">
     <a class="btn submit loading" href="{{ pluginCpUrlReindexAll }}">
         {{ "Reindex all"|t('elasticsearch') }}

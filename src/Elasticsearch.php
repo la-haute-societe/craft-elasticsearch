@@ -102,6 +102,16 @@ class Elasticsearch extends Plugin
             $this->controllerNamespace = 'lhs\elasticsearch\console\controllers';
         }
 
+        // Register our CP routes
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_CP_URL_RULES,
+            function (RegisterUrlRulesEvent $event) {
+                $event->rules['elasticsearch/test-connection'] = 'elasticsearch/elasticsearch/test-connection';
+                $event->rules['elasticsearch/reindex-all'] = 'elasticsearch/elasticsearch/reindex-all';
+            }
+        );
+
         // Register our variables
         Event::on(
             CraftVariable::class,

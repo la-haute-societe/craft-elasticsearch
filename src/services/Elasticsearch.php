@@ -60,6 +60,25 @@ class Elasticsearch extends Component
         }
     }
 
+    public function isIndexInSync()
+    {
+        $inSync = true;
+        foreach (Craft::$app->getSites()->getAllSites() as $site) {
+            Craft::$app->getSites()->setCurrentSite($site);
+            $esClass = new ElasticsearchRecord();
+            $esClass::$siteId = $site->id;
+            $countEntries = (int)Entry::find()->status(Entry::STATUS_ENABLED)->count();
+            $countEsRecords = (int)$esClass::find()->count();
+            Craft::debug("Count active entries for site {$site->id}: {$countEntries}", __METHOD__);
+            Craft::debug("Count Elasticsearch records for site {$site->id}: {$countEsRecords}", __METHOD__);
+            if($countEntries !== $countEsRecords) {
+                Craft::debug("Elasticsearch reindex needed!", __METHOD__);
+                $inSync = false;
+            }
+        }
+        return $inSync;
+    }
+
     /**
      * Recreate all Elasticsearch indexes and reindex every Craft entries
      */
@@ -107,10 +126,10 @@ class Elasticsearch extends Component
      */
     public function search($query, $siteId = null)
     {
-        if(is_null($query)) {
+        if (is_null($query)) {
             return [];
         }
-        if(is_null($siteId)) {
+        if (is_null($siteId)) {
             $siteId = Craft::$app->getSites()->getCurrentSite()->id;
         }
         $esClass = new ElasticsearchRecord();
@@ -119,10 +138,10 @@ class Elasticsearch extends Component
         $output = [];
         foreach ($results as $result) {
             $output[] = [
-                'id' => $result->getPrimaryKey(),
-                'title' => $result->title,
-                'url' => $result->url,
-                'score' => $result->score,
+                'id'         => $result->getPrimaryKey(),
+                'title'      => $result->title,
+                'url'        => $result->url,
+                'score'      => $result->score,
                 'highlights' => isset($result->highlight['attachment.content']) ? $result->highlight['attachment.content'] : []
             ];
         }
