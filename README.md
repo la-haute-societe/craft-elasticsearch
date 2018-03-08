@@ -20,7 +20,7 @@ composer require la-hautes-societe/craft-elasticsearch
 
 In the Control Panel, go to Settings → Plugins and click the “Install” button for Elasticsearch.
 
-In the `config`, you can override the following plugin configurations by adding a `elacticsearch.php` file as follow:
+In the `config` folder, you can override the following plugin configurations by adding a `elacticsearch.php` file as follow:
 ```php
 <?php
 return [
@@ -73,8 +73,8 @@ For instance, in a template `search/index.twig`, you could could use it like thi
             <h3>{{ result.title }}</h3>
             <p>
                 <small><a href="{{ result.url|raw }}">{{ result.url }}</a><br/>
-                    {% if attribute(result.highlight, 'attachment.content')|length %}
-                        {% for highligh in attribute(result.highlight, 'attachment.content') %}
+                    {% if result.highlights|length %}
+                        {% for highligh in result.highlights %}
                             {{ highligh|raw }}<br/>
                         {% endfor %}
                     {% endif %}
