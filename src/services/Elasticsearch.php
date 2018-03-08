@@ -18,9 +18,7 @@ use DateTime;
 use lhs\elasticsearch\Elasticsearch as Es;
 use lhs\elasticsearch\jobs\IndexElement;
 use lhs\elasticsearch\records\ElasticsearchRecord;
-use yii\bootstrap\Carousel;
 use yii\elasticsearch\Exception;
-use yii\helpers\VarDumper;
 use yii\web\ServerErrorHttpException;
 
 /**
@@ -118,8 +116,17 @@ class Elasticsearch extends Component
         $esClass = new ElasticsearchRecord();
         $esClass::$siteId = $siteId;
         $results = $esClass::search($query);
-        Craft::debug(VarDumper::dumpAsString($results), __METHOD__);
-        return $results;
+        $output = [];
+        foreach ($results as $result) {
+            $output[] = [
+                'id' => $result->getPrimaryKey(),
+                'title' => $result->title,
+                'url' => $result->url,
+                'score' => $result->score,
+                'highlights' => isset($result->highlight['attachment.content']) ? $result->highlight['attachment.content'] : []
+            ];
+        }
+        return $output;
     }
 
     /**

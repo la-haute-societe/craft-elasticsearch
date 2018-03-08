@@ -9,12 +9,32 @@ Bring the power of Elasticsearch to you Craft 3 CMS project
 This plugin requires Craft CMS 3.0.0-RC1 or later.
 In order to index data, you will need an Elasticsearch instance 6.0 or later with the Ingest attachment processor plugin activated.
 
-2. Then tell Composer to load the plugin:
+### Installation
 
-        composer require la-hautes-societe/craft-elasticsearch
+Install with Composer from your project directory
+```
+composer require la-hautes-societe/craft-elasticsearch
+```
 
-3. In the Control Panel, go to Settings → Plugins and click the “Install” button for Elasticsearch.
+## Configuration
 
+In the Control Panel, go to Settings → Plugins and click the “Install” button for Elasticsearch.
+
+In the `config`, you can override the following plugin configurations by adding a `elacticsearch.php` file as follow:
+```php
+<?php
+return [
+    'content_pattern' => '/<main id="content".*?>(.*?)<\/main>/s',
+    'highlight'       => [
+        'pre_tags'  => '<strong>',
+        'post_tags' => '</strong>',
+    ]
+];
+```
+
+- `content_pattern`: the regular expression used to extract the relevant content of the page to be indexed
+- `highlight`: the elasticsearch configuration used to highlight query results. For more options, refer to the [elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html)
+ 
 ## Elasticsearch Overview
 
 Elasticsearch plugin will automatically index each entries on your site(s).
@@ -75,10 +95,11 @@ For instance, in a template `search/index.twig`, you could could use it like thi
 ```
 
 Each entry consists of the following attributes:
+* `id`: Unique ID of the result
 * `title`: The page title
 * `url`: The full url of the page
 * `score`: The result score for the entry
-* `highlight.attachment.content`: An array of highlighted contents based on the found terms from the query
+* `highlights`: An array of highlighted contents based on the found terms from the query
 
 
 ## Elasticsearch Roadmap
