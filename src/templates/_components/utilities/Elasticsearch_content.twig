@@ -1,0 +1,22 @@
+{# @var craft \craft\web\twig\variables\CraftVariable #}
+{#
+/**
+ * Elasticsearch plugin for Craft CMS
+ *
+ * Elasticsearch Utility Content
+ *
+ * @author    La Haute Société
+ * @copyright Copyright (c) 2018 La Haute Société
+ * @link      https://www.lahautesociete.com
+ * @package   Elasticsearch
+ * @since     1.0.0
+ */
+#}
+
+{% set pluginCpUrlReindexAll = url('elasticsearch/reindex-all') %}
+
+<div class="buttons">
+    <a class="btn submit loading" href="{{ pluginCpUrlReindexAll }}">
+        {{ "Reindex all"|t('elasticsearch') }}
+    </a>
+</div>
