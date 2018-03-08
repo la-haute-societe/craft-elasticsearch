@@ -99,6 +99,9 @@ Each entry consists of the following attributes:
 * `score`: The result score for the entry
 * `highlights`: An array of highlighted contents based on the found terms from the query
 
+## Elasticsearch plugin utilities
+
+If your Elasticsearch index becomes out of sync with your sites contents, you can go to Utilities → Elasticsearch then click the "Reindex all" button.
 
 ## Elasticsearch plugin Roadmap
 
