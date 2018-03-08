@@ -110,4 +110,4 @@ If your Elasticsearch index becomes out of sync with your sites contents, you ca
 * Handel multi-sites configurations
 * Detect need for re-indexation
 
-Brought to you by [La Haute Société](https://www.lahautesociete.com)
+Brought to you by ![LHS Logo](resources/img/lhs.png) [La Haute Société](https://www.lahautesociete.com)
