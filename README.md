@@ -6,8 +6,9 @@ Bring the power of Elasticsearch to you Craft 3 CMS project
 
 ## Requirements
 
-This plugin requires Craft CMS 3.0.0-RC1 or later.
-In order to index data, you will need an Elasticsearch instance 6.0 or later with the Ingest attachment processor plugin activated.
+This plugin requires **Craft CMS 3.0.0-RC1** or later.
+
+In order to index data, you will need an **Elasticsearch instance 6.0** or later with the Ingest attachment processor plugin activated.
 
 ### Installation
 
@@ -109,7 +110,7 @@ Some things to do, and ideas for potential features:
 
 * Release it
 * Handel dependencies update 
-* Handel configuration for multi-sites
+* Handel multi-sites configurations
 * Detect need for re-indexation
 
 Brought to you by [La Haute Société](https://www.lahautesociete.com)
