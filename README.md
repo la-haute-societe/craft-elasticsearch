@@ -11,16 +11,26 @@ In order to index data, you will need an Elasticsearch instance 6.0 or later wit
 
 ### Installation
 
-Install with Composer from your project directory
+- Install with Composer from your project directory
 ```
 composer require la-hautes-societe/craft-elasticsearch
 ```
 
-## Configuration
+- In the Control Panel, go to Settings → Plugins and click the “Install” button for Elasticsearch.
+ 
+## Elasticsearch plugin Overview
 
-In the Control Panel, go to Settings → Plugins and click the “Install” button for Elasticsearch.
+Elasticsearch plugin will automatically index each entries on your site(s).
 
-In the `config` folder, you can override the following plugin configurations by adding a `elacticsearch.php` file as follow:
+It will figure out the best Elasticsearch mapping for you based on your site(s) language. 
+
+## Configuring Elasticsearch plugin
+
+Go to the plugin settings and adjust the host name and port for your Elasticsearch instance.
+
+If your instance is protected with X-Pack Security, you can provide your username and passwords as well.
+
+Optionally, in the `config` folder, you can override the following plugin configurations by adding a `elacticsearch.php` file as follow:
 ```php
 <?php
 return [
@@ -34,20 +44,8 @@ return [
 
 - `content_pattern`: the regular expression used to extract the relevant content of the page to be indexed
 - `highlight`: the elasticsearch configuration used to highlight query results. For more options, refer to the [elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html)
- 
-## Elasticsearch Overview
 
-Elasticsearch plugin will automatically index each entries on your site(s).
-
-It will figure out the best Elasticsearch mapping for you based on your site(s) language. 
-
-## Configuring Elasticsearch
-
-Go to the plugin settings and adjust the host name and port for your Elasticsearch instance.
-
-If your instance is protected with X-Pack Security, you can provide your username and passwords as well.
-
-## Using Elasticsearch
+## Using Elasticsearch plugin
 
 You can enable the search feature in your frontend templates by calling the `craft.elasticsearch.results('Something to search')` variable.
 For instance, in a template `search/index.twig`, you could could use it like this:
@@ -102,11 +100,13 @@ Each entry consists of the following attributes:
 * `highlights`: An array of highlighted contents based on the found terms from the query
 
 
-## Elasticsearch Roadmap
+## Elasticsearch plugin Roadmap
 
 Some things to do, and ideas for potential features:
 
 * Release it
 * Handel dependencies update 
+* Handel configuration for multi-sites
+* Detect need for re-indexation
 
 Brought to you by [La Haute Société](https://www.lahautesociete.com)
