@@ -15,12 +15,21 @@
 
 {% set pluginCpUrlReindexAll = url('elasticsearch/reindex-all') %}
 
-{% if not inSync %}
-    <div class="alert">{{ "Elasticsearch index is out of sync!"|t('elasticsearch') }}</div>
+{% if not isConnected %}
+    <p><strong>{{ "Could not connect to the elasticsearch instance. Please check your settings"|t('elasticsearch') }}</strong></p>
+{% else %}
+    {% if not inSync %}
+        <p><strong>{{ "Elasticsearch index is out of sync!"|t('elasticsearch') }}</strong></p>
+    {% endif %}
 {% endif %}
 
-<div class="buttons">
-    <a class="btn submit loading" href="{{ pluginCpUrlReindexAll }}">
-        {{ "Reindex all"|t('elasticsearch') }}
-    </a>
-</div>
+
+<form id="elasticsearch-utility" class="utility" method="post" accept-charset="UTF-8">
+    <input type="hidden" name="action" value="elasticsearch/elasticsearch/reindex-all">
+    {{ csrfInput() }}
+
+    <div class="buttons">
+        <input type="submit" class="btn submit" value="{{ "Reindex all"|t('elasticsearch') }}" />
+        <div class="utility-status"></div>
+    </div>
+</form>

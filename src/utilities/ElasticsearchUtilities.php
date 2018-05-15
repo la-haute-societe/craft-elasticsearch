@@ -72,7 +72,12 @@ class ElasticsearchUtilities extends Utility
      */
     public static function badgeCount(): int
     {
-        return 0;
+        if (!Elasticsearch::$plugin->elasticsearch->testConnection() || !Elasticsearch::$plugin->elasticsearch->isIndexInSync()) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
     }
 
     /**
@@ -87,11 +92,18 @@ class ElasticsearchUtilities extends Utility
     {
         Craft::$app->getView()->registerAssetBundle(ElasticsearchUtilityAsset::class);
 
+        $view = Craft::$app->getView();
+
+        $view->registerAssetBundle(ElasticsearchUtilityAsset::class);
+        $view->registerJs('new Craft.ElasticsearchUtility(\'elasticsearch-utility\');');
+
+        $isConnected = Elasticsearch::$plugin->elasticsearch->testConnection();
         $inSync = Elasticsearch::$plugin->elasticsearch->isIndexInSync();
 
         return Craft::$app->getView()->renderTemplate(
             'elasticsearch/_components/utilities/Elasticsearch_content',
             [
+                'isConnected' => $isConnected,
                 'inSync' => $inSync
             ]
         );

@@ -16,7 +16,6 @@ use craft\elements\Entry;
 use craft\web\View;
 use DateTime;
 use lhs\elasticsearch\Elasticsearch as Es;
-use lhs\elasticsearch\jobs\IndexElement;
 use lhs\elasticsearch\records\ElasticsearchRecord;
 use yii\elasticsearch\Exception;
 use yii\web\ServerErrorHttpException;
@@ -60,22 +59,37 @@ class Elasticsearch extends Component
         }
     }
 
+    private static function getSyncCachekey()
+    {
+        return self::class . '_isSync';
+    }
+
+    /**
+     * Return if the Elasticsearch is in sycn with Craft or not
+     * @return bool
+     */
     public function isIndexInSync()
     {
-        $inSync = true;
-        foreach (Craft::$app->getSites()->getAllSites() as $site) {
-            Craft::$app->getSites()->setCurrentSite($site);
-            $esClass = new ElasticsearchRecord();
-            $esClass::$siteId = $site->id;
-            $countEntries = (int)Entry::find()->status(Entry::STATUS_ENABLED)->count();
-            $countEsRecords = (int)$esClass::find()->count();
-            Craft::debug("Count active entries for site {$site->id}: {$countEntries}", __METHOD__);
-            Craft::debug("Count Elasticsearch records for site {$site->id}: {$countEsRecords}", __METHOD__);
-            if($countEntries !== $countEsRecords) {
-                Craft::debug("Elasticsearch reindex needed!", __METHOD__);
-                $inSync = false;
+
+        $inSync = Craft::$app->cache->getOrSet(self::getSyncCachekey(), function () {
+            $inSync = true;
+            if ($this->testConnection() === true) {
+                foreach (Craft::$app->getSites()->getAllSites() as $site) {
+                    Craft::$app->getSites()->setCurrentSite($site);
+                    $esClass = new ElasticsearchRecord();
+                    $esClass::$siteId = $site->id;
+                    $countEntries = (int)Entry::find()->status(Entry::STATUS_ENABLED)->count();
+                    $countEsRecords = (int)$esClass::find()->count();
+                    Craft::debug("Count active entries for site {$site->id}: {$countEntries}", __METHOD__);
+                    Craft::debug("Count Elasticsearch records for site {$site->id}: {$countEsRecords}", __METHOD__);
+                    if ($countEntries !== $countEsRecords) {
+                        Craft::debug('Elasticsearch reindex needed!', __METHOD__);
+                        $inSync = false;
+                    }
+                }
             }
-        }
+            return $inSync;
+        }, 300);
         return $inSync;
     }
 
@@ -88,6 +102,7 @@ class Elasticsearch extends Component
             Craft::$app->getSites()->setCurrentSite($site);
             $this->reindexBySiteId($site->id);
         }
+        Craft::$app->cache->delete(self::getSyncCachekey()); // Invalidate cache
     }
 
     /**
@@ -107,10 +122,11 @@ class Elasticsearch extends Component
         /** @var Entry $element */
         foreach (Entry::find()->each() as $element) {
             if ($element->enabled) {
-                Craft::$app->queue->push(new IndexElement([
-                    'siteId'    => $siteId,
-                    'elementId' => $element->id,
-                ]));
+                $this->indexEntry($element);
+//                Craft::$app->queue->push(new IndexElement([
+//                    'siteId'    => $siteId,
+//                    'elementId' => $element->id,
+//                ]));
             }
         }
     }
@@ -159,7 +175,7 @@ class Elasticsearch extends Component
      */
     public function indexEntry(Entry $entry)
     {
-        if ($entry->status == Entry::STATUS_LIVE && $entry->enabledForSite && $entry->hasContent()) {
+        if ($entry->status === Entry::STATUS_LIVE && $entry->enabledForSite && $entry->hasContent()) {
             Craft::info(
                 Craft::t(
                     'elasticsearch',
@@ -201,7 +217,7 @@ class Elasticsearch extends Component
             // Have this entry override any freshly queried entries with the same ID/site ID
             Craft::$app->getElements()->setPlaceholderElement($entry);
 
-            Craft::$app->view->getTwig()->disableStrictVariables();
+            //Craft::$app->view->getTwig()->disableStrictVariables();
 
             $html = trim(Craft::$app->view->renderTemplate($sectionSiteSettings[$entry->siteId]->template, [
                 'entry' => $entry

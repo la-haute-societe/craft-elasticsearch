@@ -33,5 +33,6 @@ return [
     'Index a page in Elasticsearch'                                  => 'Indexation d\'une page dans Elasticsearch',
     'Elasticsearch indexing in progress...'                          => 'Indexation Elasticsearch en cours...',
     'Authorizations parameters (optional)'                           => 'Paramètres d\'autorisations (facultatif)',
-    'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)' => 'Nom d\'hôte ou IP et port de l\'instance Elasticsearch (ex. elasticsearch:9200)'
+    'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)' => 'Nom d\'hôte ou IP et port de l\'instance Elasticsearch (ex. elasticsearch:9200)',
+    'Elasticsearch index is out of sync!'                            => 'L\'index Elasticsearch n\'est plus synchronisé !'
 ];

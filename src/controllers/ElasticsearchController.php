@@ -52,27 +52,37 @@ class ElasticsearchController extends Controller
     // =========================================================================
 
     /**
-     * Handle a request going to our plugin's actionDoSomething URL,
-     * e.g.: actions/elasticsearch/elasticsearch/do-something
+     * Test the elasticsearch connection
      *
      * @return mixed
      */
     public function actionTestConnection()
     {
         if(Elasticsearch::$plugin->elasticsearch->testConnection() === true) {
-            Craft::$app->session->setFlash('notice', Craft::t('elasticsearch', 'Successfully connected to {http_address}', ['http_address' => $this->module->settings->http_address]));
+            Craft::$app->session->setNotice(Craft::t('elasticsearch', 'Successfully connected to {http_address}', ['http_address' => $this->module->settings->http_address]));
         }
         else {
-            Craft::$app->session->setFlash('error', Craft::t('elasticsearch', 'Could not establish connection with {http_address}', ['http_address' => $this->module->settings->http_address]));
+            Craft::$app->session->setError(Craft::t('elasticsearch', 'Could not establish connection with {http_address}', ['http_address' => $this->module->settings->http_address]));
         }
 
         return $this->redirect(UrlHelper::cpUrl('utilities/elasticsearch-utilities'));
     }
 
+    /**
+     * Reindex Craft entries into elasticsearch (called from utility panel)
+     *
+     * @return \yii\web\Response
+     */
     public function actionReindexAll()
     {
         Elasticsearch::$plugin->elasticsearch->reindexAll();
-        Craft::$app->session->setFlash('notice', Craft::t('elasticsearch', 'Elasticsearch indexing in progress...'));
+
+        if (\Craft::$app->getRequest()->getAcceptsJson()) {
+            return $this->asJson([
+                'success' => true
+            ]);
+        }
+
         return $this->redirect(UrlHelper::cpUrl('utilities/elasticsearch-utilities'));
     }
 }
