@@ -13,9 +13,10 @@ namespace lhs\elasticsearch\services;
 use Craft;
 use craft\base\Component;
 use craft\elements\Entry;
+use craft\web\Response;
 use craft\web\View;
 use DateTime;
-use lhs\elasticsearch\Elasticsearch as Es;
+use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\records\ElasticsearchRecord;
 use yii\elasticsearch\Exception;
 use yii\web\ServerErrorHttpException;
@@ -35,38 +36,29 @@ use yii\web\ServerErrorHttpException;
  */
 class Elasticsearch extends Component
 {
-    // Public Methods
+    // ElasticSearch / Craft communication
     // =========================================================================
 
     /**
-     * This function can literally be anything you want, and you can have as many service
-     * functions as you want
-     *
-     * From any other plugin file, call it like this:
-     *
-     *     Elasticsearch::$plugin->elasticsearch->testConnection()
-     *
-     * @return boolean
+     * Test the connection to the ElasticSearch server
+     * @return boolean `true` if the connection succeeds, `false` otherwise.
      */
     public function testConnection()
     {
-        $connection = Es::$plugin->connection;
+        $connection = Craft::$app->elasticsearch;
         try {
             $connection->open();
             return true;
         } catch (\Exception $e) {
             return false;
+        } finally {
+            $connection->close();
         }
     }
 
-    private static function getSyncCachekey()
-    {
-        return self::class . '_isSync';
-    }
-
     /**
-     * Return if the Elasticsearch is in sycn with Craft or not
-     * @return bool
+     * Check whether or not ElasticSearch is in sync with Craft
+     * @return boolean `true` if ElasticSearch is in sync with Craft, `false` otherwise.
      */
     public function isIndexInSync()
     {
@@ -80,8 +72,8 @@ class Elasticsearch extends Component
                     $esClass::$siteId = $site->id;
                     $countEntries = (int)Entry::find()->status(Entry::STATUS_ENABLED)->count();
                     $countEsRecords = (int)$esClass::find()->count();
-                    Craft::debug("Count active entries for site {$site->id}: {$countEntries}", __METHOD__);
-                    Craft::debug("Count Elasticsearch records for site {$site->id}: {$countEsRecords}", __METHOD__);
+                    Craft::debug('Count active entries for site {$site->id}: {$countEntries}', __METHOD__);
+                    Craft::debug('Count Elasticsearch records for site {$site->id}: {$countEsRecords}', __METHOD__);
                     if ($countEntries !== $countEsRecords) {
                         Craft::debug('Elasticsearch reindex needed!', __METHOD__);
                         $inSync = false;
@@ -93,81 +85,59 @@ class Elasticsearch extends Component
         return $inSync;
     }
 
-    /**
-     * Recreate all Elasticsearch indexes and reindex every Craft entries
-     */
-    public function reindexAll()
+
+    // Index Management - Methods related to creating/removing indexes
+    // =========================================================================
+
+    public function createSiteIndex(int $siteId)
     {
-        foreach (Craft::$app->getSites()->getAllSites() as $site) {
-            Craft::$app->getSites()->setCurrentSite($site);
-            $this->reindexBySiteId($site->id);
-        }
-        Craft::$app->cache->delete(self::getSyncCachekey()); // Invalidate cache
+        Craft::info(Craft::t(
+            ElasticsearchPlugin::TRANSLATION_CATEGORY,
+            'Creating an ElasticSearch index for the site #{siteId}',
+            ['siteId' => $siteId]
+        ), __METHOD__);
+
+        $esRecord = new ElasticsearchRecord();
+        $esRecord::$siteId = $siteId;
+        $esRecord::createIndex();
     }
 
     /**
-     * Recreate Elasticsearch index for a given siteId
+     * Remove the ElasticSearch index for the given site
      * @param int $siteId
-     * @throws Exception
-     * @throws ServerErrorHttpException
-     * @throws \Twig_Error_Loader
-     * @throws \yii\base\Exception
-     * @throws \yii\base\InvalidConfigException
      */
-    public function reindexBySiteId($siteId)
+    public function removeSiteIndex($siteId)
     {
+        Craft::info(Craft::t(
+            ElasticsearchPlugin::TRANSLATION_CATEGORY,
+            'Removing the ElasticSearch index for the site #{siteId}',
+            ['siteId' => $siteId]
+        ), __METHOD__);
+
         $esClass = new ElasticsearchRecord();
         $esClass::$siteId = $siteId;
         $esClass::deleteIndex();
-        /** @var Entry $element */
-        foreach (Entry::find()->each() as $element) {
-            if ($element->enabled) {
-                $this->indexEntry($element);
-//                Craft::$app->queue->push(new IndexElement([
-//                    'siteId'    => $siteId,
-//                    'elementId' => $element->id,
-//                ]));
-            }
-        }
     }
 
     /**
-     * Search the given query in Elasticsearch index
-     * @param string $query String to search for
-     * @param null $siteId Site id to make the search
-     * @return array|ElasticsearchRecord[]
-     * @throws Exception
-     * @throws \craft\errors\SiteNotFoundException
-     * @throws \yii\base\InvalidConfigException
+     * Re-create the ElasticSearch index of each of the site matching any of `$siteIds`
+     * @param int[] $siteIds
      */
-    public function search($query, $siteId = null)
+    public function recreateSiteIndexes(int ...$siteIds)
     {
-        if (is_null($query)) {
-            return [];
+        foreach ($siteIds as $siteId) {
+            $this->removeSiteIndex($siteId);
+            $this->createSiteIndex($siteId);
         }
-        if (is_null($siteId)) {
-            $siteId = Craft::$app->getSites()->getCurrentSite()->id;
-        }
-        $esClass = new ElasticsearchRecord();
-        $esClass::$siteId = $siteId;
-        $results = $esClass::search($query);
-        $output = [];
-        foreach ($results as $result) {
-            $output[] = [
-                'id'         => $result->getPrimaryKey(),
-                'title'      => $result->title,
-                'url'        => $result->url,
-                'score'      => $result->score,
-                'highlights' => isset($result->highlight['attachment.content']) ? $result->highlight['attachment.content'] : []
-            ];
-        }
-        return $output;
     }
+
+
+    // Index Manipulation - Methods related to adding to / removing from the index
+    // =========================================================================
 
     /**
      * Index a given entry into Elasticsearch
      * @param Entry $entry
-     * @throws Exception
      * @throws ServerErrorHttpException
      * @throws \Twig_Error_Loader
      * @throws \yii\base\Exception
@@ -178,7 +148,7 @@ class Elasticsearch extends Component
         if ($entry->status === Entry::STATUS_LIVE && $entry->enabledForSite && $entry->hasContent()) {
             Craft::info(
                 Craft::t(
-                    'elasticsearch',
+                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
                     'Indexing entry {url}',
                     ['url' => $entry->url]
                 ),
@@ -217,16 +187,28 @@ class Elasticsearch extends Component
             // Have this entry override any freshly queried entries with the same ID/site ID
             Craft::$app->getElements()->setPlaceholderElement($entry);
 
-            //Craft::$app->view->getTwig()->disableStrictVariables();
+            // Backup & disable Twig cache before rendering.
+            // Without this, templates using the `{% cache %}` Twig tag may have a strange behavior.
+            $twigCache = Craft::$app->getView()->getTwig()->getCache();
+            Craft::$app->getView()->getTwig()->setCache(false);
 
-            $html = trim(Craft::$app->view->renderTemplate($sectionSiteSettings[$entry->siteId]->template, [
-                'entry' => $entry
+            $pathInfo = Craft::$app->getRequest()->getPathInfo();
+            Craft::$app->getRequest()->setPathInfo($entry->url);
+
+            $templateName = $sectionSiteSettings[$entry->siteId]->template;
+            $html = trim(Craft::$app->view->renderTemplate($templateName, [
+                'entry' => $entry,
             ]));
 
+            // Restore Twig cache configuration. On est pas des bêtes !
+            Craft::$app->getView()->getTwig()->setCache($twigCache);
+
             $body = null;
-            if (preg_match(Es::$plugin->settings->content_pattern, $html, $body)) {
+            if (preg_match(ElasticSearchPlugin::getInstance()->settings->content_pattern, $html, $body)) {
                 $html = '<!DOCTYPE html>' . trim($body[1]);
             }
+
+            Craft::$app->getResponse()->format = Response::FORMAT_HTML;
 
             $esRecord->content = base64_encode(trim($html));
 
@@ -243,7 +225,7 @@ class Elasticsearch extends Component
     {
         Craft::info(
             Craft::t(
-                'elasticsearch',
+                ElasticsearchPlugin::TRANSLATION_CATEGORY,
                 'Deleting entry {url}',
                 ['url' => $entry->url]
             ),
@@ -256,5 +238,73 @@ class Elasticsearch extends Component
         if ($esRecord) {
             $esRecord->delete();
         }
+    }
+
+    /**
+     * Recreate the ElasticSearch index of all sites and and reindex their entries
+     */
+    public function reindexAll()
+    {
+        foreach (Craft::$app->getSites()->getAllSites() as $site) {
+            Craft::$app->getSites()->setCurrentSite($site);
+            $this->reindexBySiteId($site->id);
+        }
+        Craft::$app->cache->delete(self::getSyncCachekey()); // Invalidate cache
+    }
+
+    /**
+     * Recreate the ElasticSearch index for the site having the given `$siteId` and reindex its entries
+     * @param int $siteId
+     * @throws ServerErrorHttpException
+     * @throws \Twig_Error_Loader
+     * @throws \yii\base\Exception
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function reindexBySiteId($siteId)
+    {
+        $esClass = new ElasticsearchRecord();
+        $esClass::$siteId = $siteId;
+        $esClass::deleteIndex();
+        /** @var Entry $element */
+        foreach (Entry::find()->each() as $element) {
+            if ($element->enabled) {
+                $this->indexEntry($element);
+            }
+        }
+    }
+
+    /**
+     * Execute the given `$query` in the ElasticSearch index
+     * @param string   $query  String to search for
+     * @param int|null $siteId Site id to make the search
+     * @return array|ElasticsearchRecord[]
+     */
+    public function search($query, $siteId = null)
+    {
+        if (is_null($query)) {
+            return [];
+        }
+        if (is_null($siteId)) {
+            $siteId = Craft::$app->getSites()->getCurrentSite()->id;
+        }
+        $esClass = new ElasticsearchRecord();
+        $esClass::$siteId = $siteId;
+        $results = $esClass::search($query);
+        $output = [];
+        foreach ($results as $result) {
+            $output[] = [
+                'id'         => $result->getPrimaryKey(),
+                'title'      => $result->title,
+                'url'        => $result->url,
+                'score'      => $result->score,
+                'highlights' => isset($result->highlight['attachment.content']) ? $result->highlight['attachment.content'] : [],
+            ];
+        }
+        return $output;
+    }
+
+    private static function getSyncCachekey()
+    {
+        return self::class . '_isSync';
     }
 }

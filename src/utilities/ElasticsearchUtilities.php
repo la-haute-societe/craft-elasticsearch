@@ -12,6 +12,7 @@ namespace lhs\elasticsearch\utilities;
 
 use Craft;
 use craft\base\Utility;
+use craft\helpers\ArrayHelper;
 use lhs\elasticsearch\assetbundles\elasticsearchutility\ElasticsearchUtilityAsset;
 use lhs\elasticsearch\Elasticsearch;
 
@@ -38,7 +39,7 @@ class ElasticsearchUtilities extends Utility
      */
     public static function displayName(): string
     {
-        return Craft::t('elasticsearch', 'Elasticsearch');
+        return Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Elasticsearch');
     }
 
     /**
@@ -72,12 +73,11 @@ class ElasticsearchUtilities extends Utility
      */
     public static function badgeCount(): int
     {
-        if (!Elasticsearch::$plugin->elasticsearch->testConnection() || !Elasticsearch::$plugin->elasticsearch->isIndexInSync()) {
+        if (!ElasticSearch::getInstance()->service->testConnection() || !ElasticSearch::getInstance()->service->isIndexInSync()) {
             return 1;
         }
-        else {
-            return 0;
-        }
+
+        return 0;
     }
 
     /**
@@ -97,14 +97,17 @@ class ElasticsearchUtilities extends Utility
         $view->registerAssetBundle(ElasticsearchUtilityAsset::class);
         $view->registerJs('new Craft.ElasticsearchUtility(\'elasticsearch-utility\');');
 
-        $isConnected = Elasticsearch::$plugin->elasticsearch->testConnection();
-        $inSync = Elasticsearch::$plugin->elasticsearch->isIndexInSync();
+        $isConnected = ElasticSearch::getInstance()->service->testConnection();
+        $inSync = ElasticSearch::getInstance()->service->isIndexInSync();
+
+        $sites = ArrayHelper::map(Craft::$app->sites->getAllSites(), 'id', 'name');
 
         return Craft::$app->getView()->renderTemplate(
             'elasticsearch/_components/utilities/Elasticsearch_content',
             [
                 'isConnected' => $isConnected,
-                'inSync' => $inSync
+                'inSync'      => $inSync,
+                'sites'       => $sites,
             ]
         );
     }

@@ -27,5 +27,5 @@ return [
     'highlight'       => [
         'pre_tags'  => '<strong>',
         'post_tags' => '</strong>',
-    ]
+    ],
 ];

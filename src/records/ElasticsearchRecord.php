@@ -1,6 +1,6 @@
 <?php
 /**
- * @link http://www.lahautesociete.com
+ * @link      http://www.lahautesociete.com
  * @copyright Copyright (c) 2018 La Haute Société
  */
 
@@ -35,15 +35,15 @@ class ElasticsearchRecord extends ActiveRecord
             'query_string' => [
                 'fields'   => ['attachment.content', 'title'],
                 'query'    => $query,
-                'analyzer' => self::siteAnalyzer()
-            ]
+                'analyzer' => self::siteAnalyzer(),
+            ],
         ];
 
-        $highlightParams = ArrayHelper::merge(Elasticsearch::$plugin->settings->highlight, [
-            'fields'    => [
+        $highlightParams = ArrayHelper::merge(ElasticSearch::getInstance()->settings->highlight, [
+            'fields' => [
                 'title'              => (object)['type' => 'plain'],
-                'attachment.content' => (object)[]
-            ]
+                'attachment.content' => (object)[],
+            ],
         ]);
         return self::find()->query($queryParams)->highlight($highlightParams)->limit(self::find()->count())->all();
     }
@@ -148,7 +148,7 @@ class ElasticsearchRecord extends ActiveRecord
      */
     public static function getDb()
     {
-        return Elasticsearch::$plugin->connection;
+        return Craft::$app->elasticsearch;
     }
 
     /**
@@ -160,7 +160,7 @@ class ElasticsearchRecord extends ActiveRecord
         if (null === static::$siteId) {
             throw new InvalidConfigException('siteId was not set');
         }
-        return parent::index() . '_' . static::$siteId;
+        return 'craft-entries_' . static::$siteId;
     }
 
     /**
@@ -187,13 +187,13 @@ class ElasticsearchRecord extends ActiveRecord
                         "field"          => "content",
                         "target_field"   => "attachment",
                         "indexed_chars"  => -1,
-                        "ignore_missing" => true
+                        "ignore_missing" => true,
                     ],
                     "remove"     => [
-                        "field" => "content"
-                    ]
+                        "field" => "content",
+                    ],
                 ],
-            ]
+            ],
         ]));
         $command->createIndex(static::index(), [
             'mappings' => static::mapping(),
@@ -221,32 +221,32 @@ class ElasticsearchRecord extends ActiveRecord
                     'title'      => [
                         'type'     => 'text',
                         'analyzer' => $analyzer,
-                        'store'    => true
+                        'store'    => true,
                     ],
                     'section'    => [
                         'type'  => 'keyword',
-                        'store' => true
+                        'store' => true,
                     ],
                     'url'        => [
                         'type'  => 'text',
-                        'store' => true
+                        'store' => true,
                     ],
                     'content'    => [
                         'type'     => 'text',
                         'analyzer' => $analyzer,
-                        'store'    => true
+                        'store'    => true,
                     ],
                     'attachment' => [
                         'properties' => [
                             'content' => [
                                 'type'     => 'text',
                                 'analyzer' => $analyzer,
-                                'store'    => true
-                            ]
-                        ]
-                    ]
-                ]
-            ]
+                                'store'    => true,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 

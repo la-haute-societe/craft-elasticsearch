@@ -12,6 +12,7 @@ namespace lhs\elasticsearch\models;
 
 use Craft;
 use craft\base\Model;
+use lhs\elasticsearch\Elasticsearch;
 
 /**
  * Elasticsearch Settings Model
@@ -59,11 +60,11 @@ class Settings extends Model
     public function rules()
     {
         return [
-            ['http_address', 'required', 'message' => Craft::t("elasticsearch", "Host is required")],
+            ['http_address', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Host is required')],
             ['http_address', 'string'],
             ['http_address', 'default', 'value' => 'elasticsearch:9200'],
             [['auth_username', 'auth_password'], 'string'],
-            [['auth_username', 'auth_password'], 'trim']
+            [['auth_username', 'auth_password'], 'trim'],
         ];
     }
 }

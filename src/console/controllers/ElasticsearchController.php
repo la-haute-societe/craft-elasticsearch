@@ -10,6 +10,7 @@
 
 namespace lhs\elasticsearch\console\controllers;
 
+use craft\records\Site;
 use lhs\elasticsearch\Elasticsearch;
 use yii\console\Controller;
 
@@ -32,6 +33,16 @@ class ElasticsearchController extends Controller
      */
     public function actionReindexAll()
     {
-        return Elasticsearch::$plugin->elasticsearch->reindexAll();
+        return ElasticSearch::getInstance()->service->reindexAll();
+    }
+
+    /**
+     * Remove & recreate an empty index for all sites
+     */
+    public function actionRecreateEmptyIndexes()
+    {
+        $siteIds = Site::find()->select('id')->column();
+
+        ElasticSearch::getInstance()->service->recreateSiteIndexes(...$siteIds);
     }
 }

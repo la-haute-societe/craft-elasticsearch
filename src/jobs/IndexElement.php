@@ -74,11 +74,11 @@ class IndexElement extends BaseJob
         $site = Craft::$app->getSites()->getSiteById($this->siteId);
         Craft::$app->getSites()->setCurrentSite($site);
         $element = Entry::findOne($this->elementId);
-        Craft::debug(VarDumper::dumpAsString($element),__METHOD__);
-        if($element) {
+        Craft::debug(VarDumper::dumpAsString($element), __METHOD__);
+        if ($element) {
             $site = Craft::$app->getSites()->getSiteById($element->siteId);
             Craft::$app->getSites()->setCurrentSite($site);
-            Elasticsearch::$plugin->elasticsearch->indexEntry($element);
+            ElasticSearch::getInstance()->service->indexEntry($element);
         }
     }
 
@@ -92,6 +92,6 @@ class IndexElement extends BaseJob
      */
     protected function defaultDescription(): string
     {
-        return Craft::t('elasticsearch', 'Index a page in Elasticsearch');
+        return Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Index a page in Elasticsearch');
     }
 }

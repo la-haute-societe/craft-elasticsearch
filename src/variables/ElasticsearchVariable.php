@@ -12,8 +12,6 @@ namespace lhs\elasticsearch\variables;
 
 use lhs\elasticsearch\Elasticsearch;
 
-use Craft;
-
 /**
  * Elasticsearch Variable
  *
@@ -47,6 +45,6 @@ class ElasticsearchVariable
      */
     public function results($query)
     {
-        return Elasticsearch::$plugin->elasticsearch->search($query);
+        return ElasticSearch::getInstance()->service->search($query);
     }
 }

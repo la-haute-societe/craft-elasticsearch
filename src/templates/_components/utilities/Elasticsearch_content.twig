@@ -12,8 +12,7 @@
  * @since     1.0.0
  */
 #}
-
-{% set pluginCpUrlReindexAll = url('elasticsearch/reindex-all') %}
+{% import "_includes/forms" as forms %}
 
 {% if not isConnected %}
     <p><strong>{{ "Could not connect to the elasticsearch instance. Please check your settings"|t('elasticsearch') }}</strong></p>
@@ -23,13 +22,19 @@
     {% endif %}
 {% endif %}
 
-
 <form id="elasticsearch-utility" class="utility" method="post" accept-charset="UTF-8">
-    <input type="hidden" name="action" value="elasticsearch/elasticsearch/reindex-all">
+    <input type="hidden" name="action" value="{{ url('elasticsearch/reindex-perform-action') }}">
     {{ csrfInput() }}
 
+    {{ forms.checkboxSelect({
+        name: 'sites',
+        options: sites,
+        showAllOption: true,
+        values: '*',
+    }) }}
+
     <div class="buttons">
-        <input type="submit" class="btn submit" value="{{ "Reindex all"|t('elasticsearch') }}" />
+        <input type="submit" class="btn submit" value="{{ 'Reindex selected'|t('elasticsearch') }}"/>
         <div class="utility-status"></div>
     </div>
 </form>

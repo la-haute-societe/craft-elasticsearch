@@ -18,18 +18,22 @@ use craft\elements\Entry;
 use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
+use craft\events\RegisterUserPermissionsEvent;
 use craft\services\Plugins;
+use craft\services\UserPermissions;
 use craft\services\Utilities;
+use craft\web\Application;
+use craft\web\Controller;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
-use lhs\elasticsearch\jobs\DeleteElement;
 use lhs\elasticsearch\jobs\IndexElement;
-use lhs\elasticsearch\jobs\SomeJob;
 use lhs\elasticsearch\models\Settings;
+use lhs\elasticsearch\services\Elasticsearch as ElasticsearchService;
 use lhs\elasticsearch\utilities\ElasticsearchUtilities;
 use lhs\elasticsearch\variables\ElasticsearchVariable;
 use yii\base\Event;
 use yii\elasticsearch\Connection;
+use yii\elasticsearch\DebugPanel;
 
 /**
  * Craft plugins are very much like little applications in and of themselves. We’ve made
@@ -45,46 +49,36 @@ use yii\elasticsearch\Connection;
  * @package   Elasticsearch
  * @since     1.0.0
  *
- * @property  Elasticsearch $elasticsearch
- * @property  Settings $settings
- * @property  Connection $connection
+ * @property  services\Elasticsearch service
+ * @property  Settings               settings
+ * @property  Connection             elasticsearch
  * @method    Settings getSettings()
  */
 class Elasticsearch extends Plugin
 {
-    /**
-     * Static property that is an instance of this plugin class so that it can be accessed via
-     * Elasticsearch::$plugin
-     *
-     * @var Elasticsearch
-     */
-    public static $plugin;
-
-    // Static Properties
-    // =========================================================================
-
+    const TRANSLATION_CATEGORY = 'elasticsearch';
     // Public Methods
     // =========================================================================
-
 
     public function init()
     {
         parent::init();
         $this->name = "Elasticsearch";
-        self::$plugin = $this;
 
         $this->setComponents([
-            'connection' => [
-                'class' => 'yii\elasticsearch\Connection',
-                'nodes' => [
-                    ['http_address' => $this->settings->http_address],
-                    // configure more hosts if you have a cluster
-                ],
-                'auth'  => [
-                    'username' => $this->settings->auth_username,
-                    'password' => $this->settings->auth_password
-                ]
-            ]
+            'service' => ElasticsearchService::class,
+        ]);
+
+        Craft::$app->set('elasticsearch', [
+            'class' => 'yii\elasticsearch\Connection',
+            'nodes' => [
+                ['http_address' => $this->settings->http_address],
+                // configure more hosts if you have a cluster
+            ],
+            'auth'  => [
+                'username' => $this->settings->auth_username,
+                'password' => $this->settings->auth_password,
+            ],
         ]);
 
         // Add in our console commands
@@ -125,10 +119,10 @@ class Elasticsearch extends Plugin
                     if ($element->enabled) {
                         Craft::$app->queue->push(new IndexElement([
                             'siteId'    => $element->siteId,
-                            'elementId' => $element->id
+                            'elementId' => $element->id,
                         ]));
                     } else {
-                        Elasticsearch::$plugin->elasticsearch->deleteEntry($element);
+                        ElasticSearch::getInstance()->service->deleteEntry($element);
                     }
 
                 }
@@ -143,7 +137,7 @@ class Elasticsearch extends Plugin
             Element::EVENT_AFTER_DELETE,
             function (Event $event) {
                 $element = $event->sender;
-                Elasticsearch::$plugin->elasticsearch->deleteEntry($element);
+                ElasticSearch::getInstance()->service->deleteEntry($element);
             }
         );
 
@@ -160,20 +154,35 @@ class Elasticsearch extends Plugin
             Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
             function (PluginEvent $event) {
                 if ($event->plugin === $this) {
-                    $this->elasticsearch->reindexAll();
+                    $this->service->reindexAll();
                 }
             }
         );
 
-        //        Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function(RegisterUserPermissionsEvent $event) {
-        //            $event->permissions[\Craft::t('elasticsearch', 'Elasticsearch')] = [
-        //                'some-thing' => ['label' => \Craft::t('elasticsearch', 'Something')],
-        //            ];
-        //        });
+        Event::on(
+            UserPermissions::class,
+            UserPermissions::EVENT_REGISTER_PERMISSIONS,
+            function (RegisterUserPermissionsEvent $event) {
+                $event->permissions[Craft::t(self::TRANSLATION_CATEGORY, 'Elasticsearch')] = [
+                    'reindex' => ['label' => Craft::t(self::TRANSLATION_CATEGORY, 'Refresh ElasticSearch index')],
+                ];
+            }
+        );
 
+        Event::on(
+            Application::class,
+            Application::EVENT_BEFORE_REQUEST,
+            function () {
+                /** @var \yii\debug\Module */
+                $debugModule = Craft::$app->getModule('debug');
+
+                $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
+            }
+        );
+Controller::EVENT_BEFORE_ACTION;
         Craft::info(
             Craft::t(
-                'elasticsearch',
+                self::TRANSLATION_CATEGORY,
                 '{name} plugin loaded',
                 ['name' => $this->name]
             ),
@@ -207,9 +216,10 @@ class Elasticsearch extends Plugin
         return Craft::$app->view->renderTemplate(
             'elasticsearch/settings',
             [
-                'settings' => $this->getSettings()
+                'settings' => $this->getSettings(),
             ]
         );
     }
+
 
 }
