@@ -12,6 +12,7 @@
  * @since     1.0.0
  */
 #}
+
 {% import "_includes/forms" as forms %}
 
 {% if not isConnected %}
@@ -38,3 +39,5 @@
         <div class="utility-status"></div>
     </div>
 </form>
+
+{% include 'elasticsearch/components/elastic-branding' %}

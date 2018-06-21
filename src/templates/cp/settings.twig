@@ -13,9 +13,8 @@
  */
 #}
 
+{% do view.registerAssetBundle("lhs\\elasticsearch\\resources\\CpAssetBundle") %}
 {% import "_includes/forms" as forms %}
-
-{% do view.registerAssetBundle("lhs\\elasticsearch\\assetbundles\\elasticsearch\\ElasticsearchAsset") %}
 
 {{ forms.textField({
     first: true,
@@ -48,3 +47,4 @@
     errors: settings.getErrors('auth_password')}
 ) }}
 
+{% include 'elasticsearch/components/elastic-branding' %}

@@ -63,7 +63,7 @@ class Elasticsearch extends Plugin
     public function init()
     {
         parent::init();
-        $this->name = "Elasticsearch";
+        $this->name = 'Elasticsearch';
 
         $this->setComponents([
             'service' => ElasticsearchService::class,
@@ -214,7 +214,7 @@ Controller::EVENT_BEFORE_ACTION;
     protected function settingsHtml(): string
     {
         return Craft::$app->view->renderTemplate(
-            'elasticsearch/settings',
+            'elasticsearch/cp/settings',
             [
                 'settings' => $this->getSettings(),
             ]

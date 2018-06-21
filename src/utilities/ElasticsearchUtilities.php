@@ -13,8 +13,8 @@ namespace lhs\elasticsearch\utilities;
 use Craft;
 use craft\base\Utility;
 use craft\helpers\ArrayHelper;
-use lhs\elasticsearch\assetbundles\elasticsearchutility\ElasticsearchUtilityAsset;
 use lhs\elasticsearch\Elasticsearch;
+use lhs\elasticsearch\resources\CpAssetBundle;
 
 /**
  * Elasticsearch Utility
@@ -61,7 +61,7 @@ class ElasticsearchUtilities extends Utility
      */
     public static function iconPath()
     {
-        return Craft::getAlias("@lhs/elasticsearch/assetbundles/elasticsearchutility/dist/img/icon.svg");
+        return Craft::getAlias('@lhs/elasticsearch/resources/cp/img/utility-icon.svg');
     }
 
     /**
@@ -90,11 +90,9 @@ class ElasticsearchUtilities extends Utility
      */
     public static function contentHtml(): string
     {
-        Craft::$app->getView()->registerAssetBundle(ElasticsearchUtilityAsset::class);
-
         $view = Craft::$app->getView();
 
-        $view->registerAssetBundle(ElasticsearchUtilityAsset::class);
+        $view->registerAssetBundle(CpAssetBundle::class);
         $view->registerJs('new Craft.ElasticsearchUtility(\'elasticsearch-utility\');');
 
         $isConnected = ElasticSearch::getInstance()->service->testConnection();
@@ -103,7 +101,7 @@ class ElasticsearchUtilities extends Utility
         $sites = ArrayHelper::map(Craft::$app->sites->getAllSites(), 'id', 'name');
 
         return Craft::$app->getView()->renderTemplate(
-            'elasticsearch/_components/utilities/Elasticsearch_content',
+            'elasticsearch/cp/utility',
             [
                 'isConnected' => $isConnected,
                 'inSync'      => $inSync,

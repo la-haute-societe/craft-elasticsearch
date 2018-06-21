@@ -1,20 +1,17 @@
 <?php
 /**
- * Elasticsearch plugin for Craft CMS 3.x
- *
- * Bring the power of Elasticsearch to you Craft 3 CMS project
- *
- * @link      https://www.lahautesociete.com
- * @copyright Copyright (c) 2018 La Haute Société
+ * @author Yohann Bianchi<yohann.b@lahautesociete.com>
+ * @date 21/06/2018 17:04
  */
 
-namespace lhs\elasticsearch\assetbundles\elasticsearchutility;
+namespace lhs\elasticsearch\resources;
+
 
 use craft\web\AssetBundle;
 use craft\web\assets\cp\CpAsset;
 
 /**
- * ElasticsearchUtilityAsset AssetBundle
+ * CpAssetBundle
  *
  * AssetBundle represents a collection of asset files, such as CSS, JS, images.
  *
@@ -31,32 +28,29 @@ use craft\web\assets\cp\CpAsset;
  * @package   Elasticsearch
  * @since     1.0.0
  */
-class ElasticsearchUtilityAsset extends AssetBundle
+class CpAssetBundle extends AssetBundle
 {
-    // Public Methods
-    // =========================================================================
-
     /**
      * Initializes the bundle.
      */
     public function init()
     {
         // define the path that your publishable resources live
-        $this->sourcePath = "@lhs/elasticsearch/assetbundles/elasticsearchutility/dist";
+        $this->sourcePath = '@lhs/elasticsearch/resources/cp';
 
         // define the dependencies
         $this->depends = [
             CpAsset::class,
         ];
 
-        // define the relative path to CSS/JS files that should be registered with the page
-        // when this asset bundle is registered
+        // define the relative path to CSS/JS files that should be registered
+        // with the page when this asset bundle is registered
         $this->js = [
-            'js/Elasticsearch.js',
+            'js/utilities/reindex.js',
         ];
 
         $this->css = [
-            'css/Elasticsearch.css',
+            'css/elastic-branding.css',
         ];
 
         parent::init();
