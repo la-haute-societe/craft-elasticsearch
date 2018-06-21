@@ -78,7 +78,7 @@ class IndexElement extends BaseJob
         if ($element) {
             $site = Craft::$app->getSites()->getSiteById($element->siteId);
             Craft::$app->getSites()->setCurrentSite($site);
-            ElasticSearch::getInstance()->service->indexEntry($element);
+            Elasticsearch::getInstance()->service->indexEntry($element);
         }
     }
 

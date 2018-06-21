@@ -52,7 +52,7 @@ class ElasticsearchController extends Controller
      */
     public function actionTestConnection()
     {
-        if (ElasticSearch::getInstance()->service->testConnection() === true) {
+        if (Elasticsearch::getInstance()->service->testConnection() === true) {
             Craft::$app->session->setNotice(Craft::t(
                 'elasticsearch',
                 'Successfully connected to {http_address}',
@@ -70,13 +70,13 @@ class ElasticsearchController extends Controller
     }
 
     /**
-     * Reindex Craft entries into ElasticSearch (called from utility panel)
+     * Reindex Craft entries into Elasticsearch (called from utility panel)
      *
      * @return Response
      * @throws \Twig_Error_Loader
      * @throws \yii\base\Exception
      * @throws \yii\web\BadRequestHttpException if the request body is missing a `params` property
-     * @throws \yii\web\ForbiddenHttpException if the user doesn't have access to the ElasticSearch utility
+     * @throws \yii\web\ForbiddenHttpException if the user doesn't have access to the Elasticsearch utility
      */
     public function actionReindexPerformAction(): Response
     {
@@ -92,7 +92,7 @@ class ElasticsearchController extends Controller
                 $siteIds = Site::find()->select('id')->column();
             }
 
-            ElasticSearch::getInstance()->service->recreateSiteIndexes(...$siteIds);
+            Elasticsearch::getInstance()->service->recreateSiteIndexes(...$siteIds);
 
             return $this->getReindexQueue($siteIds);
         }
@@ -102,7 +102,7 @@ class ElasticsearchController extends Controller
         $entry = Entry::find()->id($entryId)->siteId($siteId)->one();
 
         try {
-            ElasticSearch::getInstance()->service->indexEntry($entry);
+            Elasticsearch::getInstance()->service->indexEntry($entry);
         } catch (Exception $e) {
             Craft::error(
                 Craft::t(

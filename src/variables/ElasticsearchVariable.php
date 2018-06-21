@@ -45,6 +45,6 @@ class ElasticsearchVariable
      */
     public function results($query)
     {
-        return ElasticSearch::getInstance()->service->search($query);
+        return Elasticsearch::getInstance()->service->search($query);
     }
 }

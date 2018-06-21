@@ -39,7 +39,7 @@ class ElasticsearchRecord extends ActiveRecord
             ],
         ];
 
-        $highlightParams = ArrayHelper::merge(ElasticSearch::getInstance()->settings->highlight, [
+        $highlightParams = ArrayHelper::merge(Elasticsearch::getInstance()->settings->highlight, [
             'fields' => [
                 'title'              => (object)['type' => 'plain'],
                 'attachment.content' => (object)[],

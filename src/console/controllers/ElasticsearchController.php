@@ -33,7 +33,7 @@ class ElasticsearchController extends Controller
      */
     public function actionReindexAll()
     {
-        return ElasticSearch::getInstance()->service->reindexAll();
+        return Elasticsearch::getInstance()->service->reindexAll();
     }
 
     /**
@@ -43,6 +43,6 @@ class ElasticsearchController extends Controller
     {
         $siteIds = Site::find()->select('id')->column();
 
-        ElasticSearch::getInstance()->service->recreateSiteIndexes(...$siteIds);
+        Elasticsearch::getInstance()->service->recreateSiteIndexes(...$siteIds);
     }
 }

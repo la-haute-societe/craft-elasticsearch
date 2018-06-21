@@ -122,7 +122,7 @@ class Elasticsearch extends Plugin
                             'elementId' => $element->id,
                         ]));
                     } else {
-                        ElasticSearch::getInstance()->service->deleteEntry($element);
+                        Elasticsearch::getInstance()->service->deleteEntry($element);
                     }
 
                 }
@@ -137,7 +137,7 @@ class Elasticsearch extends Plugin
             Element::EVENT_AFTER_DELETE,
             function (Event $event) {
                 $element = $event->sender;
-                ElasticSearch::getInstance()->service->deleteEntry($element);
+                Elasticsearch::getInstance()->service->deleteEntry($element);
             }
         );
 
@@ -164,7 +164,7 @@ class Elasticsearch extends Plugin
             UserPermissions::EVENT_REGISTER_PERMISSIONS,
             function (RegisterUserPermissionsEvent $event) {
                 $event->permissions[Craft::t(self::TRANSLATION_CATEGORY, 'Elasticsearch')] = [
-                    'reindex' => ['label' => Craft::t(self::TRANSLATION_CATEGORY, 'Refresh ElasticSearch index')],
+                    'reindex' => ['label' => Craft::t(self::TRANSLATION_CATEGORY, 'Refresh Elasticsearch index')],
                 ];
             }
         );

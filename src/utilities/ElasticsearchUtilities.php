@@ -73,7 +73,7 @@ class ElasticsearchUtilities extends Utility
      */
     public static function badgeCount(): int
     {
-        if (!ElasticSearch::getInstance()->service->testConnection() || !ElasticSearch::getInstance()->service->isIndexInSync()) {
+        if (!Elasticsearch::getInstance()->service->testConnection() || !Elasticsearch::getInstance()->service->isIndexInSync()) {
             return 1;
         }
 
@@ -95,8 +95,8 @@ class ElasticsearchUtilities extends Utility
         $view->registerAssetBundle(CpAssetBundle::class);
         $view->registerJs('new Craft.ElasticsearchUtility(\'elasticsearch-utility\');');
 
-        $isConnected = ElasticSearch::getInstance()->service->testConnection();
-        $inSync = ElasticSearch::getInstance()->service->isIndexInSync();
+        $isConnected = Elasticsearch::getInstance()->service->testConnection();
+        $inSync = Elasticsearch::getInstance()->service->isIndexInSync();
 
         $sites = ArrayHelper::map(Craft::$app->sites->getAllSites(), 'id', 'name');
 

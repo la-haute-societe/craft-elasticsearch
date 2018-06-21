@@ -36,5 +36,5 @@ return [
     'Authorizations parameters (optional)'                           => 'Paramètres d\'autorisations (facultatif)',
     'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)' => 'Nom d\'hôte ou IP et port de l\'instance Elasticsearch (ex. elasticsearch:9200)',
     'Elasticsearch index is out of sync!'                            => 'L\'index Elasticsearch n\'est plus synchronisé !',
-    'Refresh ElasticSearch index'                                    => 'Rafraîcher l\'index ElasticSearch',
+    'Refresh Elasticsearch index'                                    => 'Rafraîcher l\'index Elasticsearch',
 ];

@@ -36,11 +36,11 @@ use yii\web\ServerErrorHttpException;
  */
 class Elasticsearch extends Component
 {
-    // ElasticSearch / Craft communication
+    // Elasticsearch / Craft communication
     // =========================================================================
 
     /**
-     * Test the connection to the ElasticSearch server
+     * Test the connection to the Elasticsearch server
      * @return boolean `true` if the connection succeeds, `false` otherwise.
      */
     public function testConnection()
@@ -57,8 +57,8 @@ class Elasticsearch extends Component
     }
 
     /**
-     * Check whether or not ElasticSearch is in sync with Craft
-     * @return boolean `true` if ElasticSearch is in sync with Craft, `false` otherwise.
+     * Check whether or not Elasticsearch is in sync with Craft
+     * @return boolean `true` if Elasticsearch is in sync with Craft, `false` otherwise.
      */
     public function isIndexInSync()
     {
@@ -93,7 +93,7 @@ class Elasticsearch extends Component
     {
         Craft::info(Craft::t(
             ElasticsearchPlugin::TRANSLATION_CATEGORY,
-            'Creating an ElasticSearch index for the site #{siteId}',
+            'Creating an Elasticsearch index for the site #{siteId}',
             ['siteId' => $siteId]
         ), __METHOD__);
 
@@ -103,14 +103,14 @@ class Elasticsearch extends Component
     }
 
     /**
-     * Remove the ElasticSearch index for the given site
+     * Remove the Elasticsearch index for the given site
      * @param int $siteId
      */
     public function removeSiteIndex($siteId)
     {
         Craft::info(Craft::t(
             ElasticsearchPlugin::TRANSLATION_CATEGORY,
-            'Removing the ElasticSearch index for the site #{siteId}',
+            'Removing the Elasticsearch index for the site #{siteId}',
             ['siteId' => $siteId]
         ), __METHOD__);
 
@@ -120,7 +120,7 @@ class Elasticsearch extends Component
     }
 
     /**
-     * Re-create the ElasticSearch index of each of the site matching any of `$siteIds`
+     * Re-create the Elasticsearch index of each of the site matching any of `$siteIds`
      * @param int[] $siteIds
      */
     public function recreateSiteIndexes(int ...$siteIds)
@@ -204,7 +204,7 @@ class Elasticsearch extends Component
             Craft::$app->getView()->getTwig()->setCache($twigCache);
 
             $body = null;
-            if (preg_match(ElasticSearchPlugin::getInstance()->settings->content_pattern, $html, $body)) {
+            if (preg_match(ElasticsearchPlugin::getInstance()->settings->content_pattern, $html, $body)) {
                 $html = '<!DOCTYPE html>' . trim($body[1]);
             }
 
@@ -241,7 +241,7 @@ class Elasticsearch extends Component
     }
 
     /**
-     * Recreate the ElasticSearch index of all sites and and reindex their entries
+     * Recreate the Elasticsearch index of all sites and and reindex their entries
      */
     public function reindexAll()
     {
@@ -253,7 +253,7 @@ class Elasticsearch extends Component
     }
 
     /**
-     * Recreate the ElasticSearch index for the site having the given `$siteId` and reindex its entries
+     * Recreate the Elasticsearch index for the site having the given `$siteId` and reindex its entries
      * @param int $siteId
      * @throws ServerErrorHttpException
      * @throws \Twig_Error_Loader
@@ -274,7 +274,7 @@ class Elasticsearch extends Component
     }
 
     /**
-     * Execute the given `$query` in the ElasticSearch index
+     * Execute the given `$query` in the Elasticsearch index
      * @param string   $query  String to search for
      * @param int|null $siteId Site id to make the search
      * @return array|ElasticsearchRecord[]
