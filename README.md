@@ -2,36 +2,41 @@
 
 Bring the power of Elasticsearch to you Craft 3 CMS project
 
-![Screenshot](resources/img/plugin-logo.png)
-
 ## Requirements
 
 This plugin requires **Craft CMS 3.0.0-RC1** or later.
 
-In order to index data, you will need an **Elasticsearch instance 6.0** or later with the Ingest attachment processor plugin activated.
+In order to index data, you will need an **Elasticsearch instance 6.0** or 
+later with the Ingest attachment processor plugin activated.
+
 
 ### Installation
 
-- Install with Composer from your project directory
-```
-composer require la-hautes-societe/craft-elasticsearch
-```
-
-- In the Control Panel, go to Settings → Plugins and click the “Install” button for Elasticsearch.
+  - Install with Composer from your project directory:  
+    `composer require la-hautes-societe/craft-elasticsearch`
+  - In the Control Panel, go to Settings → Plugins and click the “Install” 
+    button for Elasticsearch.
+ 
  
 ## Elasticsearch plugin Overview
 
 Elasticsearch plugin will automatically index each entries on your site(s).
 
-It will figure out the best Elasticsearch mapping for you based on your site(s) language. 
+It will figure out the best Elasticsearch mapping for you based on your site(s)
+language. 
+
 
 ## Configuring Elasticsearch plugin
 
-Go to the plugin settings and adjust the host name and port for your Elasticsearch instance.
+Go to the plugin settings and adjust the host name and port for your 
+Elasticsearch instance.
 
-If your instance is protected with X-Pack Security, you can provide your username and passwords as well.
+If your instance is protected with X-Pack Security, you can provide your 
+username and passwords as well.
 
-Optionally, in the `config` folder, you can override the following plugin configurations by adding a `elacticsearch.php` file as follow:
+Optionally, in the `config` folder, you can override the following plugin 
+configurations by adding a `elacticsearch.php` file as follow:
+
 ```php
 <?php
 return [
@@ -43,13 +48,20 @@ return [
 ];
 ```
 
-- `content_pattern`: the regular expression used to extract the relevant content of the page to be indexed
-- `highlight`: the elasticsearch configuration used to highlight query results. For more options, refer to the [elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html)
+  - `content_pattern`: the regular expression used to extract the relevant
+     content of the page to be indexed
+  - `highlight`: the elasticsearch configuration used to highlight query 
+    results. For more options, refer to the [elasticsearch documentation][]
 
-## Using Elasticsearch plugin
+[elasticsearch documentation]: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html
 
-You can enable the search feature in your frontend templates by calling the `craft.elasticsearch.results('Something to search')` variable.
-For instance, in a template `search/index.twig`, you could could use it like this:
+
+## Using the Elasticsearch plugin
+
+You can enable the search feature in your frontend templates by calling the 
+`craft.elasticsearch.results('Something to search')` variable.
+For instance, in a template `search/index.twig`, you could could use it like 
+this:
 
 ```twig
 {% set results = craft.elasticsearch.results(craft.app.request.get('q')) %}
@@ -94,15 +106,19 @@ For instance, in a template `search/index.twig`, you could could use it like thi
 ```
 
 Each entry consists of the following attributes:
-* `id`: Unique ID of the result
-* `title`: The page title
-* `url`: The full url of the page
-* `score`: The result score for the entry
-* `highlights`: An array of highlighted contents based on the found terms from the query
+  - `id`: Unique ID of the result
+  - `title`: The page title
+  - `url`: The full url of the page
+  - `score`: The result score for the entry
+  - `highlights`: An array of highlighted contents based on the found terms 
+    from the query
+
 
 ## Elasticsearch plugin utilities
 
-If your Elasticsearch index becomes out of sync with your sites contents, you can go to Utilities → Elasticsearch then click the "Reindex all" button.
+If your Elasticsearch index becomes out of sync with your sites contents, you 
+can go to Utilities → Elasticsearch then click the "Reindex all" button.
+
 
 ## Elasticsearch plugin Roadmap
 
@@ -110,4 +126,11 @@ If your Elasticsearch index becomes out of sync with your sites contents, you ca
 * Handle multi-sites configurations
 * Detect need for re-indexation
 
-Brought to you by ![LHS Logo](resources/img/lhs.png) [La Haute Société](https://www.lahautesociete.com)
+Brought to you by [![LHS Logo](resources/img/lhs.png) La Haute Société][lhs-site].
+
+[![Elastic](resources/img/elasticsearch-logo.png)](elastic-site)  
+Elasticsearch is a trademark of Elasticsearch BV, registered in the U.S. and in
+other countries.
+
+[lhs-site]: https://www.lahautesociete.com
+[elastic-site]: https://www.elastic.co/brand
