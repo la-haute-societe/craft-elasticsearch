@@ -15,6 +15,9 @@
 }
 
 .ElasticBranding__text {
+    position: relative;
+    bottom: 2px;
+
     color: gray;
     padding-left: 0.5em;
 }
