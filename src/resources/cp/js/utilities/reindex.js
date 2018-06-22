@@ -16,6 +16,7 @@
     $form:    null,
     $innerProgressBar: null,
 
+    formAction: null,
     totalActions: null,
     completedActions: null,
     loadingActions: null,
@@ -25,12 +26,15 @@
       this.$form = $('#' + formId);
       this.$trigger = $('input.submit', this.$form);
       this.$status = $('.utility-status', this.$form);
+      this.formAction = this.$form.attr('action');
+      console.log(this.formAction);
 
-      this.addListener(this.$form, 'submit', 'onSubmit');
+      this.addListener(this.$form, 'submit', this.onSubmit);
     },
 
     onSubmit: function (ev) {
       ev.preventDefault();
+      ev.stopPropagation();
 
       if (!this.$trigger.hasClass('disabled')) {
         if (!this.progressBar) {
@@ -93,7 +97,7 @@
       };
 
       Craft.postActionRequest(
-          'elasticsearch/elasticsearch/reindex-perform-action',
+          this.formAction,
           data,
           $.proxy(this, 'onActionResponse'),
           {

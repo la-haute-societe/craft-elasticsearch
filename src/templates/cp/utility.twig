@@ -23,8 +23,13 @@
     {% endif %}
 {% endif %}
 
-<form id="elasticsearch-utility" class="utility" method="post" accept-charset="UTF-8">
-    <input type="hidden" name="action" value="{{ url('elasticsearch/reindex-perform-action') }}">
+<form
+        id="elasticsearch-utility"
+        class="utility"
+        action="{{ url('elasticsearch/cp/reindex-perform-action') }}"
+        method="post"
+        accept-charset="UTF-8"
+>
     {{ csrfInput() }}
 
     {{ forms.checkboxSelect({

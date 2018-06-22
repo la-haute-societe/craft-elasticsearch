@@ -16,8 +16,10 @@ use craft\elements\Entry;
 use craft\helpers\UrlHelper;
 use craft\records\Site;
 use craft\web\Controller;
+use craft\web\Request;
 use lhs\elasticsearch\Elasticsearch;
-use yii\base\Exception;
+use Psr\Log\LogLevel;
+use yii\helpers\VarDumper;
 use yii\web\Response;
 
 /**
@@ -40,7 +42,7 @@ use yii\web\Response;
  * @package   Elasticsearch
  * @since     1.0.0
  */
-class ElasticsearchController extends Controller
+class CpController extends Controller
 {
     // Public Methods
     // =========================================================================
@@ -48,21 +50,23 @@ class ElasticsearchController extends Controller
     /**
      * Test the elasticsearch connection
      *
-     * @return mixed
+     * @return Response
      */
-    public function actionTestConnection()
+    public function actionTestConnection(): Response
     {
+        $settings = Elasticsearch::getInstance()->getSettings();
+
         if (Elasticsearch::getInstance()->service->testConnection() === true) {
             Craft::$app->session->setNotice(Craft::t(
                 'elasticsearch',
                 'Successfully connected to {http_address}',
-                ['http_address' => $this->module->settings->http_address]
+                ['http_address' => $settings->http_address]
             ));
         } else {
             Craft::$app->session->setError(Craft::t(
                 'elasticsearch',
                 'Could not establish connection with {http_address}',
-                ['http_address' => $this->module->settings->http_address]
+                ['http_address' => $settings->http_address]
             ));
         }
 
@@ -73,8 +77,7 @@ class ElasticsearchController extends Controller
      * Reindex Craft entries into Elasticsearch (called from utility panel)
      *
      * @return Response
-     * @throws \Twig_Error_Loader
-     * @throws \yii\base\Exception
+     * @throws \Exception If reindexing an entry fails
      * @throws \yii\web\BadRequestHttpException if the request body is missing a `params` property
      * @throws \yii\web\ForbiddenHttpException if the user doesn't have access to the Elasticsearch utility
      */
@@ -82,46 +85,26 @@ class ElasticsearchController extends Controller
     {
         $this->requirePermission('elasticsearch:reindex');
 
-        $params = Craft::$app->getRequest()->getRequiredBodyParam('params');
+        $request = Craft::$app->getRequest();
+        $params = $request->getRequiredBodyParam('params');
 
         // Return the ids of entries to process
         if (!empty($params['start'])) {
-            $siteIds = Craft::$app->getRequest()->getParam('params.sites', '*');
-
-            if ($siteIds === '*') {
-                $siteIds = Site::find()->select('id')->column();
-            }
-
+            $siteIds = $this->getSiteIds($request);
             Elasticsearch::getInstance()->service->recreateSiteIndexes(...$siteIds);
 
             return $this->getReindexQueue($siteIds);
         }
 
-        $entryId = Craft::$app->getRequest()->getRequiredBodyParam('params.entryId');
-        $siteId = Craft::$app->getRequest()->getRequiredBodyParam('params.siteId');
-        $entry = Entry::find()->id($entryId)->siteId($siteId)->one();
-
-        try {
-            Elasticsearch::getInstance()->service->indexEntry($entry);
-        } catch (Exception $e) {
-            Craft::error(
-                Craft::t(
-                    Elasticsearch::TRANSLATION_CATEGORY,
-                    'Error while re-indexing entry {url}',
-                    ['url' => $entry->url]
-                ),
-                __METHOD__
-            );
-
-            throw $e;
-        }
-
         // Process the given element
-        return $this->asJson(['success' => true]);
+        $isSuccessful = $this->reindexEntry();
+
+        return $this->asJson(['success' => $isSuccessful]);
     }
 
     /**
      * @param int[] $siteIds The numeric ids of sites to be re-indexed
+     *
      * @return Response
      */
     protected function getReindexQueue(array $siteIds): Response
@@ -129,21 +112,81 @@ class ElasticsearchController extends Controller
         $entryQuery = (new Query())
             ->select(['elements.id entryId', 'siteId'])
             ->from('{{%elements}}')
-            ->join('inner join', 'elements_sites', 'elements.id = elementId')
+            ->join('inner join', '{{%elements_sites}}', '{{%elements}}.id = elementId')
             ->where([
-                'elements.type' => 'craft\\elements\\Entry',
-                'siteId'        => $siteIds,
+                '{{%elements}}.type'    => 'craft\\elements\\Entry',
+                '{{%elements}}.enabled' => true,
+                'siteId'                => $siteIds,
             ]);
 
         $entries = $entryQuery->all();
 
         // Re-format entries to keep the JS part as close as possible to Craft SearchIndexUtility's
-        array_walk($entries, function (&$entry) {
+        array_walk($entries, function(&$entry) {
             $entry = ['params' => $entry];
         });
 
         return $this->asJson([
             'entries' => [$entries],
         ]);
+    }
+
+    /**
+     * When using Garnish's CheckboxSelect component, the field value is "*" when the all checkbox is selected.
+     * This value gets passed to the controller.
+     *
+     * This methods converts the "*" value into an array containing the id of all sites.
+     *
+     * @param Request $request
+     *
+     * @return int[]
+     */
+    protected function getSiteIds(Request $request): array
+    {
+        $siteIds = $request->getParam('params.sites', '*');
+
+        if ($siteIds === '*') {
+            $siteIds = Site::find()->select('id')->column();
+        }
+
+        return $siteIds;
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception If reindexing the entry fails for some reason.
+     */
+    protected function reindexEntry()
+    {
+        $request = Craft::$app->getRequest();
+
+        $entryId = $request->getRequiredBodyParam('params.entryId');
+        $siteId = $request->getRequiredBodyParam('params.siteId');
+        $entry = Entry::find()->id($entryId)->siteId($siteId)->one();
+
+        try {
+            return Elasticsearch::getInstance()->service->indexEntry($entry);
+        } catch (\Exception $e) {
+            Craft::error(
+                Craft::t(
+                    Elasticsearch::TRANSLATION_CATEGORY,
+                    'Error while re-indexing entry {url}: {message}',
+                    [
+                        'url' => $entry->url,
+                        'message' => $e->getMessage(),
+                    ]
+                ),
+                __METHOD__
+            );
+            Craft::error(
+                Craft::t(
+                    Elasticsearch::TRANSLATION_CATEGORY,
+                    VarDumper::dumpAsString($e)
+                ),
+                __METHOD__
+            );
+
+            throw $e;
+        }
     }
 }

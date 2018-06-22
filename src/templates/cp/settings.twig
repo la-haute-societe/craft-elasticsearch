@@ -31,20 +31,58 @@
 
 <h2>{{ "Authorizations parameters (optional)"|t('elasticsearch') }}</h2>
 
-{{ forms.textField({
-    label: 'Auth username'|t('elasticsearch'),
-    id: 'auth_username',
-    name: 'auth_username',
-    value: settings['auth_username'],
-    errors: settings.getErrors('auth_username')}
+{{ forms.textField(
+    {
+        label:  'Auth username'|t('elasticsearch'),
+        id:     'auth_username',
+        name:   'auth_username',
+        value:  settings['auth_username'],
+        errors: settings.getErrors('auth_username'),
+    }
 ) }}
 
-{{ forms.passwordField({
-    label: 'Auth password'|t('elasticsearch'),
-    id: 'auth_password',
-    name: 'auth_password',
-    value: settings['auth_password'],
-    errors: settings.getErrors('auth_password')}
+{{ forms.passwordField(
+    {
+        label:  'Auth password'|t('elasticsearch'),
+        id:     'auth_password',
+        name:   'auth_password',
+        value:  settings['auth_password'],
+        errors: settings.getErrors('auth_password'),
+    }
+) }}
+
+<hr>
+
+{{ forms.textField(
+    {
+        label:  'Content extractor pattern'|t('elasticsearch'),
+        id:     'content_pattern',
+        name:   'content_pattern',
+        value:  settings['content_pattern'],
+        errors: settings.getErrors('content_pattern'),
+    }
+) }}
+
+<hr>
+
+{{ forms.textField(
+    {
+        label:  'Search term highlight'|t('elasticsearch'),
+        id:     'highlight_pre_tags',
+        name:   'highlight[pre_tags]',
+        value:  settings['highlight']['pre_tags'],
+        errors: settings.getErrors('highlight_pre_tags'),
+    }
+) }}
+
+{{ forms.textField(
+    {
+        label:  'Search term highlight'|t('elasticsearch'),
+        id:     'highlight_post_tags',
+        name:   'highlight[post_tags]',
+        value:  settings['highlight']['post_tags'],
+        errors: settings.getErrors('highlight_post_tags'),
+    }
 ) }}
 
 {% include 'elasticsearch/components/elastic-branding' %}

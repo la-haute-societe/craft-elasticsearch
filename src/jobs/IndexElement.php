@@ -71,14 +71,15 @@ class IndexElement extends BaseJob
      */
     public function execute($queue)
     {
-        $site = Craft::$app->getSites()->getSiteById($this->siteId);
-        Craft::$app->getSites()->setCurrentSite($site);
-        $element = Entry::findOne($this->elementId);
-        Craft::debug(VarDumper::dumpAsString($element), __METHOD__);
-        if ($element) {
-            $site = Craft::$app->getSites()->getSiteById($element->siteId);
-            Craft::$app->getSites()->setCurrentSite($site);
-            Elasticsearch::getInstance()->service->indexEntry($element);
+        $sites = Craft::$app->getSites();
+        $site = $sites->getSiteById($this->siteId);
+
+        $sites->setCurrentSite($site);
+        $entry = Entry::findOne($this->elementId);
+        Craft::debug(VarDumper::dumpAsString($entry), __METHOD__);
+
+        if ($entry) {
+            Elasticsearch::getInstance()->service->indexEntry($entry);
         }
     }
 

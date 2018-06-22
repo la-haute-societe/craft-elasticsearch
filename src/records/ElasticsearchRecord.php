@@ -14,13 +14,22 @@ use yii\elasticsearch\ActiveRecord;
 use yii\helpers\Json;
 
 /**
- * News class
- *
- * @author albanjubert
- **/
+ * @property string title
+ * @property string url
+ * @property mixed section
+ * @property object|array content
+ */
 class ElasticsearchRecord extends ActiveRecord
 {
     public static $siteId;
+
+    /**
+     * @inheritdoc
+     */
+    public function attributes()
+    {
+        return ['title', 'url', 'section', 'content'];
+    }
 
     /**
      * Return an array of Elasticsearch records for the given query
@@ -116,9 +125,6 @@ class ElasticsearchRecord extends ActiveRecord
      * @param bool $runValidation
      * @param null $attributeNames
      * @return bool
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\db\StaleObjectException
-     * @throws \yii\elasticsearch\Exception
      */
     public function save($runValidation = true, $attributeNames = null)
     {
@@ -148,7 +154,7 @@ class ElasticsearchRecord extends ActiveRecord
      */
     public static function getDb()
     {
-        return Craft::$app->elasticsearch;
+        return Elasticsearch::getConnection();
     }
 
     /**
@@ -178,19 +184,19 @@ class ElasticsearchRecord extends ActiveRecord
             self::deleteIndex();
         }
 
-        $db->delete("_ingest/pipeline/attachment");
-        $db->put("_ingest/pipeline/attachment", [], Json::encode([
-            "description" => "Extract attachment information",
-            "processors"  => [
+        $db->delete('_ingest/pipeline/attachment');
+        $db->put('_ingest/pipeline/attachment', [], Json::encode([
+            'description' => 'Extract attachment information',
+            'processors'  => [
                 [
-                    "attachment" => [
-                        "field"          => "content",
-                        "target_field"   => "attachment",
-                        "indexed_chars"  => -1,
-                        "ignore_missing" => true,
+                    'attachment' => [
+                        'field'          => 'content',
+                        'target_field'   => 'attachment',
+                        'indexed_chars'  => -1,
+                        'ignore_missing' => true,
                     ],
-                    "remove"     => [
-                        "field" => "content",
+                    'remove'     => [
+                        'field' => 'content',
                     ],
                 ],
             ],
@@ -248,13 +254,5 @@ class ElasticsearchRecord extends ActiveRecord
                 ],
             ],
         ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributes()
-    {
-        return ['title', 'url', 'section', 'content'];
     }
 }

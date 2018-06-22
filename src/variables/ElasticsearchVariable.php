@@ -40,7 +40,7 @@ class ElasticsearchVariable
      *
      *     {{ craft.elasticsearch.results(twigValue) }}
      *
-     * @param null $optional
+     * @param $query
      * @return string
      */
     public function results($query)
