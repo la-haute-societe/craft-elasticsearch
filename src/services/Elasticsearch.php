@@ -181,7 +181,6 @@ class Elasticsearch extends Component
 
         $sites = Craft::$app->getSites();
         $view = Craft::$app->getView();
-        $twig = $view->getTwig();
 
         $esRecord = $this->getElasticRecordForEntry($entry);
         $esRecord->title = $entry->title;
@@ -239,19 +238,30 @@ class Elasticsearch extends Component
         return true;
     }
 
+    /**
+     * Removes an entry from  the Elasticsearch index
+     * @param Entry $entry
+     *
+     * @return int
+     * @throws Exception
+     */
     public function deleteEntry(Entry $entry)
     {
         Craft::info(
             Craft::t(
                 ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'Deleting entry {url}',
-                ['url' => $entry->url]
+                'Deleting entry #{id}: {url}',
+                [
+                    'id'  => $entry->id,
+                    'url' => $entry->url,
+                ]
             ),
             __METHOD__
         );
 
         ElasticsearchRecord::$siteId = $entry->siteId;
-        ElasticsearchRecord::deleteAll(['id' => $entry->id]);
+
+        return ElasticsearchRecord::deleteAll(['_id' => $entry->id]);
     }
 
     /**

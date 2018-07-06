@@ -124,7 +124,12 @@ class ElasticsearchRecord extends ActiveRecord
     /**
      * @param bool $runValidation
      * @param null $attributeNames
+     *
      * @return bool
+     * @throws InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
+     * @throws \yii\elasticsearch\Exception
      */
     public function save($runValidation = true, $attributeNames = null)
     {
