@@ -102,14 +102,13 @@ class Elasticsearch extends Component
      * Create an Elasticsearch index for the giver site
      *
      * @param int $siteId
+     *
+     * @throws Exception
+     * @throws \yii\base\InvalidConfigException
      */
     public function createSiteIndex(int $siteId)
     {
-        Craft::info(Craft::t(
-            ElasticsearchPlugin::TRANSLATION_CATEGORY,
-            'Creating an Elasticsearch index for the site #{siteId}',
-            ['siteId' => $siteId]
-        ), __METHOD__);
+        Craft::info("Creating an Elasticsearch index for the site #{$siteId}", __METHOD__);
 
         ElasticsearchRecord::$siteId = $siteId;
         ElasticsearchRecord::createIndex();
@@ -122,12 +121,7 @@ class Elasticsearch extends Component
      */
     public function removeSiteIndex(int $siteId)
     {
-        Craft::info(Craft::t(
-            ElasticsearchPlugin::TRANSLATION_CATEGORY,
-            'Removing the Elasticsearch index for the site #{siteId}',
-            ['siteId' => $siteId]
-        ), __METHOD__);
-
+        Craft::info("Removing the Elasticsearch index for the site #{$siteId}", __METHOD__);
         ElasticsearchRecord::$siteId = $siteId;
         ElasticsearchRecord::deleteIndex();
     }
@@ -136,6 +130,9 @@ class Elasticsearch extends Component
      * Re-create the Elasticsearch index of each of the site matching any of `$siteIds`
      *
      * @param int[] $siteIds
+     *
+     * @throws Exception
+     * @throws \yii\base\InvalidConfigException
      */
     public function recreateSiteIndexes(int ...$siteIds)
     {
@@ -170,69 +167,18 @@ class Elasticsearch extends Component
             return false;
         }
 
-        Craft::info(
-            Craft::t(
-                ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'Indexing entry {url}',
-                ['url' => $entry->url]
-            ),
-            __METHOD__
-        );
-
-        $sites = Craft::$app->getSites();
-        $view = Craft::$app->getView();
+        Craft::info("Indexing entry {$entry->url}", __METHOD__);
 
         $esRecord = $this->getElasticRecordForEntry($entry);
         $esRecord->title = $entry->title;
         $esRecord->url = $entry->url;
 
-        $view->setTemplateMode(View::TEMPLATE_MODE_SITE);
-
-        $sectionSiteSettings = $entry->getSection()->getSiteSettings();
-
-        $site = $sites->getSiteById($entry->siteId);
-
-        if (!$site) {
-            throw new ServerErrorHttpException('Invalid site ID: '.$entry->siteId);
-        }
-        $sites->setCurrentSite($site);
-
-        Craft::$app->language = $site->language;
-
-        if (!$entry->postDate) {
-            $entry->postDate = new DateTime();
-        }
-
-        // Have this entry override any freshly queried entries with the same ID/site ID
-        Craft::$app->getElements()->setPlaceholderElement($entry);
-
-        // Disable template caching before rendering.
-        // Without this, templates using the `{% cache %}` Twig tag may have a strange behavior.
-        $craftGeneralConfig = Craft::$app->getConfig()->getGeneral();
-        $craftGeneralConfig->enableTemplateCaching = false;
-
-        $templateName = $sectionSiteSettings[$entry->siteId]->template;
-        $html = trim($view->renderTemplate($templateName, [
-            'entry' => $entry,
-        ]));
-
-        // Re-enable template caching. On est pas des bêtes !
-        $craftGeneralConfig->enableTemplateCaching = false;
-
-        $body = null;
-        if (preg_match(ElasticsearchPlugin::getInstance()->settings->content_pattern, $html, $body)) {
-            $html = '<!DOCTYPE html>'.trim($body[1]);
-        }
-
-        Craft::$app->getResponse()->format = Response::FORMAT_HTML;
+        $html = $this->getEntryIndexableContent($entry);
 
         $esRecord->content = base64_encode(trim($html));
 
-        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
-
-
         if (!$esRecord->save()) {
-            throw new Exception("Could not save elasticsearch record", $esRecord->errors);
+            throw new Exception('Could not save elasticsearch record', $esRecord->errors);
         }
 
         return true;
@@ -240,6 +186,7 @@ class Elasticsearch extends Component
 
     /**
      * Removes an entry from  the Elasticsearch index
+     *
      * @param Entry $entry
      *
      * @return int
@@ -247,17 +194,7 @@ class Elasticsearch extends Component
      */
     public function deleteEntry(Entry $entry)
     {
-        Craft::info(
-            Craft::t(
-                ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'Deleting entry #{id}: {url}',
-                [
-                    'id'  => $entry->id,
-                    'url' => $entry->url,
-                ]
-            ),
-            __METHOD__
-        );
+        Craft::info("Deleting entry #{$entry->id}: {$entry->url}", __METHOD__);
 
         ElasticsearchRecord::$siteId = $entry->siteId;
 
@@ -299,24 +236,8 @@ class Elasticsearch extends Component
                 try {
                     $this->indexEntry($entry);
                 } catch (\Exception $e) {
-                    Craft::error(
-                        Craft::t(
-                            ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                            'Error while re-indexing entry {url}: {message}',
-                            [
-                                'url' => $entry->url,
-                                'message' => $e->getMessage(),
-                            ]
-                        ),
-                        __METHOD__
-                    );
-                    Craft::error(
-                        Craft::t(
-                            ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                            VarDumper::dumpAsString($e)
-                        ),
-                        __METHOD__
-                    );
+                    Craft::error("Error while re-indexing entry {$entry->url}: {$e->getMessage()}", __METHOD__);
+                    Craft::error(VarDumper::dumpAsString($e), __METHOD__);
 
                     throw $e;
                 }
@@ -380,5 +301,75 @@ class Elasticsearch extends Component
         }
 
         return $esRecord;
+    }
+
+    /**
+     * @param Entry $entry
+     *
+     * @return string
+     * @throws ServerErrorHttpException
+     * @throws \Twig_Error_Loader
+     * @throws \yii\base\Exception
+     * @throws \yii\base\InvalidConfigException
+     */
+    protected function getEntryIndexableContent(Entry $entry): string
+    {
+        $sites = Craft::$app->getSites();
+        $view = Craft::$app->getView();
+        $site = $sites->getSiteById($entry->siteId);
+
+        if (!$site) {
+            throw new ServerErrorHttpException('Invalid site ID: '.$entry->siteId);
+        }
+        $sites->setCurrentSite($site);
+
+        Craft::$app->language = $site->language;
+
+        if (!$entry->postDate) {
+            $entry->postDate = new DateTime();
+        }
+
+        // Have this entry override any freshly queried entries with the same ID/site ID
+        Craft::$app->getElements()->setPlaceholderElement($entry);
+
+        // Switch to site template rendering mode
+        $view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+        // Disable template caching before rendering.
+        // Without this, templates using the `{% cache %}` Twig tag may have a strange behavior.
+        $craftGeneralConfig = Craft::$app->getConfig()->getGeneral();
+        $craftGeneralConfig->enableTemplateCaching = false;
+
+        $sectionSiteSettings = $entry->getSection()->getSiteSettings();
+        $templateName = $sectionSiteSettings[$entry->siteId]->template;
+        $html = trim($view->renderTemplate($templateName, [
+            'entry' => $entry,
+        ]));
+
+        // Re-enable template caching. On est pas des bêtes !
+        $craftGeneralConfig->enableTemplateCaching = false;
+        // Restore template rendering mode
+        $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+
+        $html = $this->extractIndexablePartFromEntryContent($html);
+
+        return $html;
+    }
+
+    /**
+     * @param $html
+     *
+     * @return string
+     */
+    protected function extractIndexablePartFromEntryContent(string $html): string
+    {
+        if ($callback = ElasticsearchPlugin::getInstance()->settings->contentExtractorCallback) {
+            return call_user_func($callback, $html);
+        }
+
+        if (preg_match('/<!-- BEGIN elasticsearch indexed content -->(.*)<!-- END elasticsearch indexed content -->/s', $html, $body)) {
+            $html = '<!DOCTYPE html>'.trim($body[1]);
+        }
+
+        return $html;
     }
 }

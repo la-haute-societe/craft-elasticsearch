@@ -23,9 +23,16 @@
  */
 
 return [
-    'content_pattern' => '/<main id="content".*?>(.*?)<\/main>/s',
     'highlight'       => [
         'pre_tags'  => '<strong>',
         'post_tags' => '</strong>',
     ],
+
+    'contentExtractorCallback' => function(string $entryContent) {
+        if (preg_match('/<!-- BEGIN elasticsearch indexed content -->(.*)<!-- END elasticsearch indexed content -->/s', $entryContent, $body)) {
+            $entryContent = '<!DOCTYPE html>'.trim($body[1]);
+        }
+
+        return $entryContent;
+    },
 ];

@@ -167,24 +167,8 @@ class CpController extends Controller
         try {
             return Elasticsearch::getInstance()->service->indexEntry($entry);
         } catch (\Exception $e) {
-            Craft::error(
-                Craft::t(
-                    Elasticsearch::TRANSLATION_CATEGORY,
-                    'Error while re-indexing entry {url}: {message}',
-                    [
-                        'url' => $entry->url,
-                        'message' => $e->getMessage(),
-                    ]
-                ),
-                __METHOD__
-            );
-            Craft::error(
-                Craft::t(
-                    Elasticsearch::TRANSLATION_CATEGORY,
-                    VarDumper::dumpAsString($e)
-                ),
-                __METHOD__
-            );
+            Craft::error("Error while re-indexing entry {$entry->url}: {$e->getMessage()}", __METHOD__);
+            Craft::error(VarDumper::dumpAsString($e), __METHOD__);
 
             throw $e;
         }

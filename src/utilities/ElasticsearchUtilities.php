@@ -39,7 +39,7 @@ class ElasticsearchUtilities extends Utility
      */
     public static function displayName(): string
     {
-        return Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Elasticsearch');
+        return 'Elasticsearch';
     }
 
     /**

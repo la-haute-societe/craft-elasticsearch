@@ -57,11 +57,11 @@ class Elasticsearch extends Plugin
 {
     public $name = 'Elasticsearch';
 
-    const TRANSLATION_CATEGORY = 'elasticsearch';
+    const APP_COMPONENT_NAME = 'elasticsearch';
+
     // Public Methods
     // =========================================================================
 
-    const APP_COMPONENT_NAME = 'elasticsearch';
 
     public function init()
     {
@@ -136,7 +136,7 @@ class Elasticsearch extends Plugin
             Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
             function(PluginEvent $event) {
                 if ($event->plugin === $this) {
-                    Craft::debug('Elasticsearch plugin settings saved => re-index all entries');
+                    Craft::debug('Elasticsearch plugin settings saved => re-index all entries', __METHOD__);
                     $this->service->reindexAll();
                 }
             }
@@ -156,8 +156,8 @@ class Elasticsearch extends Plugin
             UserPermissions::class,
             UserPermissions::EVENT_REGISTER_PERMISSIONS,
             function(RegisterUserPermissionsEvent $event) {
-                $event->permissions[Craft::t(self::TRANSLATION_CATEGORY, 'Elasticsearch')] = [
-                    'reindex' => ['label' => Craft::t(self::TRANSLATION_CATEGORY, 'Refresh Elasticsearch index')],
+                $event->permissions['elasticsearch'] = [
+                    'reindex' => ['label' => Craft::t('elasticsearch', 'Refresh Elasticsearch index')],
                 ];
             }
         );
@@ -183,14 +183,7 @@ class Elasticsearch extends Plugin
             }
         );
 
-        Craft::info(
-            Craft::t(
-                self::TRANSLATION_CATEGORY,
-                '{name} plugin loaded',
-                ['name' => $this->name]
-            ),
-            __METHOD__
-        );
+        Craft::info("{$this->name} plugin loaded", __METHOD__);
     }
 
     /** @noinspection PhpDocMissingThrowsInspection */

@@ -33,7 +33,7 @@
 
 {{ forms.textField(
     {
-        label:  'Auth username'|t('elasticsearch'),
+        label:  'Username'|t('elasticsearch'),
         id:     'auth_username',
         name:   'auth_username',
         value:  settings['auth_username'],
@@ -43,7 +43,7 @@
 
 {{ forms.passwordField(
     {
-        label:  'Auth password'|t('elasticsearch'),
+        label:  'Password'|t('elasticsearch'),
         id:     'auth_password',
         name:   'auth_password',
         value:  settings['auth_password'],
@@ -53,21 +53,11 @@
 
 <hr>
 
+<h2>{{ 'Search term highlight'|t('elasticsearch') }}</h2>
+<p>{{ 'HTML tags used to wrap the search term in order to highlight it in  the search results'|t('elasticsearch') }}</p>
 {{ forms.textField(
     {
-        label:  'Content extractor pattern'|t('elasticsearch'),
-        id:     'content_pattern',
-        name:   'content_pattern',
-        value:  settings['content_pattern'],
-        errors: settings.getErrors('content_pattern'),
-    }
-) }}
-
-<hr>
-
-{{ forms.textField(
-    {
-        label:  'Search term highlight'|t('elasticsearch'),
+        label:  'Before'|t('elasticsearch'),
         id:     'highlight_pre_tags',
         name:   'highlight[pre_tags]',
         value:  settings['highlight']['pre_tags'],
@@ -77,7 +67,7 @@
 
 {{ forms.textField(
     {
-        label:  'Search term highlight'|t('elasticsearch'),
+        label:  'After'|t('elasticsearch'),
         id:     'highlight_post_tags',
         name:   'highlight[post_tags]',
         value:  settings['highlight']['post_tags'],

@@ -21,20 +21,34 @@
  * @since     1.0.0
  */
 return [
-    'Host'                                                           => 'Hôte',
-    'Auth username'                                                  => 'Nom d\'utilisateur',
-    'Auth password'                                                  => 'Mot de passe',
-    'Host is required'                                               => 'L\'hôte est obligatoire',
-    'Test connection'                                                => 'Tester la connexion',
-    'Sites'                                                          => 'Sites',
-    'All sites'                                                      => 'Tous les sites',
-    'Reindex selected'                                               => 'Réindexer les sites sélectionnés',
-    'Successfully connected to {http_address}'                       => 'Connecté à {http_address} avec succès',
-    'Could not establish connection with {http_address}'             => 'Impossible d\'établir la connexion avec {http_address}',
-    'Index a page in Elasticsearch'                                  => 'Indexation d\'une page dans Elasticsearch',
-    'Elasticsearch indexing in progress...'                          => 'Indexation Elasticsearch en cours...',
-    'Authorizations parameters (optional)'                           => 'Paramètres d\'autorisations (facultatif)',
-    'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)' => 'Nom d\'hôte ou IP et port de l\'instance Elasticsearch (ex. elasticsearch:9200)',
-    'Elasticsearch index is out of sync!'                            => 'L\'index Elasticsearch n\'est plus synchronisé !',
-    'Refresh Elasticsearch index'                                    => 'Rafraîcher l\'index Elasticsearch',
+    // Settings
+    'Host'                                                                                   => 'Hôte',
+    'Host is required'                                                                       => 'L\'hôte est obligatoire',
+    'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)'                         => 'Nom d\'hôte ou IP et port de l\'instance Elasticsearch (ex. elasticsearch:9200)',
+    'Authorizations parameters (optional)'                                                   => 'Paramètres d\'autorisations (facultatif)',
+    'Username'                                                                               => 'Nom d\'utilisateur',
+    'Password'                                                                               => 'Mot de passe',
+    'Search term highlight'                                                                  => 'Mise en avant des résultats',
+    'HTML tags used to wrap the search term in order to highlight it in  the search results' => 'Balises HTML insérées autour des termes recherchés afin de les mettre en avant dans les résultats de recherche',
+    'Before'                                                                                 => 'Avant',
+    'After'                                                                                  => 'Après',
+
+
+    // Utility
+    'Elasticsearch index is out of sync!'                                                    => 'L\'index Elasticsearch n\'est plus synchronisé !',
+    'Reindex selected'                                                                       => 'Réindexer les sites sélectionnés',
+    'Sites'                                 => 'Sites',
+    'Could not connect to the elasticsearch instance. Please check your settings'            => 'Connexion à l\'instance Elasticsearch impossible. Veuillez vérifier les paramètres du plugin.',
+
+    // Connection test
+    'Successfully connected to {http_address}'                                               => 'Connecté à {http_address} avec succès',
+    'Could not establish connection with {http_address}'                                     => 'Impossible d\'établir la connexion avec {http_address}',
+
+
+    // Jobs
+    'Index a page in Elasticsearch'         => 'Indexation d\'une page dans Elasticsearch',
+
+
+    // Permissions
+    'Refresh Elasticsearch index'           => 'Rafraîcher l\'index Elasticsearch',
 ];

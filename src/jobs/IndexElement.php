@@ -93,6 +93,6 @@ class IndexElement extends BaseJob
      */
     protected function defaultDescription(): string
     {
-        return Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Index a page in Elasticsearch');
+        return Craft::t('elasticsearch', 'Index a page in Elasticsearch');
     }
 }

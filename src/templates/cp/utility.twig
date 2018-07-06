@@ -16,11 +16,9 @@
 {% import "_includes/forms" as forms %}
 
 {% if not isConnected %}
-    <p><strong>{{ "Could not connect to the elasticsearch instance. Please check your settings"|t('elasticsearch') }}</strong></p>
-{% else %}
-    {% if not inSync %}
-        <p><strong>{{ "Elasticsearch index is out of sync!"|t('elasticsearch') }}</strong></p>
-    {% endif %}
+    <p class="error"><strong>{{ 'Could not connect to the elasticsearch instance. Please check your settings'|t('elasticsearch') }}</strong></p>
+{% elseif not inSync %}
+    <p class="error"><strong>{{ "Elasticsearch index is out of sync!"|t('elasticsearch') }}</strong></p>
 {% endif %}
 
 <form
@@ -32,6 +30,7 @@
 >
     {{ csrfInput() }}
 
+    <h2>{{ 'Sites'|t('elasticsearch') }}</h2>
     {{ forms.checkboxSelect({
         name: 'sites',
         options: sites,

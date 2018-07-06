@@ -41,8 +41,11 @@ class Settings extends Model
     public $http_address = 'elasticsearch:9200';
     public $auth_username = 'elastic';
     public $auth_password = 'MagicWord';
-    public $content_pattern;
-    public $highlight = [];
+    public $contentExtractorCallback;
+    public $highlight = [
+        'pre_tags'  => null,
+        'post_tags' => null,
+    ];
 
     // Public Methods
     // =========================================================================
@@ -60,7 +63,7 @@ class Settings extends Model
     public function rules()
     {
         return [
-            ['http_address', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Host is required')],
+            ['http_address', 'required', 'message' => Craft::t('elasticsearch', 'Host is required')],
             ['http_address', 'string'],
             ['http_address', 'default', 'value' => 'elasticsearch:9200'],
             [['auth_username', 'auth_password'], 'string'],
