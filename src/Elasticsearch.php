@@ -166,7 +166,7 @@ class Elasticsearch extends Plugin
         Event::on(
             UrlManager::class,
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
+            function(RegisterUrlRulesEvent $event) {
                 $event->rules['elasticsearch/cp/test-connection'] = 'elasticsearch/cp/test-connection';
                 $event->rules['elasticsearch/cp/reindex-perform-action'] = 'elasticsearch/cp/reindex-perform-action';
             }
@@ -209,8 +209,21 @@ class Elasticsearch extends Plugin
      */
     protected function createSettingsModel()
     {
-        return new Settings();
+        opcache_reset();
+        $settingsModel = new Settings();
+
+        return $settingsModel;
     }
+
+    public function setSettings(array $settings)
+    {
+        // Ensure all sites have a blacklist (at least an empty one)
+        $siteIds = Craft::$app->sites->getAllSiteIds();
+        $settings['blacklistedSections'] = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedSections']);
+
+        parent::setSettings($settings);
+    }
+
 
     /**
      * Returns the rendered settings HTML, which will be inserted into the content
@@ -222,10 +235,16 @@ class Elasticsearch extends Plugin
      */
     protected function settingsHtml(): string
     {
+        $sections = [];
+        array_map(function($section) use (&$sections) {
+            $sections[$section->id] = Craft::t('site', $section->name);
+        }, Craft::$app->sections->getAllSections());
+
         return Craft::$app->view->renderTemplate(
             'elasticsearch/cp/settings',
             [
                 'settings' => $this->getSettings(),
+                'sections' => $sections,
             ]
         );
     }

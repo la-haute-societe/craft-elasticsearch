@@ -46,6 +46,7 @@ class Settings extends Model
         'pre_tags'  => null,
         'post_tags' => null,
     ];
+    public $blacklistedSections = [];
 
     // Public Methods
     // =========================================================================

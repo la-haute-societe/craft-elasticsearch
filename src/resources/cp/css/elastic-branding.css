@@ -1,20 +1,25 @@
-#content {
+.elastic-branding-container {
+    box-sizing: border-box;
     position: relative;
+
+    min-height: 100%;
+
+    padding-bottom: 3em;
 }
 
-.ElasticBranding {
+.elastic-branding {
     display: flex;
     align-items: center;
 
     position: absolute;
-    bottom: 0;
+    bottom: -48px;
     left: 0;
     right: 0;
 
-    padding: 1em;
+    padding: 1em 0;
 }
 
-.ElasticBranding__text {
+.elastic-branding__text {
     position: relative;
     bottom: 2px;
 

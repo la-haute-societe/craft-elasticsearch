@@ -15,33 +15,40 @@
 
 {% import "_includes/forms" as forms %}
 
-{% if not isConnected %}
-    <p class="error"><strong>{{ 'Could not connect to the elasticsearch instance. Please check your settings'|t('elasticsearch') }}</strong></p>
-{% elseif not inSync %}
-    <p class="error"><strong>{{ "Elasticsearch index is out of sync!"|t('elasticsearch') }}</strong></p>
-{% endif %}
+<div class="elastic-branding-container">
+    {% if not isConnected %}
+        <p class="error">
+            <strong>{{ 'Could not connect to the elasticsearch instance. Please check your settings'|t('elasticsearch') }}</strong>
+        </p>
+    {% elseif not inSync %}
+        <p class="error">
+            <strong>{{ "Elasticsearch index is out of sync!"|t('elasticsearch') }}</strong>
+        </p>
+    {% endif %}
 
-<form
-        id="elasticsearch-utility"
-        class="utility"
-        action="{{ url('elasticsearch/cp/reindex-perform-action') }}"
-        method="post"
-        accept-charset="UTF-8"
->
-    {{ csrfInput() }}
+    <form
+            id="elasticsearch-utility"
+            class="utility"
+            action="{{ url('elasticsearch/cp/reindex-perform-action') }}"
+            method="post"
+            accept-charset="UTF-8"
+    >
+        {{ csrfInput() }}
 
-    <h2>{{ 'Sites'|t('elasticsearch') }}</h2>
-    {{ forms.checkboxSelect({
-        name: 'sites',
-        options: sites,
-        showAllOption: true,
-        values: '*',
-    }) }}
+        <h2>{{ 'Sites'|t('elasticsearch') }}</h2>
+        {{ forms.checkboxSelect({
+            name: 'sites',
+            options: sites,
+            showAllOption: true,
+            values: '*',
+        }) }}
 
-    <div class="buttons">
-        <input type="submit" class="btn submit" value="{{ 'Reindex selected'|t('elasticsearch') }}"/>
-        <div class="utility-status"></div>
-    </div>
-</form>
+        <div class="buttons">
+            <input type="submit" class="btn submit"
+                   value="{{ 'Reindex selected'|t('elasticsearch') }}"/>
+            <div class="utility-status"></div>
+        </div>
+    </form>
 
-{% include 'elasticsearch/components/elastic-branding' %}
+    {% include 'elasticsearch/components/elastic-branding' %}
+</div>

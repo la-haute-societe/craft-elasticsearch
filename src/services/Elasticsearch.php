@@ -13,7 +13,6 @@ namespace lhs\elasticsearch\services;
 use Craft;
 use craft\base\Component;
 use craft\elements\Entry;
-use craft\web\Response;
 use craft\web\View;
 use DateTime;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
@@ -67,19 +66,25 @@ class Elasticsearch extends Component
     public function isIndexInSync(): bool
     {
         $inSync = Craft::$app->cache->getOrSet(self::getSyncCachekey(), function() {
+            Craft::debug('isIndexInSync cache miss', __METHOD__);
+
             if ($this->testConnection() === true) {
                 $sites = Craft::$app->getSites();
 
                 foreach ($sites->getAllSites() as $site) {
                     $sites->setCurrentSite($site);
-
                     ElasticsearchRecord::$siteId = $site->id;
-                    $esClass = new ElasticsearchRecord();
-                    $countEntries = (int)Entry::find()->status(Entry::STATUS_ENABLED)->count();
-                    $countEsRecords = (int)$esClass::find()->count();
 
-                    Craft::debug("Count active entries for site {$site->id}: {$countEntries}", __METHOD__);
-                    Craft::debug("Count Elasticsearch records for site {$site->id}: {$countEsRecords}", __METHOD__);
+                    $blacklistedSections = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections[$site->id];
+
+                    $countEntries = (int)Entry::find()
+                        ->status(Entry::STATUS_ENABLED)
+                        ->where(['not in', 'sectionId', $blacklistedSections])
+                        ->count();
+                    $countEsRecords = (int)ElasticsearchRecord::find()->count();
+
+                    Craft::debug("Active entry count for site #{$site->id}: {$countEntries}", __METHOD__);
+                    Craft::debug("Elasticsearch record count for site #{$site->id}: {$countEsRecords}", __METHOD__);
 
                     if ($countEntries !== $countEsRecords) {
                         Craft::debug('Elasticsearch reindex needed!', __METHOD__);
@@ -159,11 +164,7 @@ class Elasticsearch extends Component
      */
     public function indexEntry(Entry $entry)
     {
-        if (
-            $entry->status !== Entry::STATUS_LIVE ||
-            !$entry->enabledForSite ||
-            !$entry->hasContent()
-        ) {
+        if (!$this->shouldEntryBeIndexed($entry)) {
             return false;
         }
 
@@ -212,7 +213,7 @@ class Elasticsearch extends Component
             $this->reindexBySiteId($site->id);
         }
 
-        Craft::$app->cache->delete(self::getSyncCachekey()); // Invalidate cache
+        Craft::$app->getCache()->delete(self::getSyncCachekey()); // Invalidate cache
     }
 
     /**
@@ -362,7 +363,7 @@ class Elasticsearch extends Component
      */
     protected function extractIndexablePartFromEntryContent(string $html): string
     {
-        if ($callback = ElasticsearchPlugin::getInstance()->settings->contentExtractorCallback) {
+        if ($callback = ElasticsearchPlugin::getInstance()->getSettings()->contentExtractorCallback) {
             return call_user_func($callback, $html);
         }
 
@@ -371,5 +372,38 @@ class Elasticsearch extends Component
         }
 
         return $html;
+    }
+
+    /**
+     * @param Entry $entry
+     *
+     * @return bool
+     * @throws \craft\errors\SiteNotFoundException If no sites exist
+     */
+    protected function shouldEntryBeIndexed(Entry $entry): bool
+    {
+        if ($entry->status !== Entry::STATUS_LIVE) {
+            Craft::debug("Not indexing entry #{$entry->id} since it is not published.", __METHOD__);
+            return false;
+        }
+
+        if (!$entry->enabledForSite) {
+            $currentSiteId = Craft::$app->getSites()->getCurrentSite()->id;
+            Craft::debug("Not indexing entry #{$entry->id} since it is not enabled for the current site (#{$currentSiteId}).", __METHOD__);
+            return false;
+        }
+
+        if (!$entry->hasContent()) {
+            Craft::debug("Not indexing entry #{$entry->id} since it has no content.", __METHOD__);
+            return false;
+        }
+
+        $blacklist = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections;
+        if (in_array($entry->sectionId, $blacklist[$entry->siteId])) {
+            Craft::debug("Not indexing entry #{$entry->id} since it's in a blacklisted section.", __METHOD__);
+            return false;
+        }
+
+        return true;
     }
 }

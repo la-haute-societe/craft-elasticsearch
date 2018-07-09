@@ -16,63 +16,80 @@
 {% do view.registerAssetBundle("lhs\\elasticsearch\\resources\\CpAssetBundle") %}
 {% import "_includes/forms" as forms %}
 
-{{ forms.textField({
-    first: true,
-    label: 'Host'|t('elasticsearch'),
-    instructions: 'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)'|t('elasticsearch'),
-    placeholder: '127.0.0.1:9200',
-    id: 'http_address',
-    name: 'http_address',
-    value: settings['http_address'],
-    errors: settings.getErrors('http_address')}
-) }}
+<div class="elastic-branding-container">
+    {{ forms.textField({
+        first: true,
+        label: 'Host'|t('elasticsearch'),
+        instructions: 'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)'|t('elasticsearch'),
+        placeholder: '127.0.0.1:9200',
+        id: 'http_address',
+        name: 'http_address',
+        value: settings['http_address'],
+        errors: settings.getErrors('http_address')}
+    ) }}
 
-<hr>
+    <hr>
 
-<h2>{{ "Authorizations parameters (optional)"|t('elasticsearch') }}</h2>
+    <h2>{{ "Authorizations parameters (optional)"|t('elasticsearch') }}</h2>
 
-{{ forms.textField(
-    {
-        label:  'Username'|t('elasticsearch'),
-        id:     'auth_username',
-        name:   'auth_username',
-        value:  settings['auth_username'],
-        errors: settings.getErrors('auth_username'),
-    }
-) }}
+    {{ forms.textField(
+        {
+            label:  'Username'|t('elasticsearch'),
+            id:     'auth_username',
+            name:   'auth_username',
+            value:  settings['auth_username'],
+            errors: settings.getErrors('auth_username'),
+        }
+    ) }}
 
-{{ forms.passwordField(
-    {
-        label:  'Password'|t('elasticsearch'),
-        id:     'auth_password',
-        name:   'auth_password',
-        value:  settings['auth_password'],
-        errors: settings.getErrors('auth_password'),
-    }
-) }}
+    {{ forms.passwordField(
+        {
+            label:  'Password'|t('elasticsearch'),
+            id:     'auth_password',
+            name:   'auth_password',
+            value:  settings['auth_password'],
+            errors: settings.getErrors('auth_password'),
+        }
+    ) }}
 
-<hr>
+    <hr>
 
-<h2>{{ 'Search term highlight'|t('elasticsearch') }}</h2>
-<p>{{ 'HTML tags used to wrap the search term in order to highlight it in  the search results'|t('elasticsearch') }}</p>
-{{ forms.textField(
-    {
-        label:  'Before'|t('elasticsearch'),
-        id:     'highlight_pre_tags',
-        name:   'highlight[pre_tags]',
-        value:  settings['highlight']['pre_tags'],
-        errors: settings.getErrors('highlight_pre_tags'),
-    }
-) }}
+    <h2>{{ 'Search term highlight'|t('elasticsearch') }}</h2>
+    <p>{{ 'HTML tags used to wrap the search term in order to highlight it in  the search results'|t('elasticsearch') }}</p>
+    {{ forms.textField(
+        {
+            label:  'Before'|t('elasticsearch'),
+            id:     'highlight_pre_tags',
+            name:   'highlight[pre_tags]',
+            value:  settings['highlight']['pre_tags'],
+            errors: settings.getErrors('highlight_pre_tags'),
+        }
+    ) }}
 
-{{ forms.textField(
-    {
-        label:  'After'|t('elasticsearch'),
-        id:     'highlight_post_tags',
-        name:   'highlight[post_tags]',
-        value:  settings['highlight']['post_tags'],
-        errors: settings.getErrors('highlight_post_tags'),
-    }
-) }}
+    {{ forms.textField(
+        {
+            label:  'After'|t('elasticsearch'),
+            id:     'highlight_post_tags',
+            name:   'highlight[post_tags]',
+            value:  settings['highlight']['post_tags'],
+            errors: settings.getErrors('highlight_post_tags'),
+        }
+    ) }}
 
-{% include 'elasticsearch/components/elastic-branding' %}
+    <hr>
+
+    <h2>{{ 'Blacklisted sections'|t('elasticsearch') }}</h2>
+    <p>{{ 'Never index entries in the folowing sections:'|t('elasticsearch') }}</p>
+    {% for site in craft.app.sites.getAllSites() %}
+        <h3>{{ site.name }}</h3>
+
+        {{ forms.checkboxSelect({
+            name: "blacklistedSections[#{site.id}]",
+            instructions: 'Never index entries in the following sections',
+            options: sections,
+            values: settings['blacklistedSections'][site.id]
+        }) }}
+    {% endfor %}
+
+    {% include 'elasticsearch/components/elastic-branding' %}
+</div>

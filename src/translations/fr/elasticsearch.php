@@ -32,6 +32,8 @@ return [
     'HTML tags used to wrap the search term in order to highlight it in  the search results' => 'Balises HTML insérées autour des termes recherchés afin de les mettre en avant dans les résultats de recherche',
     'Before'                                                                                 => 'Avant',
     'After'                                                                                  => 'Après',
+    'Blacklisted sections'                                                                   => 'Sections exclues',
+    'Never index entries in the folowing sections:'                                          => 'Ne pas indexer les entrées dans les sections suivantes :',
 
 
     // Utility
