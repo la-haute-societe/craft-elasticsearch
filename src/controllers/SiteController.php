@@ -32,7 +32,7 @@ class SiteController extends Controller
 
         try {
             $entryId = Craft::$app->getRequest()->getParam('entryId');
-            $siteId = 46455654; //Craft::$app->getRequest()->getParam('siteId');
+            $siteId = Craft::$app->getRequest()->getParam('siteId');
             $entry = Entry::find()->id($entryId)->siteId($siteId)->one();
 
             if ($entry === null) {
