@@ -14,9 +14,9 @@ use yii\elasticsearch\ActiveRecord;
 use yii\helpers\Json;
 
 /**
- * @property string title
- * @property string url
- * @property mixed section
+ * @property string       title
+ * @property string       url
+ * @property mixed        section
  * @property object|array content
  */
 class ElasticsearchRecord extends ActiveRecord
@@ -33,7 +33,9 @@ class ElasticsearchRecord extends ActiveRecord
 
     /**
      * Return an array of Elasticsearch records for the given query
+     *
      * @param $query
+     *
      * @return array|ElasticsearchRecord[]
      * @throws InvalidConfigException
      * @throws \yii\elasticsearch\Exception
@@ -59,14 +61,16 @@ class ElasticsearchRecord extends ActiveRecord
 
     /**
      * Try to guess the best Elasticsearch analyze for the current site language
+     *
      * @return string
-     * @throws InvalidConfigException
+     * @throws InvalidConfigException If the `$siteId` isn't set
      */
     public static function siteAnalyzer()
     {
         if (null === static::$siteId) {
             throw new InvalidConfigException('siteId was not set');
         }
+
         $analyzer = 'standard'; // Default analyzer
         $availableAnalyzers = [
             'ar'    => 'arabic',
@@ -108,6 +112,7 @@ class ElasticsearchRecord extends ActiveRecord
             'th'    => 'thai',
             'zh'    => 'cjk' //Chinese
         ];
+
         $siteLanguage = Craft::$app->language;
         if (array_key_exists($siteLanguage, $availableAnalyzers)) {
             $analyzer = $availableAnalyzers[$siteLanguage];
@@ -118,6 +123,7 @@ class ElasticsearchRecord extends ActiveRecord
                 $analyzer = $availableAnalyzers[$siteLanguage];
             }
         }
+
         return $analyzer;
     }
 
@@ -142,8 +148,9 @@ class ElasticsearchRecord extends ActiveRecord
 
     /**
      * Check if the Elasticsearch index already exists or created it if not
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\elasticsearch\Exception
+     *
+     * @throws InvalidConfigException If the `$siteId` isn't set*
+     * @throws \yii\elasticsearch\Exception If the Elasticsearch index can't be created
      */
     protected static function checkIndex()
     {
@@ -164,21 +171,23 @@ class ElasticsearchRecord extends ActiveRecord
 
     /**
      * @return string
-     * @throws InvalidConfigException
+     * @throws InvalidConfigException If the `$siteId` isn't set
      */
     public static function index()
     {
         if (null === static::$siteId) {
             throw new InvalidConfigException('siteId was not set');
         }
-        return 'craft-entries_' . static::$siteId;
+        return 'craft-entries_'.static::$siteId;
     }
 
     /**
-     * Create this model's index
+     * Create this model's index in Elasticsearch
+     *
      * @param bool $force
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\elasticsearch\Exception
+     *
+     * @throws InvalidConfigException If the `$siteId` isn't set
+     * @throws \yii\elasticsearch\Exception If an error occurs while communicating with the Elasticsearch server
      */
     public static function createIndex($force = false)
     {
@@ -213,6 +222,8 @@ class ElasticsearchRecord extends ActiveRecord
 
     /**
      * Delete this model's index
+     *
+     * @throws InvalidConfigException If the `$siteId` isn't set
      */
     public static function deleteIndex()
     {
@@ -223,9 +234,14 @@ class ElasticsearchRecord extends ActiveRecord
         }
     }
 
+    /**
+     * @return array
+     * @throws InvalidConfigException If the `$siteId` isn't set
+     */
     public static function mapping()
     {
         $analyzer = self::siteAnalyzer();
+
         return [
             static::type() => [
                 'properties' => [

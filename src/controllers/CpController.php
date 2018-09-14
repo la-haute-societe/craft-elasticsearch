@@ -18,7 +18,6 @@ use craft\records\Site;
 use craft\web\Controller;
 use craft\web\Request;
 use lhs\elasticsearch\Elasticsearch;
-use Psr\Log\LogLevel;
 use yii\helpers\VarDumper;
 use yii\web\Response;
 
@@ -91,15 +90,23 @@ class CpController extends Controller
         // Return the ids of entries to process
         if (!empty($params['start'])) {
             $siteIds = $this->getSiteIds($request);
-            Elasticsearch::getInstance()->service->recreateSiteIndexes(...$siteIds);
+            Elasticsearch::getInstance()->service->recreateSiteIndex(...$siteIds);
 
             return $this->getReindexQueue($siteIds);
         }
 
         // Process the given element
-        $isSuccessful = $this->reindexEntry();
+        $reason = $this->reindexEntry();
 
-        return $this->asJson(['success' => $isSuccessful]);
+        if ($reason !== null) {
+            return $this->asJson([
+                'success' => true,
+                'skipped' => true,
+                'reason'  => $reason,
+            ]);
+        }
+
+        return $this->asJson(['success' => true]);
     }
 
     /**
@@ -109,17 +116,7 @@ class CpController extends Controller
      */
     protected function getReindexQueue(array $siteIds): Response
     {
-        $entryQuery = (new Query())
-            ->select(['elements.id entryId', 'siteId'])
-            ->from('{{%elements}}')
-            ->join('inner join', '{{%elements_sites}}', '{{%elements}}.id = elementId')
-            ->where([
-                '{{%elements}}.type'    => 'craft\\elements\\Entry',
-                '{{%elements}}.enabled' => true,
-                'siteId'                => $siteIds,
-            ]);
-
-        $entries = $entryQuery->all();
+        $entries = Elasticsearch::getInstance()->service->getEnabledEntries($siteIds);
 
         // Re-format entries to keep the JS part as close as possible to Craft SearchIndexUtility's
         array_walk($entries, function(&$entry) {
@@ -153,8 +150,9 @@ class CpController extends Controller
     }
 
     /**
-     * @return bool
+     * @return string|null A string explaining why the entry wasn't reindexed or `null` if it was reindexed
      * @throws \Exception If reindexing the entry fails for some reason.
+     * @throws \yii\web\BadRequestHttpException if the request body is missing a `params` property
      */
     protected function reindexEntry()
     {

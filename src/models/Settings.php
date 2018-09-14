@@ -33,20 +33,35 @@ class Settings extends Model
     // Public Properties
     // =========================================================================
 
-    /**
-     * Some model attribute
-     *
-     * @var string
-     */
+    /** @var string The hostname and port (separated by a colon `:`) used to connect to the Elasticsearch instance */
     public $http_address = 'elasticsearch:9200';
+
+    /** @var string [optional] The username used to connect to the Elasticsearch instance */
     public $auth_username = 'elastic';
+
+    /** @var string [optional] The password used to connect to the Elasticsearch instance */
     public $auth_password = 'MagicWord';
+
+    /**
+     * @var callable A callback used to extract the indexable content from a page source code.
+     *               The only argument is the page source code (rendered template) and it is expected to return a string.
+     */
     public $contentExtractorCallback;
+
+    /** @var array The tags inserted before and after the search term to highlight in search results */
     public $highlight = [
         'pre_tags'  => null,
         'post_tags' => null,
     ];
+
+    /** @var array The list of IDs of sections which entries should not be indexed */
     public $blacklistedSections = [];
+
+    /** @var array The list of hosts that are allowed to access this module. */
+    public $allowedHosts = ['localhost'];
+
+    /** @var array The list of IPs that are allowed to access this module. */
+    public $allowedIPs = ['::1', '127.0.0.1'];
 
     // Public Methods
     // =========================================================================
@@ -71,4 +86,5 @@ class Settings extends Model
             [['auth_username', 'auth_password'], 'trim'],
         ];
     }
+
 }

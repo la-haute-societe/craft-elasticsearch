@@ -23,7 +23,10 @@
  */
 
 return [
-    'highlight'       => [
+    'allowedIPs'   => ['::1', '127.0.0.1'],
+    'allowedHosts' => ['localhost'],
+
+    'highlight' => [
         'pre_tags'  => '<strong>',
         'post_tags' => '</strong>',
     ],

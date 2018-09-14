@@ -172,6 +172,17 @@ class Elasticsearch extends Plugin
             }
         );
 
+        // Register our site routes
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+            function(RegisterUrlRulesEvent $event) {
+                $event->rules['elasticsearch/get-all-entries'] = 'elasticsearch/site/get-all-entries';
+                $event->rules['elasticsearch/reindex-all'] = 'elasticsearch/site/reindex-all';
+                $event->rules['elasticsearch/reindex-entry'] = 'elasticsearch/site/reindex-entry';
+            }
+        );
+
         // Add the Elasticsearch panel to the Yii debug bar
         Event::on(
             Application::class,
@@ -209,7 +220,6 @@ class Elasticsearch extends Plugin
      */
     protected function createSettingsModel()
     {
-        opcache_reset();
         $settingsModel = new Settings();
 
         return $settingsModel;
