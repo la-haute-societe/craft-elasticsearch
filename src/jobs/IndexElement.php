@@ -25,7 +25,7 @@ use yii\helpers\VarDumper;
  *
  * You can use it like this:
  *
- * use lahautesocit\generic\jobs\IndexEntry as IndexEntryJob;
+ * use lhs\elasticsearch\jobs\IndexElement as IndexElementJob;
  *
  * $queue = Craft::$app->getQueue();
  * $jobId = $queue->push(new IndexEntryJob([
@@ -93,6 +93,9 @@ class IndexElement extends BaseJob
      */
     protected function defaultDescription(): string
     {
-        return Craft::t('elasticsearch', 'Index a page in Elasticsearch');
+        return Craft::t(
+            Elasticsearch::TRANSLATION_CATEGORY,
+            'Index a page in Elasticsearch'
+        );
     }
 }

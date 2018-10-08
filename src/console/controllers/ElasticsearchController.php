@@ -10,6 +10,7 @@
 
 namespace lhs\elasticsearch\console\controllers;
 
+use Craft;
 use craft\records\Site;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
@@ -18,6 +19,7 @@ use function GuzzleHttp\Psr7\build_query;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use lhs\elasticsearch\Elasticsearch;
+use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\exceptions\IndexEntryException;
 use Psr\Http\Message\ResponseInterface;
 use yii\console\Controller;
@@ -94,17 +96,7 @@ class ElasticsearchController extends Controller
      */
     public function actionRecreateEmptyIndexes()
     {
-        $siteIds = Site::find()->select('id')->column();
-
-        try {
-            Elasticsearch::getInstance()->service->recreateSiteIndex(...$siteIds);
-        } catch (\Exception $e) {
-            throw new IndexEntryException(
-                'Cannot recreate empty indexes for all sites',
-                0,
-                $e
-            );
-        }
+        ElasticsearchPlugin::getInstance()->service->recreateIndexesForAllSites();
     }
 
     /**

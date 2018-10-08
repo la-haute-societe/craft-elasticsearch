@@ -15,6 +15,7 @@ use craft\base\Component;
 use craft\db\Query;
 use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
+use craft\records\Site;
 use craft\services\Sites;
 use craft\web\View;
 use DateTime;
@@ -80,6 +81,7 @@ class Elasticsearch extends Component
                     $sites->setCurrentSite($site);
                     ElasticsearchRecord::$siteId = $site->id;
 
+                    /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
                     $blacklistedSections = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections[$site->id];
 
                     $countEntries = (int)Entry::find()
@@ -206,7 +208,7 @@ class Elasticsearch extends Component
      * @return int
      * @throws Exception
      */
-    public function deleteEntry(Entry $entry)
+    public function deleteEntry(Entry $entry): int
     {
         Craft::info("Deleting entry #{$entry->id}: {$entry->url}", __METHOD__);
 
@@ -243,7 +245,11 @@ class Elasticsearch extends Component
         try {
             $this->recreateSiteIndex($siteId);
         } catch (\Exception $e) {
-            throw new IndexEntryException("Cannot recreate the Elasticsearch index for site #$siteId");
+            throw new IndexEntryException(Craft::t(
+                ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                'Cannot recreate the Elasticsearch index for site #{siteId}: {previousExceptionMessage}',
+                ['siteId' => $siteId, 'previousExceptionMessage' => $e->getMessage()]
+            ));
         }
 
         /** @var Entry[] $entries */
@@ -259,7 +265,11 @@ class Elasticsearch extends Component
                     Craft::error("Error while re-indexing entry {$entry->url}: {$e->getMessage()}", __METHOD__);
                     Craft::error(VarDumper::dumpAsString($e), __METHOD__);
 
-                    throw new IndexEntryException("Cannot reindex entry {$entry->url}: {$e->getMessage()}");
+                    throw new IndexEntryException(Craft::t(
+                        ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                        'Cannot reindex entry {entryUrl}: {previousExceptionMessage}',
+                        ['entryUrl' => $entry->url, 'previousExceptionMessage' => $e->getMessage()]
+                    ));
                 }
             }
         }
@@ -284,7 +294,10 @@ class Elasticsearch extends Component
             try {
                 $siteId = Craft::$app->getSites()->getCurrentSite()->id;
             } catch (SiteNotFoundException $e) {
-                throw new IndexEntryException('Cannot fetch current site ID');
+                throw new IndexEntryException(Craft::t(
+                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                    'Cannot fetch the id of the current site. Please make sure at least one site is enabled.'
+                ));
             }
         }
 
@@ -298,21 +311,25 @@ class Elasticsearch extends Component
                     'title'      => $result->title,
                     'url'        => $result->url,
                     'score'      => $result->score,
-                    'highlights' => isset($result->highlight['attachment.content']) ? $result->highlight['attachment.content'] : [],
+                    'highlights' => $result->highlight['attachment.content'] ?? [],
                 ];
             }
 
             return $output;
         } catch (\Exception $e) {
             throw new IndexEntryException(
-                'An error occurred while running the search on Elasticsearch instance',
+                Craft::t(
+                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                    'An error occurred while running the "{searchQuery}" search query on Elasticsearch instance: {previousExceptionMessage}',
+                    ['previousExceptionMessage' => $e->getMessage(), 'searchQuery' => $query]
+                ),
                 0,
                 $e
             );
         }
     }
 
-    protected static function getSyncCachekey()
+    protected static function getSyncCachekey(): string
     {
         return self::class.'_isSync';
     }
@@ -349,7 +366,11 @@ class Elasticsearch extends Component
 
         $site = $sitesService->getSiteById($entry->siteId);
         if (!$site) {
-            throw new IndexEntryException('Invalid site ID: '.$entry->siteId);
+            throw new IndexEntryException(Craft::t(
+                ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                'Invalid site id: {siteId}',
+                ['siteId' => $entry->siteId]
+            ));
         }
         $sitesService->setCurrentSite($site);
 
@@ -378,38 +399,53 @@ class Elasticsearch extends Component
         try {
             $sectionSiteSettings = $entry->getSection()->getSiteSettings();
             $templateName = $sectionSiteSettings[$entry->siteId]->template;
-            $html = trim($view->renderTemplate($templateName, [
-                'entry' => $entry,
-            ]));
 
-            // Re-enable template caching. On est pas des bêtes !
-            $craftGeneralConfig->enableTemplateCaching = false;
-            // Restore template rendering mode
             try {
-                $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+                $html = trim($view->renderTemplate($templateName, [
+                    'entry' => $entry,
+                ]));
+
+                // Re-enable template caching. On est pas des bêtes !
+                $craftGeneralConfig->enableTemplateCaching = false;
+                // Restore template rendering mode
+                try {
+                    $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+                } catch (\yii\base\Exception $e) {
+                    // Shouldn't happen as a constant is used for the templateMode parameter
+                    throw new IndexEntryException($e->getMessage(), 0, $e);
+                }
+
+                $html = $this->extractIndexablePartFromEntryContent($html);
+
+                return $html;
+            } catch (Twig_Error_Loader $e) {
+                throw new IndexEntryException(
+                    Craft::t(
+                        ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                        'The entry #{entryId} uses an invalid Twig template: {twigTemplateName}',
+                        ['entryId' => $entry->id, 'twigTemplateName' => $templateName]
+                    ),
+                    0,
+                    $e
+                );
             } catch (\yii\base\Exception $e) {
-                // Shouldn't happen as a constant is used for the templateMode parameter
-                throw new IndexEntryException($e->getMessage(), 0, $e);
+                throw new IndexEntryException(
+                    Craft::t(
+                        ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                        'An error occurred while rendering the {twigTemplateName} Twig template: {previousExceptionMessage}',
+                        ['twigTemplateName' => $templateName, 'previousExceptionMessage' => $e->getMessage()]
+                    ),
+                    0,
+                    $e
+                );
             }
-
-            $html = $this->extractIndexablePartFromEntryContent($html);
-
-            return $html;
         } catch (InvalidConfigException $e) {
             throw new IndexEntryException(
-                'The entry has an incorrect section ID',
-                0,
-                $e
-            );
-        } catch (Twig_Error_Loader $e) {
-            throw new IndexEntryException(
-                'The entry uses an invalid Twig template',
-                0,
-                $e
-            );
-        } catch (\yii\base\Exception $e) {
-            throw new IndexEntryException(
-                'An error occurred while rendering the Twig template',
+                Craft::t(
+                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                    'The entry #{entryId} has an incorrect section id: #{sectionId}',
+                    ['entryId' => $entry->id, 'sectionId' => $entry->sectionId]
+                ),
                 0,
                 $e
             );
@@ -423,8 +459,9 @@ class Elasticsearch extends Component
      */
     protected function extractIndexablePartFromEntryContent(string $html): string
     {
+        /** @noinspection NullPointerExceptionInspection NPE cannot happen here. */
         if ($callback = ElasticsearchPlugin::getInstance()->getSettings()->contentExtractorCallback) {
-            return call_user_func($callback, $html);
+            return $callback($html);
         }
 
         if (preg_match('/<!-- BEGIN elasticsearch indexed content -->(.*)<!-- END elasticsearch indexed content -->/s', $html, $body)) {
@@ -470,8 +507,9 @@ class Elasticsearch extends Component
             return $message;
         }
 
+        /** @noinspection NullPointerExceptionInspection NPE cannot happen here. */
         $blacklist = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections;
-        if (isset($blacklist[$entry->siteId]) && in_array($entry->sectionId, $blacklist[$entry->siteId])) {
+        if (isset($blacklist[$entry->siteId]) && in_array($entry->sectionId, $blacklist[$entry->siteId], false)) {
             $message = "Not indexing entry #{$entry->id} since it's in a blacklisted section.";
             Craft::debug($message, __METHOD__);
             return $message;
@@ -480,7 +518,14 @@ class Elasticsearch extends Component
         return null;
     }
 
-    public function getEnabledEntries($siteIds = null)
+    /**
+     * @param int[]|null $siteIds An array containing the ids of sites to be or
+     *                            reindexed, or `null` to reindex all sites.
+     *
+     * @return array An array of entry descriptors. An entry descriptor is an
+     *               associative array with the `entryId` and `siteId` keys.
+     */
+    public function getEnabledEntries($siteIds = null): array
     {
         if ($siteIds === null) {
             $siteIds = Craft::$app->getSites()->getAllSiteIds();
@@ -491,11 +536,32 @@ class Elasticsearch extends Component
             ->from('{{%elements}}')
             ->join('inner join', '{{%elements_sites}}', '{{%elements}}.id = elementId')
             ->where([
-                '{{%elements}}.type'    => 'craft\\elements\\Entry',
+                '{{%elements}}.type'    => Entry::class,
                 '{{%elements}}.enabled' => true,
                 'siteId'                => $siteIds,
             ]);
 
         return $entryQuery->all();
+    }
+
+    /**
+     * Create an empty Elasticsearch index for all sites. Existing indexes will be deleted and recreated.
+     *
+     * @throws IndexEntryException If the Elasticsearch index of a site cannot be recreated
+     */
+    public function recreateIndexesForAllSites()
+    {
+        $siteIds = Site::find()->select('id')->column();
+
+        try {
+            $this->recreateSiteIndex(...$siteIds);
+        } catch (\Exception $e) {
+            throw new IndexEntryException(Craft::t(
+                ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                'Cannot recreate empty indexes for all sites'
+            ), 0, $e);
+        }
+
+        Craft::$app->getCache()->delete(self::getSyncCachekey()); // Invalidate cache
     }
 }

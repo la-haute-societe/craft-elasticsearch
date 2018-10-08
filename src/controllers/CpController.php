@@ -11,13 +11,13 @@
 namespace lhs\elasticsearch\controllers;
 
 use Craft;
-use craft\db\Query;
 use craft\elements\Entry;
 use craft\helpers\UrlHelper;
 use craft\records\Site;
 use craft\web\Controller;
 use craft\web\Request;
 use lhs\elasticsearch\Elasticsearch;
+use yii\elasticsearch\Exception;
 use yii\helpers\VarDumper;
 use yii\web\Response;
 
@@ -57,13 +57,13 @@ class CpController extends Controller
 
         if (Elasticsearch::getInstance()->service->testConnection() === true) {
             Craft::$app->session->setNotice(Craft::t(
-                'elasticsearch',
+                Elasticsearch::TRANSLATION_CATEGORY,
                 'Successfully connected to {http_address}',
                 ['http_address' => $settings->http_address]
             ));
         } else {
             Craft::$app->session->setError(Craft::t(
-                'elasticsearch',
+                Elasticsearch::TRANSLATION_CATEGORY,
                 'Could not establish connection with {http_address}',
                 ['http_address' => $settings->http_address]
             ));
@@ -89,8 +89,13 @@ class CpController extends Controller
 
         // Return the ids of entries to process
         if (!empty($params['start'])) {
-            $siteIds = $this->getSiteIds($request);
-            Elasticsearch::getInstance()->service->recreateSiteIndex(...$siteIds);
+
+            try {
+                $siteIds = $this->getSiteIds($request);
+                Elasticsearch::getInstance()->service->recreateSiteIndex(...$siteIds);
+            } catch (Exception $e) {
+                return $this->asErrorJson($e->getMessage());
+            }
 
             return $this->getReindexQueue($siteIds);
         }

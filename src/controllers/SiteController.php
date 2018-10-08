@@ -36,7 +36,11 @@ class SiteController extends Controller
             $entry = Entry::find()->id($entryId)->siteId($siteId)->one();
 
             if ($entry === null) {
-                throw new IndexEntryException("No such entry (id #$entryId / site ID #$siteId)");
+                throw new IndexEntryException(Craft::t(
+                    Elasticsearch::TRANSLATION_CATEGORY,
+                    'No such entry (entry #{entryId} / site #{siteId}',
+                    ['entryId' => $entryId, 'siteId' => $siteId]
+                ));
             }
 
             $reason = Elasticsearch::getInstance()->service->indexEntry($entry);

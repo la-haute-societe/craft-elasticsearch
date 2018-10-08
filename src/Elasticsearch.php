@@ -25,7 +25,8 @@ use craft\services\Utilities;
 use craft\web\Application;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
-use lhs\elasticsearch\jobs\IndexElement;
+use lhs\elasticsearch\exceptions\IndexEntryException;
+use lhs\elasticsearch\jobs\IndexElement as IndexElementJob;
 use lhs\elasticsearch\models\Settings;
 use lhs\elasticsearch\services\Elasticsearch as ElasticsearchService;
 use lhs\elasticsearch\utilities\ElasticsearchUtilities;
@@ -57,7 +58,9 @@ class Elasticsearch extends Plugin
 {
     public $name = 'Elasticsearch';
 
-    const APP_COMPONENT_NAME = 'elasticsearch';
+    const PLUGIN_HANDLE = 'elasticsearch';
+    const APP_COMPONENT_NAME = self::PLUGIN_HANDLE;
+    const TRANSLATION_CATEGORY = self::PLUGIN_HANDLE;
 
     // Public Methods
     // =========================================================================
@@ -73,7 +76,7 @@ class Elasticsearch extends Plugin
 
         /** @noinspection PhpUnhandledExceptionInspection */
         Craft::$app->set(self::APP_COMPONENT_NAME, [
-            'class' => 'yii\elasticsearch\Connection',
+            'class' => Connection::class,
             'nodes' => [
                 ['http_address' => $this->settings->http_address],
                 // configure more hosts if you have a cluster
@@ -100,7 +103,7 @@ class Elasticsearch extends Plugin
             }
         );
 
-        // Delete an element from the index
+        // Remove entry from the index upon deletion
         Event::on(
             Element::class,
             Element::EVENT_AFTER_DELETE,
@@ -111,7 +114,7 @@ class Elasticsearch extends Plugin
             }
         );
 
-        // Add or update an element to the index
+        // Index entries on save (creation or update)
         Event::on(
             Element::class,
             Element::EVENT_AFTER_SAVE,
@@ -119,7 +122,7 @@ class Elasticsearch extends Plugin
                 $element = $event->sender;
                 if ($element instanceof Entry) {
                     if ($element->enabled) {
-                        Craft::$app->queue->push(new IndexElement([
+                        Craft::$app->queue->push(new IndexElementJob([
                             'siteId'    => $element->siteId,
                             'elementId' => $element->id,
                         ]));
@@ -137,7 +140,12 @@ class Elasticsearch extends Plugin
             function(PluginEvent $event) {
                 if ($event->plugin === $this) {
                     Craft::debug('Elasticsearch plugin settings saved => re-index all entries', __METHOD__);
-                    $this->service->reindexAll();
+                    try{
+                        $this->service->recreateIndexesForAllSites();
+                        $this->enqueueReindexAllEntries();
+                    } catch(IndexEntryException $e) {
+                        Craft::$app->getSession()->setError($e->getMessage());
+                    }
                 }
             }
         );
@@ -157,7 +165,10 @@ class Elasticsearch extends Plugin
             UserPermissions::EVENT_REGISTER_PERMISSIONS,
             function(RegisterUserPermissionsEvent $event) {
                 $event->permissions['elasticsearch'] = [
-                    'reindex' => ['label' => Craft::t('elasticsearch', 'Refresh Elasticsearch index')],
+                    'reindex' => ['label' => Craft::t(
+                        Elasticsearch::TRANSLATION_CATEGORY,
+                        'Refresh Elasticsearch index'
+                    )],
                 ];
             }
         );
@@ -201,10 +212,11 @@ class Elasticsearch extends Plugin
     /**
      * @return Connection
      */
-    public static function getConnection()
+    public static function getConnection(): Connection
     {
-        /** @var Connection $connection */
         /** @noinspection PhpUnhandledExceptionInspection */
+        /** @noinspection OneTimeUseVariablesInspection */
+        /** @var Connection $connection */
         $connection = Craft::$app->get(self::APP_COMPONENT_NAME);
 
         return $connection;
@@ -220,9 +232,7 @@ class Elasticsearch extends Plugin
      */
     protected function createSettingsModel()
     {
-        $settingsModel = new Settings();
-
-        return $settingsModel;
+        return new Settings();
     }
 
     public function setSettings(array $settings)
@@ -257,5 +267,17 @@ class Elasticsearch extends Plugin
                 'sections' => $sections,
             ]
         );
+    }
+
+    protected function enqueueReindexAllEntries()
+    {
+        $entries = $this->service->getEnabledEntries();
+
+        foreach ($entries as $entry) {
+            Craft::$app->queue->push(new IndexElementJob([
+                'siteId'    => $entry['siteId'],
+                'elementId' => $entry['entryId'],
+            ]));
+        }
     }
 }
