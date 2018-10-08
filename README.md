@@ -2,25 +2,32 @@
 
 Bring the power of Elasticsearch to you Craft 3 CMS project
 
+
 ## Requirements
 
 This plugin requires **Craft CMS 3.0.0-RC1** or later.
 
-In order to index data, you will need an **Elasticsearch instance 6.0** or 
-later with the Ingest attachment processor plugin activated.
+In order to index data, you will need an **Elasticsearch 6.0** (or later) 
+instance, with the Ingest attachment processor plugin activated.
 
 
-### Installation
+## Installation
 
-  - Install with Composer from your project directory:  
-    `composer require la-hautes-societe/craft-elasticsearch`
-  - In the Control Panel, go to Settings → Plugins and click the “Install” 
-    button for Elasticsearch.
- 
+### The easy way
+
+Just install the plugin from the Craft Plugin Store.
+
+### Using Composer
+
+  - from your project directory, run the following command:  
+    `composer require la-haute-societe/craft-elasticsearch`
+  - then, in the Craft Control Panel, go to **Settings** → **Plugins** and click
+    the **Install** button for Elasticsearch.
+
  
 ## Elasticsearch plugin Overview
 
-Elasticsearch plugin will automatically index each entries on your site(s).
+Elasticsearch plugin will automatically index each entry on your site(s).
 
 It will figure out the best Elasticsearch mapping for you based on your site(s)
 language. 
@@ -28,14 +35,19 @@ language.
 
 ## Configuring Elasticsearch plugin
 
-Go to the plugin settings and adjust the host name and port for your 
+### From the plugin settings page in the Craft Control Panel
+
+* **Required** `Host`: the hostname or ip address of the Elasticsearch instance 
+  to connect to. May optionally contain the port 
+ 
+ Go to the plugin settings and adjust the host name and port for your 
 Elasticsearch instance.
 
 If your instance is protected with X-Pack Security, you can provide your 
 username and passwords as well.
 
 Optionally, in the `config` folder, you can override the following plugin 
-configurations by adding a `elacticsearch.php` file as follow:
+configurations by adding an `elacticsearch.php` file as follow:
 
 ```php
 <?php
@@ -123,12 +135,11 @@ can go to Utilities → Elasticsearch then click the "Reindex all" button.
 ## Elasticsearch plugin Roadmap
 
 * Handle dependencies update 
-* Handle multi-sites configurations
 * Detect need for re-indexation
 
 Brought to you by [![LHS Logo](resources/img/lhs.png) La Haute Société][lhs-site].
 
-[![Elastic](resources/img/elasticsearch-logo.png)](elastic-site)  
+[![Elastic](resources/img/elastic-logo.png)][elastic-site]  
 Elasticsearch is a trademark of Elasticsearch BV, registered in the U.S. and in
 other countries.
 
