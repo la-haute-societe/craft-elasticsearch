@@ -20,8 +20,8 @@
     {{ forms.textField({
         first: true,
         label: 'Host'|t('elasticsearch'),
-        instructions: 'Elasticsearch hostname or IP and port (ie. elasticsearch:9200)'|t('elasticsearch'),
-        placeholder: '127.0.0.1:9200',
+        instructions: 'Elasticsearch hostname or IP and port (ie. elastic.example.com:9200)'|t('elasticsearch'),
+        placeholder: 'elastic.example.com:9200',
         id: 'http_address',
         name: 'http_address',
         value: settings['http_address'],
