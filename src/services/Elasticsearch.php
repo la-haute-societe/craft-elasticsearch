@@ -46,21 +46,30 @@ class Elasticsearch extends Component
     // =========================================================================
 
     /**
-     * Test the connection to the Elasticsearch server
+     * Test the connection to the Elasticsearch server, optionally using the given $httpAddress instead of the one
+     * currently in use in the yii2-elasticsearch instance.
      *
+     * @param string|null $httpAddress An optional <hostname>:<port> to try to connect to.
      * @return boolean `true` if the connection succeeds, `false` otherwise.
      */
-    public function testConnection(): bool
+    public function testConnection($httpAddress = null): bool
     {
-        $connection = ElasticsearchPlugin::getConnection();
+        $elasticConnection = ElasticsearchPlugin::getConnection();
+        $currentElasticHttpAddress = $elasticConnection->nodes[0]['http_address'];
+
+        if ($httpAddress !== null) {
+            $elasticConnection->nodes[0]['http_address'] = $httpAddress;
+        }
+
         try {
-            $connection->open();
+            $elasticConnection->open();
             return true;
         } catch (\Exception $e) {
             return false;
         }
         finally {
-            $connection->close();
+            $elasticConnection->close();
+            $elasticConnection->nodes[0]['http_address'] = $currentElasticHttpAddress;
         }
     }
 

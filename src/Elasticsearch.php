@@ -139,13 +139,7 @@ class Elasticsearch extends Plugin
             Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
             function(PluginEvent $event) {
                 if ($event->plugin === $this) {
-                    Craft::debug('Elasticsearch plugin settings saved => re-index all entries', __METHOD__);
-                    try{
-                        $this->service->recreateIndexesForAllSites();
-                        $this->enqueueReindexAllEntries();
-                    } catch(IndexEntryException $e) {
-                        Craft::$app->getSession()->setError($e->getMessage());
-                    }
+                    $this->onPluginSettingsSaved();
                 }
             }
         );
@@ -279,5 +273,27 @@ class Elasticsearch extends Plugin
                 'elementId' => $entry['entryId'],
             ]));
         }
+    }
+
+    protected function onPluginSettingsSaved()
+    {
+        $this->applyNewSettings();
+
+        Craft::debug('Elasticsearch plugin settings saved => re-index all entries', __METHOD__);
+        try{
+            $this->service->recreateIndexesForAllSites();
+            $this->enqueueReindexAllEntries();
+        } catch(IndexEntryException $e) {
+            Craft::$app->getSession()->setError($e->getMessage());
+        }
+    }
+
+    /**
+     * Update the yii2-elasticsearch module configuration to take into account the values set in the Craft Control Panel
+     */
+    protected function applyNewSettings()
+    {
+        $settings = $this->getSettings();
+        self::getConnection()->nodes[0]['http_address'] = $settings->http_address;
     }
 }

@@ -81,10 +81,21 @@ class Settings extends Model
         return [
             ['http_address', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Host is required')],
             ['http_address', 'string'],
-            ['http_address', 'default', 'value' => 'elasticsearch:9200'],
+            ['http_address', 'validateElasticHttpAddress'],
+            ['http_address', 'default', 'value' => 'elasticsearch.example.com:9200'],
             [['auth_username', 'auth_password'], 'string'],
             [['auth_username', 'auth_password'], 'trim'],
         ];
     }
+
+    public function validateElasticHttpAddress($attributeName)
+    {
+        $httpAddress = $this->$attributeName;
+
+        if (!Elasticsearch::getInstance()->service->testConnection($httpAddress)) {
+            $this->addError('http_address', Craft::t('elasticsearch', 'Could not establish connection with {http_address}', ['http_address' => $this->http_address]));
+        }
+    }
+
 
 }
