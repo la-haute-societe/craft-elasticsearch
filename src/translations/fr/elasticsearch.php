@@ -40,7 +40,8 @@ return [
     'Elasticsearch index is out of sync!'                                                                                    => 'L\'index Elasticsearch n\'est plus synchronisé !',
     'Reindex selected'                                                                                                       => 'Réindexer les sites sélectionnés',
     'Sites'                                                                                                                  => 'Sites',
-    'Could not connect to the elasticsearch instance. Please check your settings'                                            => 'Connexion à l\'instance Elasticsearch impossible. Veuillez vérifier les paramètres du plugin.',
+    'Could not connect to the elasticsearch instance. Please check the {pluginSettingsLink}.'                                => 'Connexion à l\'instance Elasticsearch impossible. Veuillez vérifier les {pluginSettingsLink}.',
+    'plugin\'s settings'                                                                                                     => 'paramètres du plugin',
 
     // Connection test
     'Successfully connected to {http_address}'                                                                               => 'Connecté à {http_address} avec succès',

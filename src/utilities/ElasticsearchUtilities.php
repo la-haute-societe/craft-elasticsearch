@@ -13,6 +13,7 @@ namespace lhs\elasticsearch\utilities;
 use Craft;
 use craft\base\Utility;
 use craft\helpers\ArrayHelper;
+use craft\helpers\UrlHelper;
 use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\resources\CpAssetBundle;
 
@@ -103,9 +104,16 @@ class ElasticsearchUtilities extends Utility
         return Craft::$app->getView()->renderTemplate(
             'elasticsearch/cp/utility',
             [
-                'isConnected' => $isConnected,
-                'inSync'      => $inSync,
-                'sites'       => $sites,
+                'isConnected'                => $isConnected,
+                'inSync'                     => $inSync,
+                'sites'                      => $sites,
+                'notConnectedWarningMessage' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Could not connect to the elasticsearch instance. Please check the {pluginSettingsLink}.', [
+                    'pluginSettingsLink' => sprintf(
+                        '<a href="%s">%s</a>',
+                        UrlHelper::cpUrl('/settings/plugins/' . Elasticsearch::APP_COMPONENT_NAME),
+                        Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'plugin\'s settings')
+                    ),
+                ]),
             ]
         );
     }

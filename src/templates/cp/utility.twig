@@ -18,7 +18,7 @@
 <div class="elastic-branding-container">
     {% if not isConnected %}
         <p class="error">
-            <strong>{{ 'Could not connect to the elasticsearch instance. Please check your settings'|t('elasticsearch') }}</strong>
+            <strong>{{ notConnectedWarningMessage|raw }}</strong>
         </p>
     {% elseif not inSync %}
         <p class="error">
