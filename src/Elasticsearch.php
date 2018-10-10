@@ -74,18 +74,7 @@ class Elasticsearch extends Plugin
             'service' => ElasticsearchService::class,
         ]);
 
-        /** @noinspection PhpUnhandledExceptionInspection */
-        Craft::$app->set(self::APP_COMPONENT_NAME, [
-            'class' => Connection::class,
-            'nodes' => [
-                ['http_address' => $this->settings->http_address],
-                // configure more hosts if you have a cluster
-            ],
-            'auth'  => [
-                'username' => $this->settings->auth_username,
-                'password' => $this->settings->auth_password,
-            ],
-        ]);
+        $this->initializeElasticConnector();
 
         // Add in our console commands
         if (Craft::$app instanceof ConsoleApplication) {
@@ -96,7 +85,7 @@ class Elasticsearch extends Plugin
         Event::on(
             CraftVariable::class,
             CraftVariable::EVENT_INIT,
-            function(Event $event) {
+            function (Event $event) {
                 /** @var CraftVariable $variable */
                 $variable = $event->sender;
                 $variable->set('elasticsearch', ElasticsearchVariable::class);
@@ -107,7 +96,7 @@ class Elasticsearch extends Plugin
         Event::on(
             Element::class,
             Element::EVENT_AFTER_DELETE,
-            function(Event $event) {
+            function (Event $event) {
                 /** @var entry $entry */
                 $entry = $event->sender;
                 $this->service->deleteEntry($entry);
@@ -118,7 +107,7 @@ class Elasticsearch extends Plugin
         Event::on(
             Element::class,
             Element::EVENT_AFTER_SAVE,
-            function(Event $event) {
+            function (Event $event) {
                 $element = $event->sender;
                 if ($element instanceof Entry) {
                     if ($element->enabled) {
@@ -127,7 +116,7 @@ class Elasticsearch extends Plugin
                             'elementId' => $element->id,
                         ]));
                     } else {
-                        Elasticsearch::getInstance()->service->deleteEntry($element);
+                        $this->service->deleteEntry($element);
                     }
                 }
             }
@@ -137,7 +126,7 @@ class Elasticsearch extends Plugin
         Event::on(
             Plugins::class,
             Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
-            function(PluginEvent $event) {
+            function (PluginEvent $event) {
                 if ($event->plugin === $this) {
                     $this->onPluginSettingsSaved();
                 }
@@ -148,7 +137,7 @@ class Elasticsearch extends Plugin
         Event::on(
             Utilities::class,
             Utilities::EVENT_REGISTER_UTILITY_TYPES,
-            function(RegisterComponentTypesEvent $event) {
+            function (RegisterComponentTypesEvent $event) {
                 $event->types[] = ElasticsearchUtilities::class;
             }
         );
@@ -157,12 +146,14 @@ class Elasticsearch extends Plugin
         Event::on(
             UserPermissions::class,
             UserPermissions::EVENT_REGISTER_PERMISSIONS,
-            function(RegisterUserPermissionsEvent $event) {
+            function (RegisterUserPermissionsEvent $event) {
                 $event->permissions['elasticsearch'] = [
-                    'reindex' => ['label' => Craft::t(
-                        Elasticsearch::TRANSLATION_CATEGORY,
-                        'Refresh Elasticsearch index'
-                    )],
+                    'reindex' => [
+                        'label' => Craft::t(
+                            self::TRANSLATION_CATEGORY,
+                            'Refresh Elasticsearch index'
+                        ),
+                    ],
                 ];
             }
         );
@@ -171,7 +162,7 @@ class Elasticsearch extends Plugin
         Event::on(
             UrlManager::class,
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
-            function(RegisterUrlRulesEvent $event) {
+            function (RegisterUrlRulesEvent $event) {
                 $event->rules['elasticsearch/cp/test-connection'] = 'elasticsearch/cp/test-connection';
                 $event->rules['elasticsearch/cp/reindex-perform-action'] = 'elasticsearch/cp/reindex-perform-action';
             }
@@ -181,7 +172,7 @@ class Elasticsearch extends Plugin
         Event::on(
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-            function(RegisterUrlRulesEvent $event) {
+            function (RegisterUrlRulesEvent $event) {
                 $event->rules['elasticsearch/get-all-entries'] = 'elasticsearch/site/get-all-entries';
                 $event->rules['elasticsearch/reindex-all'] = 'elasticsearch/site/reindex-all';
                 $event->rules['elasticsearch/reindex-entry'] = 'elasticsearch/site/reindex-entry';
@@ -192,7 +183,7 @@ class Elasticsearch extends Plugin
         Event::on(
             Application::class,
             Application::EVENT_BEFORE_REQUEST,
-            function() {
+            function () {
                 /** @var \yii\debug\Module $debugModule */
                 $debugModule = Craft::$app->getModule('debug');
                 $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
@@ -250,7 +241,7 @@ class Elasticsearch extends Plugin
     protected function settingsHtml(): string
     {
         $sections = [];
-        array_map(function($section) use (&$sections) {
+        array_map(function ($section) use (&$sections) {
             $sections[$section->id] = Craft::t('site', $section->name);
         }, Craft::$app->sections->getAllSections());
 
@@ -277,23 +268,41 @@ class Elasticsearch extends Plugin
 
     protected function onPluginSettingsSaved()
     {
-        $this->applyNewSettings();
+        $this->initializeElasticConnector();
 
         Craft::debug('Elasticsearch plugin settings saved => re-index all entries', __METHOD__);
-        try{
+        try {
             $this->service->recreateIndexesForAllSites();
             $this->enqueueReindexAllEntries();
-        } catch(IndexEntryException $e) {
+        } catch (IndexEntryException $e) {
             Craft::$app->getSession()->setError($e->getMessage());
         }
     }
 
     /**
-     * Update the yii2-elasticsearch module configuration to take into account the values set in the Craft Control Panel
+     * Initialize the Elasticsearch connector
+     * @param Settings $settings
+     * @throws \yii\base\InvalidConfigException If the configuration passed to the yii2-elasticsearch module is invalid
      */
-    protected function applyNewSettings()
+    public function initializeElasticConnector($settings = null)
     {
-        $settings = $this->getSettings();
-        self::getConnection()->nodes[0]['http_address'] = $settings->http_address;
+        if ($settings === null) {
+            $settings = $this->getSettings();
+        }
+
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $definition = [
+            'class' => Connection::class,
+            'nodes' => [['http_address' => $settings->http_address]],
+        ];
+
+        if ($settings->auth_enabled) {
+            $definition['auth'] = [
+                'username' => $settings->auth_username,
+                'password' => $settings->auth_password,
+            ];
+        }
+
+        Craft::$app->set(self::APP_COMPONENT_NAME, $definition);
     }
 }

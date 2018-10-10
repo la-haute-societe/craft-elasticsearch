@@ -12,7 +12,9 @@ namespace lhs\elasticsearch\models;
 
 use Craft;
 use craft\base\Model;
+use RuntimeException;
 use lhs\elasticsearch\Elasticsearch;
+use yii\base\InvalidConfigException;
 
 /**
  * Elasticsearch Settings Model
@@ -41,6 +43,9 @@ class Settings extends Model
 
     /** @var string [optional] The password used to connect to the Elasticsearch instance */
     public $auth_password = 'MagicWord';
+
+    /** @var bool A boolean indicating whether authentication to the Elasticsearch server is required */
+    public $auth_enabled = false;
 
     /**
      * @var callable A callback used to extract the indexable content from a page source code.
@@ -81,21 +86,40 @@ class Settings extends Model
         return [
             ['http_address', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Host is required')],
             ['http_address', 'string'],
-            ['http_address', 'validateElasticHttpAddress'],
+            ['auth_enabled', 'boolean'],
             ['http_address', 'default', 'value' => 'elasticsearch.example.com:9200'],
             [['auth_username', 'auth_password'], 'string'],
             [['auth_username', 'auth_password'], 'trim'],
         ];
     }
 
-    public function validateElasticHttpAddress($attributeName)
+    public function afterValidate()
     {
-        $httpAddress = $this->$attributeName;
+        // Save the current Elasticsearch connector
+        $previousElasticConnector = Craft::$app->get(Elasticsearch::APP_COMPONENT_NAME);
 
-        if (!Elasticsearch::getInstance()->service->testConnection($httpAddress)) {
-            $this->addError('http_address', Craft::t('elasticsearch', 'Could not establish connection with {http_address}', ['http_address' => $this->http_address]));
+        // Create a new instance of the Elasticsearch connector with the freshly-submitted url and auth settings
+        $elasticsearchPlugin = Elasticsearch::getInstance();
+        if ($elasticsearchPlugin === null) {
+            throw new RuntimeException('');
+        }
+
+        try {
+            $elasticsearchPlugin->initializeElasticConnector($this);
+
+            // Run the actual validation
+            if (!$elasticsearchPlugin->service->testConnection()) {
+                throw new InvalidConfigException('Could not connect to the Elasticsearch server.');
+            }
+
+            // Clean up the mess we made to run the validation
+            Craft::$app->set(Elasticsearch::APP_COMPONENT_NAME, $previousElasticConnector);
+        } catch (InvalidConfigException $e) {
+            $this->addError('global', Craft::t(
+                Elasticsearch::TRANSLATION_CATEGORY,
+                'Could not connect to the Elasticsearch server at {httpAddress}. Please check the host and authentication settings.',
+                ['httpAddress' => $this->http_address]
+            ));
         }
     }
-
-
 }

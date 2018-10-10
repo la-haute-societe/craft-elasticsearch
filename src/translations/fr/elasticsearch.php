@@ -22,10 +22,12 @@
  */
 return [
     // Settings
+    'Elasticsearch connection'                                                                                               => 'Connexion à Elasticsearch',
+    'Could not connect to the Elasticsearch server at {httpAddress}. Please check the host and authentication settings.'     => 'Impossible de se connecter au serveur Elasticsearch {httpAddress}. Veuillez vérifier le nom d\'hôte et les paramètres d\'authentification.',
     'Host'                                                                                                                   => 'Hôte',
     'Host is required'                                                                                                       => 'L\'hôte est obligatoire',
+    'Authentication required'                                                                                                => 'Authentification requise',
     'Elasticsearch hostname or IP and port (ie. elastic.example.com:9200)'                                                   => 'Nom d\'hôte ou IP et port de l\'instance Elasticsearch (ex. elastic.example.com:9200)',
-    'Authorizations parameters (optional)'                                                                                   => 'Paramètres d\'autorisations (facultatif)',
     'Username'                                                                                                               => 'Nom d\'utilisateur',
     'Password'                                                                                                               => 'Mot de passe',
     'Search term highlight'                                                                                                  => 'Mise en avant des résultats',
