@@ -19,6 +19,7 @@ use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\queue\Queue;
 use craft\services\Plugins;
 use craft\services\UserPermissions;
 use craft\services\Utilities;
@@ -26,14 +27,15 @@ use craft\web\Application;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use lhs\elasticsearch\exceptions\IndexEntryException;
-use lhs\elasticsearch\jobs\IndexElement as IndexElementJob;
 use lhs\elasticsearch\models\Settings;
 use lhs\elasticsearch\services\Elasticsearch as ElasticsearchService;
+use lhs\elasticsearch\services\ReindexQueueManagement;
 use lhs\elasticsearch\utilities\ElasticsearchUtilities;
 use lhs\elasticsearch\variables\ElasticsearchVariable;
 use yii\base\Event;
 use yii\elasticsearch\Connection;
 use yii\elasticsearch\DebugPanel;
+use yii\queue\ExecEvent;
 
 /**
  * Craft plugins are very much like little applications in and of themselves. We’ve made
@@ -50,6 +52,7 @@ use yii\elasticsearch\DebugPanel;
  * @since     1.0.0
  *
  * @property  services\Elasticsearch service
+ * @property  services\ReindexQueueManagement reindexQueueManagementService
  * @property  Settings               settings
  * @property  Connection             elasticsearch
  * @method    Settings getSettings()
@@ -72,16 +75,17 @@ class Elasticsearch extends Plugin
 
         $this->setComponents([
             'service' => ElasticsearchService::class,
+            'reindexQueueManagementService' => ReindexQueueManagement::class,
         ]);
 
         $this->initializeElasticConnector();
 
-        // Add in our console commands
+        // Add console commands
         if (Craft::$app instanceof ConsoleApplication) {
             $this->controllerNamespace = 'lhs\elasticsearch\console\controllers';
         }
 
-        // Register our variables
+        // Register variables
         Event::on(
             CraftVariable::class,
             CraftVariable::EVENT_INIT,
@@ -103,7 +107,7 @@ class Elasticsearch extends Plugin
             }
         );
 
-        // Index entries on save (creation or update)
+        // Index entry upon save (creation or update)
         Event::on(
             Element::class,
             Element::EVENT_AFTER_SAVE,
@@ -111,10 +115,7 @@ class Elasticsearch extends Plugin
                 $element = $event->sender;
                 if ($element instanceof Entry) {
                     if ($element->enabled) {
-                        Craft::$app->queue->push(new IndexElementJob([
-                            'siteId'    => $element->siteId,
-                            'elementId' => $element->id,
-                        ]));
+                        $this->reindexQueueManagementService->enqueueJob($element->siteId, $element->id);
                     } else {
                         $this->service->deleteEntry($element);
                     }
@@ -122,7 +123,7 @@ class Elasticsearch extends Plugin
             }
         );
 
-        // Re-index all when plugin settings are saved
+        // Re-index all entries when plugin settings are saved
         Event::on(
             Plugins::class,
             Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
@@ -130,6 +131,15 @@ class Elasticsearch extends Plugin
                 if ($event->plugin === $this) {
                     $this->onPluginSettingsSaved();
                 }
+            }
+        );
+
+        // On reindex job success, remove its id from the cache (cache is used to keep track of reindex jobs and clear those having failed before reindexing all entries)
+        Event::on(
+            Queue::class,
+            Queue::EVENT_AFTER_EXEC,
+            function (ExecEvent $event) {
+                $this->reindexQueueManagementService->removeJob($event->id);
             }
         );
 
@@ -168,7 +178,7 @@ class Elasticsearch extends Plugin
             }
         );
 
-        // Register our site routes
+        // Register our site routes (used by the console commands to reindex entries)
         Event::on(
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
@@ -254,27 +264,20 @@ class Elasticsearch extends Plugin
         );
     }
 
-    protected function enqueueReindexAllEntries()
-    {
-        $entries = $this->service->getEnabledEntries();
-
-        foreach ($entries as $entry) {
-            Craft::$app->queue->push(new IndexElementJob([
-                'siteId'    => $entry['siteId'],
-                'elementId' => $entry['entryId'],
-            ]));
-        }
-    }
-
     protected function onPluginSettingsSaved()
     {
+        /** @noinspection PhpUnhandledExceptionInspection If there was an error in the configuration, it would have prevented validation */
         $this->initializeElasticConnector();
 
         Craft::debug('Elasticsearch plugin settings saved => re-index all entries', __METHOD__);
         try {
             $this->service->recreateIndexesForAllSites();
-            $this->enqueueReindexAllEntries();
+
+            // Remove previous reindexing jobs as all entries will be reindexed anyway
+            $this->reindexQueueManagementService->clearJobs();
+            $this->reindexQueueManagementService->enqueueReindexJobs($this->service->getEnabledEntries());
         } catch (IndexEntryException $e) {
+            /** @noinspection PhpUnhandledExceptionInspection If this happens, then something is clearly very wrong */
             Craft::$app->getSession()->setError($e->getMessage());
         }
     }
