@@ -1,73 +1,95 @@
 # Elasticsearch plugin for Craft CMS 3.x
 
-Bring the power of Elasticsearch to you Craft 3 CMS project
+Bring the power of Elasticsearch to you Craft 3 CMS project.
+
+
+
 
 ## Requirements
 
 This plugin requires **Craft CMS 3.0.0-RC1** or later.
 
-In order to index data, you will need an **Elasticsearch instance 6.0** or 
-later with the Ingest attachment processor plugin activated.
+In order to index data, you will need an **Elasticsearch 6.0** (or later) 
+instance, with the Ingest attachment processor plugin activated.
 
 
-### Installation
+## Installation
 
-  - Install with Composer from your project directory:  
-    `composer require la-hautes-societe/craft-elasticsearch`
-  - In the Control Panel, go to Settings → Plugins and click the “Install” 
-    button for Elasticsearch.
+### The easy way
+
+Just install the plugin from the Craft Plugin Store.
+
+### Using Composer
+
+  - Install with Composer from your project directory: `composer require la-hautes-societe/craft-elasticsearch`
+  - In the Craft Control Panel, go to Settings → Plugins and click the **Install** button for Elasticsearch.
  
+
  
 ## Elasticsearch plugin Overview
 
-Elasticsearch plugin will automatically index each entries on your site(s).
+Elasticsearch plugin will automatically index each entry on your site(s).
 
-It will figure out the best Elasticsearch mapping for you based on your site(s)
-language. 
+It will figure out the best Elasticsearch mapping for you based on your site(s)' language. 
 
 
-## Configuring Elasticsearch plugin
 
-Go to the plugin settings and adjust the host name and port for your 
-Elasticsearch instance.
+## Configuring the Elasticsearch plugin
 
-If your instance is protected with X-Pack Security, you can provide your 
-username and passwords as well.
+You can configure the Elasticsearch plugin from the Craft Control Panel (some settings only), of from the 
+_config/elasticsearch.php_ file in your Craft installation (all settings). If a setting is defined both in the CP and in
+the configuration file, the latter takes precedence.
 
-Optionally, in the `config` folder, you can override the following plugin 
-configurations by adding a `elacticsearch.php` file as follow:
+The [src/config.php](./src/config.php), file is a configuration template to be copied to _config/elasticsearch.php_.
 
-```php
-<?php
-return [
-    'content_pattern' => '/<main id="content".*?>(.*?)<\/main>/s',
-    'highlight'       => [
-        'pre_tags'  => '<strong>',
-        'post_tags' => '</strong>',
-    ]
-];
-```
 
-  - `content_pattern`: the regular expression used to extract the relevant
-     content of the page to be indexed
-  - `highlight`: the elasticsearch configuration used to highlight query 
-    results. For more options, refer to the [elasticsearch documentation][]
+### In both the configuration file and the CP
+
+  - `http_address` _(string)_: the hostname and port (colon-separated) used to connect to the Elasticsearch server
+  - `auth_enabled` _(bool)_: a boolean indicating whether authentication in required on the Elasticsearch server
+  - `auth_username` _(string)_: the username used to authenticate on the Elasticsearch server if it's protected by
+    X-Pack Security. Useless if `auth_enabled` is set to `false`
+  - `auth_password` _(string)_: the password used to authenticate on the Elasticsearch server if it's protected by
+    X-Pack Security. Useless if `auth_enabled` is set to `false`
+  - `highlight` _(array)_: the elasticsearch configuration used to highlight query results. Only `pre_tags` and 
+    `post_tags` are configurable in the CP, advanced config must be done in the file. 
+    For more options, refer to the [elasticsearch documentation][]
+  - `blacklistedSections` _(int[])_: an array of section ids of which entries should not be indexed
+
+
+### Only in the configuration file
+
+  - `allowedIPs` _(string[])_: an array of IP addresses allowed to use the Elasticsearch console commands
+  - `allowedHosts` _(string[])_: an array of hostnames allowed to use the Elasticsearch console commands
+  - `contentExtractorCallback` _(callable)_: a callback (`function(string $entryContent): string`) used to extract the
+    content to be indexed from the full HTML source of the entry's page. The default is to extract the HTML code between
+    those 2 comments: `<!-- BEGIN elasticsearch indexed content -->` and `<!-- END elasticsearch indexed content -->`
 
 [elasticsearch documentation]: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html
 
 
-## Using the Elasticsearch plugin
 
-You can enable the search feature in your frontend templates by calling the 
+## Indexable content
+
+By default, the content indexed in each entry is between the `<!-- BEGIN elasticsearch indexed content -->` 
+and `<!-- END elasticsearch indexed content -->` HTML comments in the source of the entry page.
+
+If you're using semantic HTML in your templates, then putting your `<main>` or `<article>` element between 
+those comments should be ideal. 
+
+If you need more control over what is indexed, you'll have to set up a custom `contentExtractorCallback`.
+
+
+## Running a search
+
+The search feature can be used from a frontend template file by calling the 
 `craft.elasticsearch.results('Something to search')` variable.
-For instance, in a template `search/index.twig`, you could could use it like 
-this:
+For instance, in a template `search/index.twig`:
 
 ```twig
 {% set results = craft.elasticsearch.results(craft.app.request.get('q')) %}
 
 {% block content %}
-
     <h1>{{ "Search"|t }}</h1>
 
     <form action="{{ url('search') }}">
@@ -76,11 +98,9 @@ this:
     </form>
 
     {% if results|length %}
-
         <h2>{{ "Results"|t }}</h2>
 
         {% for result in results %}
-
             <h3>{{ result.title }}</h3>
             <p>
                 <small><a href="{{ result.url|raw }}">{{ result.url }}</a><br/>
@@ -93,7 +113,6 @@ this:
             </p>
             <hr>
         {% endfor %}
-
     {% else %}
         {% if craft.app.request.get('q') is not null %}
             <p>
@@ -101,34 +120,56 @@ this:
             </p>
         {% endif %}
     {% endif %}
-
 {% endblock %}
 ```
 
 Each entry consists of the following attributes:
-  - `id`: Unique ID of the result
-  - `title`: The page title
-  - `url`: The full url of the page
-  - `score`: The result score for the entry
-  - `highlights`: An array of highlighted contents based on the found terms 
-    from the query
+
+  - `id`: unique ID of the result
+  - `title`: page title
+  - `url`: full url to the page
+  - `score`: entry result score
+  - `highlights`: array of highlighted content matching the query terms
+
 
 
 ## Elasticsearch plugin utilities
 
 If your Elasticsearch index becomes out of sync with your sites contents, you 
-can go to Utilities → Elasticsearch then click the "Reindex all" button.
+can go to Utilities → Elasticsearch then click the **Reindex all** button.
+
+
+
+## Elasticsearch plugin console commands
+
+The plugin provides an extension to the Craft console command that lets you reindex all entries or recreate empty 
+indexes.
+
+
+### Recreate empty indexes
+
+Remove index & create an empty one for all sites
+
+````sh
+./craft/elasticsearch/elasticsearch/recreate-empty-indexes
+````
+
+Reindex all sites 
+
+````sh
+./craft elasticsearch/elasticsearch/reindex-all http://example.com
+````
+
 
 
 ## Elasticsearch plugin Roadmap
 
 * Handle dependencies update 
-* Handle multi-sites configurations
 * Detect need for re-indexation
 
 Brought to you by [![LHS Logo](resources/img/lhs.png) La Haute Société][lhs-site].
 
-[![Elastic](resources/img/elasticsearch-logo.png)](elastic-site)  
+[![Elastic](resources/img/elastic-logo.png)][elastic-site]  
 Elasticsearch is a trademark of Elasticsearch BV, registered in the U.S. and in
 other countries.
 
