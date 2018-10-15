@@ -135,6 +135,16 @@ Each entry consists of the following attributes:
 
 
 
+## Auto indexing
+
+The plugin automatically indexes entries (created, updated or removed), as long as they're not in a blacklisted section,
+or disabled.
+
+
+All entries are reindexed (in the background) when plugin settings are saved.
+
+
+
 ## Elasticsearch plugin utilities
 
 If your Elasticsearch index becomes out of sync with your sites contents, you 
