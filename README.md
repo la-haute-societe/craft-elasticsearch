@@ -2,6 +2,7 @@
 
 Bring the power of Elasticsearch to you Craft 3 CMS project.
 
+![Plugin screenshot](resources/img/plugin-screenshot.png)
 
 
 
