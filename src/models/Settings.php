@@ -33,13 +33,13 @@ class Settings extends Model
     // Public Properties
     // =========================================================================
 
-    /** @var string The hostname and port (separated by a colon `:`) used to connect to the Elasticsearch instance */
+    /** @var string The hostname and port (separated by a colon `:`) used to connect to the Elasticsearch server */
     public $http_address = 'elasticsearch:9200';
 
-    /** @var string [optional] The username used to connect to the Elasticsearch instance */
+    /** @var string [optional] The username used to connect to the Elasticsearch server */
     public $auth_username = 'elastic';
 
-    /** @var string [optional] The password used to connect to the Elasticsearch instance */
+    /** @var string [optional] The password used to connect to the Elasticsearch server */
     public $auth_password = 'MagicWord';
 
     /**
