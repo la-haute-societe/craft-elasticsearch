@@ -151,7 +151,7 @@ indexes.
 Remove index & create an empty one for all sites
 
 ````sh
-./craft/elasticsearch/elasticsearch/recreate-empty-indexes
+./craft elasticsearch/elasticsearch/recreate-empty-indexes
 ````
 
 Reindex all sites 
