@@ -43,6 +43,7 @@ the configuration file, the latter takes precedence.
 
 The [src/config.php](./src/config.php), file is a configuration template to be copied to _config/elasticsearch.php_.
 
+> 💡 If you currently don't have an Elasticsearch server handy, here's how you can [set one up](./elasticsearch-quickstart.md).
 
 ### In both the configuration file and the CP
 
