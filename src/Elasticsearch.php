@@ -115,7 +115,7 @@ class Elasticsearch extends Plugin
                 $element = $event->sender;
                 if ($element instanceof Entry) {
                     if ($element->enabled) {
-                        $this->reindexQueueManagementService->enqueueJob($element->siteId, $element->id);
+                        $this->reindexQueueManagementService->enqueueJob($element->id, $element->siteId);
                     } else {
                         $this->service->deleteEntry($element);
                     }
