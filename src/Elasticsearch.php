@@ -55,7 +55,6 @@ use yii\queue\ExecEvent;
  * @property  services\ReindexQueueManagement reindexQueueManagementService
  * @property  Settings               settings
  * @property  Connection             elasticsearch
- * @method    Settings getSettings()
  */
 class Elasticsearch extends Plugin
 {
@@ -227,7 +226,13 @@ class Elasticsearch extends Plugin
      */
     protected function createSettingsModel()
     {
-        return new Settings();
+        $siteIds = Craft::$app->sites->getAllSiteIds();
+        $settings = new Settings();
+
+        // Ensure all sites have a blacklist (at least an empty one)
+        $settings->blacklistedSections = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedSections']);
+
+        return $settings;
     }
 
     public function setSettings(array $settings)
