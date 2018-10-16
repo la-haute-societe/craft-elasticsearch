@@ -43,10 +43,11 @@ class ElasticsearchRecord extends ActiveRecord
     public static function search($query)
     {
         $queryParams = [
-            'query_string' => [
+            'multi_match' => [
                 'fields'   => ['attachment.content', 'title'],
                 'query'    => $query,
                 'analyzer' => self::siteAnalyzer(),
+                'operator' => 'and'
             ],
         ];
 
