@@ -186,6 +186,12 @@ class Elasticsearch extends Component
         $esRecord->url = $entry->url;
 
         $html = $this->getEntryIndexableContent($entry);
+        if ($html === false) {
+            $message = "Not indexing entry #{$entry->id} since it doesn't have a template.";
+            Craft::debug($message, __METHOD__);
+            return $message;
+        }
+
 
         $esRecord->content = base64_encode(trim($html));
 
@@ -358,7 +364,7 @@ class Elasticsearch extends Component
     /**
      * @param Entry $entry
      *
-     * @return string
+     * @return string|false The indexable content of the entry or `false` if the entry doesn't have a template (ie. is not indexable)
      * @throws IndexEntryException If anything goes wrong. Check the previous property of the exception to get more details
      */
     protected function getEntryIndexableContent(Entry $entry): string
@@ -401,6 +407,10 @@ class Elasticsearch extends Component
         try {
             $sectionSiteSettings = $entry->getSection()->getSiteSettings();
             $templateName = $sectionSiteSettings[$entry->siteId]->template;
+
+            if ($templateName === null) {
+                return false;
+            }
 
             try {
                 $html = trim($view->renderTemplate($templateName, [
