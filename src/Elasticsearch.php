@@ -234,6 +234,9 @@ class Elasticsearch extends Plugin
     {
         // Ensure all sites have a blacklist (at least an empty one)
         $siteIds = Craft::$app->sites->getAllSiteIds();
+        if (!isset($settings['blacklistedSections'])) {
+            $settings['blacklistedSections'] = [];
+        }
         $settings['blacklistedSections'] = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedSections']);
 
         parent::setSettings($settings);
