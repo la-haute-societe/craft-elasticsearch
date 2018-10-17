@@ -51,7 +51,6 @@ class Elasticsearch extends Component
     /**
      * Test the connection to the Elasticsearch server, optionally using the given $httpAddress instead of the one
      * currently in use in the yii2-elasticsearch instance.
-     *
      * @return boolean `true` if the connection succeeds, `false` otherwise.
      */
     public function testConnection(): bool
@@ -77,7 +76,7 @@ class Elasticsearch extends Component
 
     /**
      * Check whether or not Elasticsearch is in sync with Craft
-     *
+     * @noinspection PhpDocMissingThrowsInspection
      * @return bool `true` if Elasticsearch is in sync with Craft, `false` otherwise.
      */
     public function isIndexInSync(): bool
@@ -88,29 +87,30 @@ class Elasticsearch extends Component
             $inSync = $application->cache->getOrSet(self::getSyncCachekey(), function () {
                 Craft::debug('isIndexInSync cache miss', __METHOD__);
 
-                if ($this->testConnection() === true) {
-                    $sites = Craft::$app->getSites();
+                if ($this->testConnection() === false) {
+                    return false;
+                }
 
-                    foreach ($sites->getAllSites() as $site) {
-                        $sites->setCurrentSite($site);
-                        ElasticsearchRecord::$siteId = $site->id;
+                $sites = Craft::$app->getSites();
+                foreach ($sites->getAllSites() as $site) {
+                    $sites->setCurrentSite($site);
+                    ElasticsearchRecord::$siteId = $site->id;
 
-                        /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
-                        $blacklistedSections = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections[$site->id];
+                    /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
+                    $blacklistedSections = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections[$site->id];
 
-                        $countEntries = (int)Entry::find()
-                            ->status(Entry::STATUS_ENABLED)
-                            ->where(['not in', 'sectionId', $blacklistedSections])
-                            ->count();
-                        $countEsRecords = (int)ElasticsearchRecord::find()->count();
+                    $countEntries = (int)Entry::find()
+                        ->status(Entry::STATUS_ENABLED)
+                        ->where(['not in', 'sectionId', $blacklistedSections])
+                        ->count();
+                    $countEsRecords = (int)ElasticsearchRecord::find()->count();
 
-                        Craft::debug("Active entry count for site #{$site->id}: {$countEntries}", __METHOD__);
-                        Craft::debug("Elasticsearch record count for site #{$site->id}: {$countEsRecords}", __METHOD__);
+                    Craft::debug("Active entry count for site #{$site->id}: {$countEntries}", __METHOD__);
+                    Craft::debug("Elasticsearch record count for site #{$site->id}: {$countEsRecords}", __METHOD__);
 
-                        if ($countEntries !== $countEsRecords) {
-                            Craft::debug('Elasticsearch reindex needed!', __METHOD__);
-                            return false;
-                        }
+                    if ($countEntries !== $countEsRecords) {
+                        Craft::debug('Elasticsearch reindex needed!', __METHOD__);
+                        return false;
                     }
                 }
 
@@ -143,9 +143,7 @@ class Elasticsearch extends Component
 
     /**
      * Create an Elasticsearch index for the giver site
-     *
      * @param int $siteId
-     *
      * @throws InvalidConfigException If the `$siteId` isn't set
      * @throws InvalidConfigException If the `$siteId` isn't set
      * @throws \yii\elasticsearch\Exception If an error occurs while communicating with the Elasticsearch server
@@ -160,9 +158,7 @@ class Elasticsearch extends Component
 
     /**
      * Remove the Elasticsearch index for the given site
-     *
      * @param int $siteId
-     *
      * @throws InvalidConfigException If the `$siteId` isn't set
      */
     public function removeSiteIndex(int $siteId)
@@ -174,9 +170,7 @@ class Elasticsearch extends Component
 
     /**
      * Re-create the Elasticsearch index of sites matching any of `$siteIds`
-     *
      * @param int[] $siteIds
-     *
      * @throws InvalidConfigException If the `$siteId` isn't set
      */
     public function recreateSiteIndex(int ...$siteIds)
@@ -197,11 +191,8 @@ class Elasticsearch extends Component
 
     /**
      * Index the given `$entry` into Elasticsearch
-     *
      * @param Entry $entry
-     *
      * @return string|null A string explaining why the entry wasn't reindexed or `null` if it was reindexed
-     *
      * @throws IndexEntryException If an error occurs while getting the indexable content of the entry. Check the previous property of the exception for more details
      * @throws Exception If an error occurs while saving the record to the Elasticsearch server
      */
@@ -241,6 +232,7 @@ class Elasticsearch extends Component
         return null;
     }
 
+
     /**
      * Removes an entry from  the Elasticsearch index
      * @param Entry $entry The entry to delete
@@ -259,17 +251,15 @@ class Elasticsearch extends Component
 
     /**
      * Execute the given `$query` in the Elasticsearch index
-     *
      * @param string   $query  String to search for
      * @param int|null $siteId Site id to make the search
-     *
      * @return ElasticsearchRecord[]
      * @throws IndexEntryException
      * todo: Specific exception
      */
-    public function search($query, $siteId = null): array
+    public function search(string $query, $siteId = null): array
     {
-        if (null === $query) {
+        if ($query === null) {
             return [];
         }
 
@@ -319,7 +309,6 @@ class Elasticsearch extends Component
 
     /**
      * @param Entry $entry
-     *
      * @return ElasticsearchRecord
      */
     protected function getElasticRecordForEntry(Entry $entry): ElasticsearchRecord
@@ -338,7 +327,6 @@ class Elasticsearch extends Component
 
     /**
      * @param Entry $entry
-     *
      * @return string|false The indexable content of the entry or `false` if the entry doesn't have a template (ie. is not indexable)
      * @throws IndexEntryException If anything goes wrong. Check the previous property of the exception to get more details
      */
@@ -441,7 +429,6 @@ class Elasticsearch extends Component
 
     /**
      * @param $html
-     *
      * @return string
      */
     protected function extractIndexablePartFromEntryContent(string $html): string
@@ -460,9 +447,7 @@ class Elasticsearch extends Component
 
     /**
      * Get the reason why an entry should NOT be reindex.
-     *
      * @param Entry $entry The entry to consider for reindexing
-     *
      * @return string|null A string explaining why the entry wasn't reindexed or `null` if it was reindexed
      */
     protected function getReasonForNotReindexing(Entry $entry)
@@ -508,7 +493,6 @@ class Elasticsearch extends Component
     /**
      * @param int[]|null $siteIds An array containing the ids of sites to be or
      *                            reindexed, or `null` to reindex all sites.
-     *
      * @return array An array of entry descriptors. An entry descriptor is an
      *               associative array with the `entryId` and `siteId` keys.
      */
@@ -533,7 +517,6 @@ class Elasticsearch extends Component
 
     /**
      * Create an empty Elasticsearch index for all sites. Existing indexes will be deleted and recreated.
-     *
      * @throws IndexEntryException If the Elasticsearch index of a site cannot be recreated
      */
     public function recreateIndexesForAllSites()

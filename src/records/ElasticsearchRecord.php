@@ -26,28 +26,26 @@ class ElasticsearchRecord extends ActiveRecord
     /**
      * @inheritdoc
      */
-    public function attributes()
+    public function attributes(): array
     {
         return ['title', 'url', 'section', 'content'];
     }
 
     /**
      * Return an array of Elasticsearch records for the given query
-     *
-     * @param $query
-     *
-     * @return array|ElasticsearchRecord[]
+     * @param string $query
+     * @return ElasticsearchRecord[]
      * @throws InvalidConfigException
      * @throws \yii\elasticsearch\Exception
      */
-    public static function search($query)
+    public static function search(string $query): array
     {
         $queryParams = [
             'multi_match' => [
                 'fields'   => ['attachment.content', 'title'],
                 'query'    => $query,
                 'analyzer' => self::siteAnalyzer(),
-                'operator' => 'and'
+                'operator' => 'and',
             ],
         ];
 
@@ -62,13 +60,12 @@ class ElasticsearchRecord extends ActiveRecord
 
     /**
      * Try to guess the best Elasticsearch analyze for the current site language
-     *
      * @return string
      * @throws InvalidConfigException If the `$siteId` isn't set
      */
-    public static function siteAnalyzer()
+    public static function siteAnalyzer(): string
     {
-        if (null === static::$siteId) {
+        if (static::$siteId === null) {
             throw new InvalidConfigException('siteId was not set');
         }
 
@@ -138,18 +135,17 @@ class ElasticsearchRecord extends ActiveRecord
      * @throws \yii\db\StaleObjectException
      * @throws \yii\elasticsearch\Exception
      */
-    public function save($runValidation = true, $attributeNames = null)
+    public function save($runValidation = true, $attributeNames = null): bool
     {
         self::checkIndex();
         if (!$this->getIsNewRecord()) {
             $this->delete(); // pipeline in not supported by Document Update API :(
         }
-        return $this->insert($runValidation, $attributeNames, ["pipeline" => "attachment"]);
+        return $this->insert($runValidation, $attributeNames, ['pipeline' => 'attachment']);
     }
 
     /**
-     * Check if the Elasticsearch index already exists or created it if not
-     *
+     * Check if the Elasticsearch index already exists or create it if not
      * @throws InvalidConfigException If the `$siteId` isn't set*
      * @throws \yii\elasticsearch\Exception If the Elasticsearch index can't be created
      */
@@ -174,19 +170,17 @@ class ElasticsearchRecord extends ActiveRecord
      * @return string
      * @throws InvalidConfigException If the `$siteId` isn't set
      */
-    public static function index()
+    public static function index(): string
     {
-        if (null === static::$siteId) {
+        if (static::$siteId === null) {
             throw new InvalidConfigException('siteId was not set');
         }
-        return 'craft-entries_'.static::$siteId;
+        return 'craft-entries_' . static::$siteId;
     }
 
     /**
      * Create this model's index in Elasticsearch
-     *
      * @param bool $force
-     *
      * @throws InvalidConfigException If the `$siteId` isn't set
      * @throws \yii\elasticsearch\Exception If an error occurs while communicating with the Elasticsearch server
      */
@@ -223,7 +217,6 @@ class ElasticsearchRecord extends ActiveRecord
 
     /**
      * Delete this model's index
-     *
      * @throws InvalidConfigException If the `$siteId` isn't set
      */
     public static function deleteIndex()
@@ -239,7 +232,7 @@ class ElasticsearchRecord extends ActiveRecord
      * @return array
      * @throws InvalidConfigException If the `$siteId` isn't set
      */
-    public static function mapping()
+    public static function mapping(): array
     {
         $analyzer = self::siteAnalyzer();
 
