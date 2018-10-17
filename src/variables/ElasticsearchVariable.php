@@ -11,6 +11,7 @@
 namespace lhs\elasticsearch\variables;
 
 use lhs\elasticsearch\Elasticsearch;
+use lhs\elasticsearch\records\ElasticsearchRecord;
 
 /**
  * Elasticsearch Variable
@@ -26,24 +27,14 @@ use lhs\elasticsearch\Elasticsearch;
  */
 class ElasticsearchVariable
 {
-    // Public Methods
-    // =========================================================================
-
     /**
-     * Whatever you want to output to a Twig template can go into a Variable method.
-     * You can have as many variable functions as you want.  From any Twig template,
-     * call it like this:
-     *
-     *     {{ craft.elasticsearch.results }}
-     *
-     * Or, if your variable requires parameters from Twig:
-     *
-     *     {{ craft.elasticsearch.results(twigValue) }}
-     *
-     * @param $query
-     * @return string
+     * Execute the given `$query` in the Elasticsearch index
+     *     {{ craft.elasticsearch.results(query) }}
+     * @param string $query String to search for
+     * @return ElasticsearchRecord[]
+     * @throws \lhs\elasticsearch\exceptions\IndexEntryException
      */
-    public function results($query)
+    public function results($query): array
     {
         return Elasticsearch::getInstance()->service->search($query);
     }
