@@ -47,25 +47,68 @@ The [src/config.php](./src/config.php), file is a configuration template to be c
 
 ### In both the configuration file and the CP
 
-  - `http_address` _(string)_: the hostname and port (colon-separated) used to connect to the Elasticsearch server
-  - `auth_enabled` _(bool)_: a boolean indicating whether authentication in required on the Elasticsearch server
-  - `auth_username` _(string)_: the username used to authenticate on the Elasticsearch server if it's protected by
-    X-Pack Security. Useless if `auth_enabled` is set to `false`
-  - `auth_password` _(string)_: the password used to authenticate on the Elasticsearch server if it's protected by
-    X-Pack Security. Useless if `auth_enabled` is set to `false`
-  - `highlight` _(array)_: the elasticsearch configuration used to highlight query results. Only `pre_tags` and 
-    `post_tags` are configurable in the CP, advanced config must be done in the file. 
-    For more options, refer to the [elasticsearch documentation][]
-  - `blacklistedSections` _(int[])_: an array of section ids of which entries should not be indexed
+#### `http_address`
+Type : _string_
+ 
+The hostname and port (colon-separated) used to connect to the Elasticsearch server.
+
+
+#### `auth_enabled`
+Type : _bool_
+ 
+A boolean indicating whether authentication in required on the Elasticsearch server.
+
+
+#### `auth_username`
+Type : _string_
+ 
+The username used to authenticate on the Elasticsearch server if it's protected by 
+X-Pack Security. Useless if `auth_enabled` is set to `false`.
+
+
+#### `auth_password`
+Type : _string_
+ 
+The password used to authenticate on the Elasticsearch server if it's protected by
+X-Pack Security. Useless if `auth_enabled` is set to `false`.
+
+
+#### `highlight`
+Type : _array_
+ 
+The elasticsearch configuration used to highlight query results. Only `pre_tags` and 
+`post_tags` are configurable in the CP, advanced config must be done in the file. 
+For more options, refer to the [elasticsearch documentation][].
+
+
+#### `blacklistedSections`
+Type : _int_
+
+An array of section ids of which entries should not be indexed.
 
 
 ### Only in the configuration file
 
-  - `allowedIPs` _(string[])_: an array of IP addresses allowed to use the Elasticsearch console commands
-  - `allowedHosts` _(string[])_: an array of hostnames allowed to use the Elasticsearch console commands
-  - `contentExtractorCallback` _(callable)_: a callback (`function(string $entryContent): string`) used to extract the
-    content to be indexed from the full HTML source of the entry's page. The default is to extract the HTML code between
-    those 2 comments: `<!-- BEGIN elasticsearch indexed content -->` and `<!-- END elasticsearch indexed content -->`
+#### `allowedIPs`
+Type : _string[]_
+
+An array of IP addresses allowed to use the Elasticsearch console commands.
+
+
+#### `allowedHosts`
+Type : _string[]_
+
+An array of hostnames allowed to use the Elasticsearch console commands.
+
+
+#### `contentExtractorCallback`
+Type : _callable_
+
+A callback (`function(string $entryContent): string`) used to extract the
+content to be indexed from the full HTML source of the entry's page. 
+
+The default is to extract the HTML code between those 2 comments: 
+`<!-- BEGIN elasticsearch indexed content -->` and `<!-- END elasticsearch indexed content -->`.
 
 [elasticsearch documentation]: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html
 
