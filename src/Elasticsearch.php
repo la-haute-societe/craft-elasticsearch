@@ -53,8 +53,8 @@ use yii\queue\ExecEvent;
  *
  * @property  services\Elasticsearch service
  * @property  services\ReindexQueueManagement reindexQueueManagementService
- * @property  Settings               settings
- * @property  Connection             elasticsearch
+ * @property  Settings settings
+ * @property  Connection elasticsearch
  */
 class Elasticsearch extends Plugin
 {
@@ -73,7 +73,7 @@ class Elasticsearch extends Plugin
         parent::init();
 
         $this->setComponents([
-            'service' => ElasticsearchService::class,
+            'service'                       => ElasticsearchService::class,
             'reindexQueueManagementService' => ReindexQueueManagement::class,
         ]);
 
@@ -188,16 +188,18 @@ class Elasticsearch extends Plugin
             }
         );
 
-        // Add the Elasticsearch panel to the Yii debug bar
-        Event::on(
-            Application::class,
-            Application::EVENT_BEFORE_REQUEST,
-            function () {
-                /** @var \yii\debug\Module $debugModule */
-                $debugModule = Craft::$app->getModule('debug');
-                $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
-            }
-        );
+        if (YII_DEBUG) {
+            // Add the Elasticsearch panel to the Yii debug bar
+            Event::on(
+                Application::class,
+                Application::EVENT_BEFORE_REQUEST,
+                function () {
+                    /** @var \yii\debug\Module $debugModule */
+                    $debugModule = Craft::$app->getModule('debug');
+                    $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
+                }
+            );
+        }
 
         Craft::info("{$this->name} plugin loaded", __METHOD__);
     }
