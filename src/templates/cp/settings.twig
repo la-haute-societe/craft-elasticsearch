@@ -27,35 +27,35 @@
         label:        'Host'|t('elasticsearch'),
         instructions: 'Elasticsearch hostname or IP and port (ie. elastic.example.com:9200)'|t('elasticsearch'),
         placeholder:  'elastic.example.com:9200',
-        id:           'http_address',
-        name:         'http_address',
-        value:        settings['http_address'],
-        errors:       settings.getErrors('http_address'),
+        id:           'elasticsearchEndpoint',
+        name:         'elasticsearchEndpoint',
+        value:        settings['elasticsearchEndpoint'],
+        errors:       settings.getErrors('elasticsearchEndpoint'),
     }) }}
 
     {{ forms.lightswitchField({
         label:  'Authentication required'|t('elasticsearch'),
-        id:     'auth_enabled',
-        name:   'auth_enabled',
-        on:     settings['auth_enabled'],
+        id:     'isAuthEnabled',
+        name:   'isAuthEnabled',
+        on:     settings['isAuthEnabled'],
         toggle: 'auth_settings',
     }) }}
 
-    <div id="auth_settings"{% if not settings['auth_enabled'] %} class="hidden" {% endif %}>
+    <div id="auth_settings"{% if not settings['isAuthEnabled'] %} class="hidden" {% endif %}>
         {{ forms.textField({
             label:    'Username'|t('elasticsearch'),
-            id:       'auth_username',
-            name:     'auth_username',
-            value:    settings['auth_username'],
-            errors:   settings.getErrors('auth_username'),
+            id:       'username',
+            name:     'username',
+            value:    settings['username'],
+            errors:   settings.getErrors('username'),
         }) }}
 
         {{ forms.passwordField({
             label:    'Password'|t('elasticsearch'),
-            id:       'auth_password',
-            name:     'auth_password',
-            value:    settings['auth_password'],
-            errors:   settings.getErrors('auth_password'),
+            id:       'password',
+            name:     'password',
+            value:    settings['password'],
+            errors:   settings.getErrors('password'),
         }) }}
     </div>
 

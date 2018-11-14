@@ -120,16 +120,16 @@ class Elasticsearch extends Component
             return $inSync;
         } /** @noinspection PhpRedundantCatchClauseInspection */ catch (Exception $e) {
             /** @noinspection NullPointerExceptionInspection */
-            $elasticHost = ElasticsearchPlugin::getInstance()->getSettings()->http_address;
+            $elasticsearchEndpoint = ElasticsearchPlugin::getInstance()->getSettings()->elasticsearchEndpoint;
 
-            Craft::error(sprintf('Cannot connect to Elasticsearch host "%s".', $elasticHost), __METHOD__);
+            Craft::error(sprintf('Cannot connect to Elasticsearch host "%s".', $elasticsearchEndpoint), __METHOD__);
 
             if ($application instanceof Application) {
                 /** @noinspection PhpUnhandledExceptionInspection Cannot happen as craft\web\getSession() never throws */
                 $application->getSession()->setError(Craft::t(
                     ElasticsearchPlugin::PLUGIN_HANDLE,
-                    'Could not connect to the Elasticsearch server at {httpAddress}. Please check the host and authentication settings.',
-                    ['httpAddress' => $elasticHost]
+                    'Could not connect to the Elasticsearch server at {elasticsearchEndpoint}. Please check the host and authentication settings.',
+                    ['elasticsearchEndpoint' => $elasticsearchEndpoint]
                 ));
             }
 
@@ -265,6 +265,7 @@ class Elasticsearch extends Component
      *
      * @return ElasticsearchRecord[]
      * @throws IndexEntryException
+     * todo: Specific exception
      */
     public function search($query, $siteId = null): array
     {

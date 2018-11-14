@@ -58,14 +58,14 @@ class CpController extends Controller
         if (Elasticsearch::getInstance()->service->testConnection() === true) {
             Craft::$app->session->setNotice(Craft::t(
                 Elasticsearch::TRANSLATION_CATEGORY,
-                'Successfully connected to {http_address}',
-                ['http_address' => $settings->http_address]
+                'Successfully connected to {elasticsearchEndpoint}',
+                ['elasticsearchEndpoint' => $settings->elasticsearchEndpoint]
             ));
         } else {
             Craft::$app->session->setError(Craft::t(
                 Elasticsearch::TRANSLATION_CATEGORY,
-                'Could not establish connection with {http_address}',
-                ['http_address' => $settings->http_address]
+                'Could not establish connection with {elasticsearchEndpoint}',
+                ['elasticsearchEndpoint' => $settings->elasticsearchEndpoint]
             ));
         }
 

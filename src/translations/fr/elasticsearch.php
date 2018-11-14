@@ -46,8 +46,8 @@ return [
     'plugin\'s settings'                                                                                                     => 'paramètres du plugin',
 
     // Connection test
-    'Successfully connected to {http_address}'                                                                               => 'Connecté à {http_address} avec succès',
-    'Could not establish connection with {http_address}'                                                                     => 'Impossible d\'établir la connexion avec {http_address}',
+    'Successfully connected to {elasticsearchEndpoint}'                                                                               => 'Connecté à {elasticsearchEndpoint} avec succès',
+    'Could not establish connection with {elasticsearchEndpoint}'                                                                     => 'Impossible d\'établir la connexion avec {elasticsearchEndpoint}',
 
 
     // Jobs

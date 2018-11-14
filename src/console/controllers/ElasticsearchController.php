@@ -27,7 +27,7 @@ use yii\console\ExitCode;
 use yii\helpers\Console;
 
 /**
- * Allow various operation for elastisearch index
+ * Allow various operation for elasticsearch index
  *
  * @author    Alban Jubert
  * @package   Elasticsearch

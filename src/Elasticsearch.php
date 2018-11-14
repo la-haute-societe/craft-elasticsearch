@@ -243,15 +243,48 @@ class Elasticsearch extends Plugin
         return $connection;
     }
 
-    // Protected Methods
-    // =========================================================================
+
+    /**
+     * Initialize the Elasticsearch connector
+     * @param Settings $settings
+     * @throws \yii\base\InvalidConfigException If the configuration passed to the yii2-elasticsearch module is invalid
+     */
+    public function initializeElasticConnector($settings = null)
+    {
+        if ($settings === null) {
+            $settings = $this->getSettings();
+        }
+
+        $definition = [
+            'class'             => Connection::class,
+            'connectionTimeout' => 10,
+            'autodetectCluster' => false,
+            'nodes'             => [
+                [
+                    'protocol'     => 'https',
+                    'http_address' => $settings->elasticsearchEndpoint,
+                    'http'         => ['publish_address' => $settings->elasticsearchEndpoint],
+                ],
+            ],
+        ];
+
+        if ($settings->isAuthEnabled) {
+            $definition['auth'] = [
+                'username' => $settings->username,
+                'password' => $settings->password,
+            ];
+        }
+
+        Craft::$app->set(self::APP_COMPONENT_NAME, $definition);
+    }
+
 
     /**
      * Creates and returns the model used to store the plugin’s settings.
      *
-     * @return \craft\base\Model|null
+     * @return Settings
      */
-    protected function createSettingsModel()
+    protected function createSettingsModel(): Settings
     {
         $siteIds = Craft::$app->sites->getAllSiteIds();
         $settings = new Settings();
@@ -315,39 +348,5 @@ class Elasticsearch extends Plugin
             /** @noinspection PhpUnhandledExceptionInspection This method should only be called in a web context so Craft::$app->getSession() will never throw */
             Craft::$app->getSession()->setError($e->getMessage());
         }
-    }
-
-    /**
-     * Initialize the Elasticsearch connector
-     * @param Settings $settings
-     * @throws \yii\base\InvalidConfigException If the configuration passed to the yii2-elasticsearch module is invalid
-     */
-    public function initializeElasticConnector($settings = null)
-    {
-        if ($settings === null) {
-            $settings = $this->getSettings();
-        }
-
-        $definition = [
-            'class'             => Connection::class,
-            'connectionTimeout' => 10,
-            'autodetectCluster' => false,
-            'nodes'             => [
-                [
-                    'protocol'     => 'https',
-                    'http_address' => $settings->http_address,
-                    'http'         => ['publish_address' => $settings->http_address],
-                ],
-            ],
-        ];
-
-        if ($settings->auth_enabled) {
-            $definition['auth'] = [
-                'username' => $settings->auth_username,
-                'password' => $settings->auth_password,
-            ];
-        }
-
-        Craft::$app->set(self::APP_COMPONENT_NAME, $definition);
     }
 }

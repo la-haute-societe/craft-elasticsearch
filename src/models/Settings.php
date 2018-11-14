@@ -35,16 +35,16 @@ class Settings extends Model
     // =========================================================================
 
     /** @var string The hostname and port (separated by a colon `:`) used to connect to the Elasticsearch server */
-    public $http_address = 'elasticsearch:9200';
+    public $elasticsearchEndpoint = 'elasticsearch:9200';
 
     /** @var string [optional] The username used to connect to the Elasticsearch server */
-    public $auth_username = 'elastic';
+    public $username = 'elastic';
 
     /** @var string [optional] The password used to connect to the Elasticsearch server */
-    public $auth_password = 'MagicWord';
+    public $password = 'MagicWord';
 
     /** @var bool A boolean indicating whether authentication to the Elasticsearch server is required */
-    public $auth_enabled = false;
+    public $isAuthEnabled = false;
 
     /**
      * @var callable A callback used to extract the indexable content from a page source code.
@@ -83,12 +83,12 @@ class Settings extends Model
     public function rules()
     {
         return [
-            ['http_address', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Host is required')],
-            ['http_address', 'string'],
-            ['auth_enabled', 'boolean'],
-            ['http_address', 'default', 'value' => 'elasticsearch.example.com:9200'],
-            [['auth_username', 'auth_password'], 'string'],
-            [['auth_username', 'auth_password'], 'trim'],
+            ['elasticsearchEndpoint', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Host is required')],
+            ['elasticsearchEndpoint', 'string'],
+            ['isAuthEnabled', 'boolean'],
+            ['elasticsearchEndpoint', 'default', 'value' => 'elasticsearch.example.com:9200'],
+            [['username', 'password'], 'string'],
+            [['username', 'password'], 'trim'],
         ];
     }
 
@@ -114,8 +114,8 @@ class Settings extends Model
         } catch (InvalidConfigException $e) {
             $this->addError('global', Craft::t(
                 Elasticsearch::TRANSLATION_CATEGORY,
-                'Could not connect to the Elasticsearch server at {httpAddress}. Please check the host and authentication settings.',
-                ['httpAddress' => $this->http_address]
+                'Could not connect to the Elasticsearch server at {elasticsearchEndpoint}. Please check the host and authentication settings.',
+                ['elasticsearchEndpoint' => $this->elasticsearchEndpoint]
             ));
         }
     }
