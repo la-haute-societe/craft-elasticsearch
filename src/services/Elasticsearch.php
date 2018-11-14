@@ -57,9 +57,14 @@ class Elasticsearch extends Component
     public function testConnection(): bool
     {
         $elasticConnection = ElasticsearchPlugin::getConnection();
+        if (count($elasticConnection->nodes) < 1) {
+            return false;
+        }
 
         try {
             $elasticConnection->open();
+            $elasticConnection->activeNode = array_keys($elasticConnection->nodes)[0];
+            $elasticConnection->getNodeInfo();
             return true;
         } catch (\Exception $e) {
             return false;
