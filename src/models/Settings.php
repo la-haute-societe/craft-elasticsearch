@@ -12,7 +12,6 @@ namespace lhs\elasticsearch\models;
 
 use Craft;
 use craft\base\Model;
-use RuntimeException;
 use lhs\elasticsearch\Elasticsearch;
 use yii\base\InvalidConfigException;
 
@@ -100,9 +99,7 @@ class Settings extends Model
 
         // Create a new instance of the Elasticsearch connector with the freshly-submitted url and auth settings
         $elasticsearchPlugin = Elasticsearch::getInstance();
-        if ($elasticsearchPlugin === null) {
-            throw new RuntimeException('');
-        }
+        assert($elasticsearchPlugin !== null, 'Elasticseach::getInstance() should always return the plugin instance when called from the plugin\'s code.');
 
         try {
             $elasticsearchPlugin->initializeElasticConnector($this);
