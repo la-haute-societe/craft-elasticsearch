@@ -17,13 +17,16 @@ use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
 use craft\records\Site;
 use craft\services\Sites;
+use craft\web\Application;
 use craft\web\View;
 use DateTime;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
+use lhs\elasticsearch\events\ErrorEvent;
 use lhs\elasticsearch\exceptions\IndexEntryException;
 use lhs\elasticsearch\records\ElasticsearchRecord;
 use Twig_Error_Loader;
 use yii\base\InvalidConfigException;
+use yii\elasticsearch\Connection;
 use yii\elasticsearch\Exception;
 use yii\helpers\VarDumper;
 
@@ -60,8 +63,7 @@ class Elasticsearch extends Component
             return true;
         } catch (\Exception $e) {
             return false;
-        }
-        finally {
+        } finally {
             $elasticConnection->close();
         }
     }
@@ -73,39 +75,59 @@ class Elasticsearch extends Component
      */
     public function isIndexInSync(): bool
     {
-        $inSync = Craft::$app->cache->getOrSet(self::getSyncCachekey(), function() {
-            Craft::debug('isIndexInSync cache miss', __METHOD__);
+        $application = Craft::$app;
 
-            if ($this->testConnection() === true) {
-                $sites = Craft::$app->getSites();
+        try {
+            $inSync = $application->cache->getOrSet(self::getSyncCachekey(), function () {
+                Craft::debug('isIndexInSync cache miss', __METHOD__);
 
-                foreach ($sites->getAllSites() as $site) {
-                    $sites->setCurrentSite($site);
-                    ElasticsearchRecord::$siteId = $site->id;
+                if ($this->testConnection() === true) {
+                    $sites = Craft::$app->getSites();
 
-                    /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
-                    $blacklistedSections = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections[$site->id];
+                    foreach ($sites->getAllSites() as $site) {
+                        $sites->setCurrentSite($site);
+                        ElasticsearchRecord::$siteId = $site->id;
 
-                    $countEntries = (int)Entry::find()
-                        ->status(Entry::STATUS_ENABLED)
-                        ->where(['not in', 'sectionId', $blacklistedSections])
-                        ->count();
-                    $countEsRecords = (int)ElasticsearchRecord::find()->count();
+                        /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
+                        $blacklistedSections = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections[$site->id];
 
-                    Craft::debug("Active entry count for site #{$site->id}: {$countEntries}", __METHOD__);
-                    Craft::debug("Elasticsearch record count for site #{$site->id}: {$countEsRecords}", __METHOD__);
+                        $countEntries = (int)Entry::find()
+                            ->status(Entry::STATUS_ENABLED)
+                            ->where(['not in', 'sectionId', $blacklistedSections])
+                            ->count();
+                        $countEsRecords = (int)ElasticsearchRecord::find()->count();
 
-                    if ($countEntries !== $countEsRecords) {
-                        Craft::debug('Elasticsearch reindex needed!', __METHOD__);
-                        return false;
+                        Craft::debug("Active entry count for site #{$site->id}: {$countEntries}", __METHOD__);
+                        Craft::debug("Elasticsearch record count for site #{$site->id}: {$countEsRecords}", __METHOD__);
+
+                        if ($countEntries !== $countEsRecords) {
+                            Craft::debug('Elasticsearch reindex needed!', __METHOD__);
+                            return false;
+                        }
                     }
                 }
+
+                return true;
+            }, 300);
+
+            return $inSync;
+        } /** @noinspection PhpRedundantCatchClauseInspection */ catch (Exception $e) {
+            /** @noinspection NullPointerExceptionInspection */
+            $elasticHost = ElasticsearchPlugin::getInstance()->getSettings()->http_address;
+
+            Craft::error(sprintf('Cannot connect to Elasticsearch host "%s".', $elasticHost), __METHOD__);
+
+            if ($application instanceof Application) {
+                /** @noinspection PhpUnhandledExceptionInspection Cannot happen as craft\web\getSession() never throws */
+                $application->getSession()->setError(Craft::t(
+                    ElasticsearchPlugin::PLUGIN_HANDLE,
+                    'Could not connect to the Elasticsearch server at {httpAddress}. Please check the host and authentication settings.',
+                    ['httpAddress' => $elasticHost]
+                ));
             }
 
-            return true;
-        }, 300);
-
-        return $inSync;
+            return false;
+        }
     }
 
 
@@ -118,7 +140,8 @@ class Elasticsearch extends Component
      * @param int $siteId
      *
      * @throws InvalidConfigException If the `$siteId` isn't set
-     * @throws Exception If an error in the communication with the Elasticsearch instance occurs
+     * @throws InvalidConfigException If the `$siteId` isn't set
+     * @throws \yii\elasticsearch\Exception If an error occurs while communicating with the Elasticsearch server
      */
     public function createSiteIndex(int $siteId)
     {
@@ -143,18 +166,22 @@ class Elasticsearch extends Component
     }
 
     /**
-     * Re-create the Elasticsearch index of each of the site matching any of `$siteIds`
+     * Re-create the Elasticsearch index of sites matching any of `$siteIds`
      *
      * @param int[] $siteIds
      *
      * @throws InvalidConfigException If the `$siteId` isn't set
-     * @throws Exception If an error in the communication with the Elasticsearch instance occurs
      */
     public function recreateSiteIndex(int ...$siteIds)
     {
         foreach ($siteIds as $siteId) {
             $this->removeSiteIndex($siteId);
-            $this->createSiteIndex($siteId);
+
+            try {
+                $this->createSiteIndex($siteId);
+            } catch (Exception $e) {
+                $this->triggerErrorEvent($e);
+            }
         }
     }
 
@@ -339,7 +366,7 @@ class Elasticsearch extends Component
 
     protected static function getSyncCachekey(): string
     {
-        return self::class.'_isSync';
+        return self::class . '_isSync';
     }
 
     /**
@@ -477,7 +504,7 @@ class Elasticsearch extends Component
         }
 
         if (preg_match('/<!-- BEGIN elasticsearch indexed content -->(.*)<!-- END elasticsearch indexed content -->/s', $html, $body)) {
-            $html = '<!DOCTYPE html>'.trim($body[1]);
+            $html = '<!DOCTYPE html>' . trim($body[1]);
         }
 
         return $html;
@@ -575,5 +602,19 @@ class Elasticsearch extends Component
         }
 
         Craft::$app->getCache()->delete(self::getSyncCachekey()); // Invalidate cache
+    }
+
+    protected function triggerErrorEvent(Exception $e)
+    {
+        if (
+            isset($e->errorInfo['responseBody']['error']['reason'])
+            && $e->errorInfo['responseBody']['error']['reason'] === 'No processor type exists with name [attachment]'
+        ) {
+            /** @noinspection NullPointerExceptionInspection */
+            ElasticsearchPlugin::getInstance()->trigger(
+                ElasticsearchPlugin::EVENT_ERROR_NO_ATTACHMENT_PROCESSOR,
+                new ErrorEvent($e)
+            );
+        }
     }
 }

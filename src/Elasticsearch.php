@@ -26,6 +26,7 @@ use craft\services\Utilities;
 use craft\web\Application;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
+use lhs\elasticsearch\events\ErrorEvent;
 use lhs\elasticsearch\exceptions\IndexEntryException;
 use lhs\elasticsearch\models\Settings;
 use lhs\elasticsearch\services\Elasticsearch as ElasticsearchService;
@@ -58,6 +59,8 @@ use yii\queue\ExecEvent;
  */
 class Elasticsearch extends Plugin
 {
+    const EVENT_ERROR_NO_ATTACHMENT_PROCESSOR = 'errorNoAttachmentProcessor';
+
     public $name = 'Elasticsearch';
 
     const PLUGIN_HANDLE = 'elasticsearch';
@@ -188,6 +191,22 @@ class Elasticsearch extends Plugin
             }
         );
 
+        // Display a flash message if the ingest attachment plugin isn't activated on the Elasticsearch instance
+        Event::on(
+            self::class,
+            self::EVENT_ERROR_NO_ATTACHMENT_PROCESSOR,
+            function () {
+                $application = Craft::$app;
+
+                if ($application instanceof \yii\web\Application) {
+                    $application->getSession()->setError(Craft::t(
+                        self::TRANSLATION_CATEGORY,
+                        'The ingest-attachment plugin seems to be missing on your Elasticsearch instance.'
+                ));
+                }
+            }
+        );
+
         if (YII_DEBUG) {
             // Add the Elasticsearch panel to the Yii debug bar
             Event::on(
@@ -287,7 +306,7 @@ class Elasticsearch extends Plugin
             $this->reindexQueueManagementService->clearJobs();
             $this->reindexQueueManagementService->enqueueReindexJobs($this->service->getEnabledEntries());
         } catch (IndexEntryException $e) {
-            /** @noinspection PhpUnhandledExceptionInspection If this happens, then something is clearly very wrong */
+            /** @noinspection PhpUnhandledExceptionInspection This method should only be called in a web context so Craft::$app->getSession() will never throw */
             Craft::$app->getSession()->setError($e->getMessage());
         }
     }
@@ -303,10 +322,17 @@ class Elasticsearch extends Plugin
             $settings = $this->getSettings();
         }
 
-        /** @noinspection PhpUnhandledExceptionInspection */
         $definition = [
             'class' => Connection::class,
-            'nodes' => [['http_address' => $settings->http_address]],
+            'connectionTimeout' => 10,
+            'autodetectCluster' => false,
+            'nodes' => [
+                [
+                    'protocol' => 'http',
+                    'http_address' => $settings->http_address,
+                    'http' => [ 'publish_address' => $settings->http_address ]
+                ],
+            ],
         ];
 
         if ($settings->auth_enabled) {
