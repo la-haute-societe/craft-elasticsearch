@@ -74,8 +74,12 @@ class ElasticsearchUtilities extends Utility
      */
     public static function badgeCount(): int
     {
-        if (!Elasticsearch::getInstance()->service->testConnection() || !Elasticsearch::getInstance()->service->isIndexInSync()) {
-            return 1;
+        try {
+            if (!Elasticsearch::getInstance()->service->testConnection() || !Elasticsearch::getInstance()->service->isIndexInSync()) {
+                return 1;
+            }
+        } catch (\Exception $e) {
+            // Noop, we sure don't want to break the Control Panel over a badge count…
         }
 
         return 0;

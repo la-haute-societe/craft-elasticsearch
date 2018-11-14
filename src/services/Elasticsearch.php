@@ -56,12 +56,12 @@ class Elasticsearch extends Component
      */
     public function testConnection(): bool
     {
-        $elasticConnection = ElasticsearchPlugin::getConnection();
-        if (count($elasticConnection->nodes) < 1) {
-            return false;
-        }
-
         try {
+            $elasticConnection = ElasticsearchPlugin::getConnection();
+            if (count($elasticConnection->nodes) < 1) {
+                return false;
+            }
+
             $elasticConnection->open();
             $elasticConnection->activeNode = array_keys($elasticConnection->nodes)[0];
             $elasticConnection->getNodeInfo();
@@ -69,7 +69,9 @@ class Elasticsearch extends Component
         } catch (\Exception $e) {
             return false;
         } finally {
-            $elasticConnection->close();
+            if (isset($elasticConnection)) {
+                $elasticConnection->close();
+            }
         }
     }
 
@@ -180,9 +182,8 @@ class Elasticsearch extends Component
     public function recreateSiteIndex(int ...$siteIds)
     {
         foreach ($siteIds as $siteId) {
-            $this->removeSiteIndex($siteId);
-
             try {
+                $this->removeSiteIndex($siteId);
                 $this->createSiteIndex($siteId);
             } catch (Exception $e) {
                 $this->triggerErrorEvent($e);
@@ -242,11 +243,9 @@ class Elasticsearch extends Component
 
     /**
      * Removes an entry from  the Elasticsearch index
-     *
-     * @param Entry $entry
-     *
-     * @return int
-     * @throws Exception
+     * @param Entry $entry The entry to delete
+     * @return int The number of rows deleted
+     * @throws Exception If the entry to be deleted cannot be found
      */
     public function deleteEntry(Entry $entry): int
     {

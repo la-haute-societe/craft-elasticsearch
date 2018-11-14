@@ -104,7 +104,11 @@ class Elasticsearch extends Plugin
             function (Event $event) {
                 /** @var entry $entry */
                 $entry = $event->sender;
-                $this->service->deleteEntry($entry);
+                try {
+                    $this->service->deleteEntry($entry);
+                } catch (Exception $e) {
+                    // Noop, the element must have already been deleted
+                }
             }
         );
 
@@ -118,7 +122,7 @@ class Elasticsearch extends Plugin
                 if ($entry->enabled) {
                     $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId);
                 } else {
-                    try{
+                    try {
                         $this->service->deleteEntry($entry);
                     } catch (Exception $e) {
                         // Noop, the element must have already been deleted
