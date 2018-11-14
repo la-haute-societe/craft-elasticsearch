@@ -34,6 +34,7 @@ use lhs\elasticsearch\variables\ElasticsearchVariable;
 use yii\base\Event;
 use yii\elasticsearch\Connection;
 use yii\elasticsearch\DebugPanel;
+use yii\elasticsearch\Exception;
 use yii\queue\ExecEvent;
 
 /**
@@ -117,7 +118,11 @@ class Elasticsearch extends Plugin
                 if ($entry->enabled) {
                     $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId);
                 } else {
-                    $this->service->deleteEntry($entry);
+                    try{
+                        $this->service->deleteEntry($entry);
+                    } catch (Exception $e) {
+                        // Noop, the element must have already been deleted
+                    }
                 }
             }
         );
