@@ -11,7 +11,6 @@
 namespace lhs\elasticsearch;
 
 use Craft;
-use craft\base\Element;
 use craft\base\Plugin;
 use craft\console\Application as ConsoleApplication;
 use craft\elements\Entry;
@@ -26,7 +25,6 @@ use craft\services\Utilities;
 use craft\web\Application;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
-use lhs\elasticsearch\events\ErrorEvent;
 use lhs\elasticsearch\exceptions\IndexEntryException;
 use lhs\elasticsearch\models\Settings;
 use lhs\elasticsearch\services\Elasticsearch as ElasticsearchService;
@@ -52,10 +50,10 @@ use yii\queue\ExecEvent;
  * @package   Elasticsearch
  * @since     1.0.0
  *
- * @property  services\Elasticsearch service
+ * @property  services\Elasticsearch          service
  * @property  services\ReindexQueueManagement reindexQueueManagementService
- * @property  Settings settings
- * @property  Connection elasticsearch
+ * @property  Settings                        settings
+ * @property  Connection                      elasticsearch
  */
 class Elasticsearch extends Plugin
 {
@@ -100,8 +98,8 @@ class Elasticsearch extends Plugin
 
         // Remove entry from the index upon deletion
         Event::on(
-            Element::class,
-            Element::EVENT_AFTER_DELETE,
+            Entry::class,
+            Entry::EVENT_AFTER_DELETE,
             function (Event $event) {
                 /** @var entry $entry */
                 $entry = $event->sender;
@@ -111,16 +109,15 @@ class Elasticsearch extends Plugin
 
         // Index entry upon save (creation or update)
         Event::on(
-            Element::class,
-            Element::EVENT_AFTER_SAVE,
+            Entry::class,
+            Entry::EVENT_AFTER_SAVE,
             function (Event $event) {
-                $element = $event->sender;
-                if ($element instanceof Entry) {
-                    if ($element->enabled) {
-                        $this->reindexQueueManagementService->enqueueJob($element->id, $element->siteId);
-                    } else {
-                        $this->service->deleteEntry($element);
-                    }
+                /** @var Entry $entry */
+                $entry = $event->sender;
+                if ($entry->enabled) {
+                    $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId);
+                } else {
+                    $this->service->deleteEntry($entry);
                 }
             }
         );
@@ -202,7 +199,7 @@ class Elasticsearch extends Plugin
                     $application->getSession()->setError(Craft::t(
                         self::TRANSLATION_CATEGORY,
                         'The ingest-attachment plugin seems to be missing on your Elasticsearch instance.'
-                ));
+                    ));
                 }
             }
         );
@@ -323,14 +320,14 @@ class Elasticsearch extends Plugin
         }
 
         $definition = [
-            'class' => Connection::class,
+            'class'             => Connection::class,
             'connectionTimeout' => 10,
             'autodetectCluster' => false,
-            'nodes' => [
+            'nodes'             => [
                 [
-                    'protocol' => 'http',
+                    'protocol'     => 'https',
                     'http_address' => $settings->http_address,
-                    'http' => [ 'publish_address' => $settings->http_address ]
+                    'http'         => ['publish_address' => $settings->http_address],
                 ],
             ],
         ];
