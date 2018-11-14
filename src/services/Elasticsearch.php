@@ -256,63 +256,6 @@ class Elasticsearch extends Component
         return ElasticsearchRecord::deleteAll(['_id' => $entry->id]);
     }
 
-    /**
-     * Recreate the Elasticsearch index of all sites and and reindex their entries
-     *
-     * @throws IndexEntryException If reindexing an entry fails for some reason.
-     */
-    public function reindexAll()
-    {
-        $sites = Craft::$app->getSites();
-
-        foreach ($sites->getAllSites() as $site) {
-            $this->reindexBySiteId($site->id);
-        }
-
-        Craft::$app->getCache()->delete(self::getSyncCachekey()); // Invalidate cache
-    }
-
-    /**
-     * Recreate the Elasticsearch index for the site having the given `$siteId` and reindex its entries
-     *
-     * @param int $siteId
-     *
-     * @throws IndexEntryException If reindexing the entry fails for some reason.
-     */
-    public function reindexBySiteId(int $siteId)
-    {
-        try {
-            $this->recreateSiteIndex($siteId);
-        } catch (\Exception $e) {
-            throw new IndexEntryException(Craft::t(
-                ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'Cannot recreate the Elasticsearch index for site #{siteId}: {previousExceptionMessage}',
-                ['siteId' => $siteId, 'previousExceptionMessage' => $e->getMessage()]
-            ));
-        }
-
-        /** @var Entry[] $entries */
-        $entries = Entry::findAll([
-            'siteId' => $siteId,
-        ]);
-
-        foreach ($entries as $entry) {
-            if ($entry->enabled) {
-                try {
-                    $this->indexEntry($entry);
-                } catch (\Exception $e) {
-                    Craft::error("Error while re-indexing entry {$entry->url}: {$e->getMessage()}", __METHOD__);
-                    Craft::error(VarDumper::dumpAsString($e), __METHOD__);
-
-                    throw new IndexEntryException(Craft::t(
-                        ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                        'Cannot reindex entry {entryUrl}: {previousExceptionMessage}',
-                        ['entryUrl' => $entry->url, 'previousExceptionMessage' => $e->getMessage()]
-                    ));
-                }
-            }
-        }
-    }
 
     /**
      * Execute the given `$query` in the Elasticsearch index
