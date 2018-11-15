@@ -144,11 +144,11 @@ If you need more control over what is indexed, you'll have to set up a custom `c
 ## Running a search
 
 The search feature can be used from a frontend template file by calling the 
-`craft.elasticsearch.results('Something to search')` variable.
+`craft.elasticsearch.search('Something to search')` variable.
 For instance, in a template `search/index.twig`:
 
 ```twig
-{% set results = craft.elasticsearch.results(craft.app.request.get('q')) %}
+{% set results = craft.elasticsearch.search(craft.app.request.get('q')) %}
 
 {% block content %}
     <h1>{{ "Search"|t }}</h1>

@@ -34,8 +34,8 @@ class ElasticsearchVariable
      * @return ElasticsearchRecord[]
      * @throws \lhs\elasticsearch\exceptions\IndexEntryException
      */
-    public function results($query): array
+    public function search($query): array
     {
-        return Elasticsearch::getInstance()->service->search($query);
+        return Elasticsearch::getInstance()->service->search($query ?? '');
     }
 }
