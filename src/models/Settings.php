@@ -84,7 +84,7 @@ class Settings extends Model
     {
         return [
             ['elasticsearchEndpoint', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Endpoint URL is required')],
-            ['elasticsearchEndpoint', 'url', 'defaultScheme' => 'http'],
+            ['elasticsearchEndpoint', 'url', 'defaultScheme' => 'http', 'pattern' => '/^{schemes}:\/\/(([A-Z0-9][A-Z0-9_-]*)(\.?[A-Z0-9][A-Z0-9_-]*)+)(?::\d{1,5})?(?:$|[?\/#])/i'],
             ['elasticsearchEndpoint', 'default', 'value' => 'elasticsearch.example.com:9200'],
             ['isAuthEnabled', 'boolean'],
             [['username', 'password'], 'string'],
