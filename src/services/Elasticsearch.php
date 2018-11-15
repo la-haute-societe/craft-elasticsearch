@@ -26,9 +26,7 @@ use lhs\elasticsearch\exceptions\IndexEntryException;
 use lhs\elasticsearch\records\ElasticsearchRecord;
 use Twig_Error_Loader;
 use yii\base\InvalidConfigException;
-use yii\elasticsearch\Connection;
 use yii\elasticsearch\Exception;
-use yii\helpers\VarDumper;
 
 /**
  * Elasticsearch Service

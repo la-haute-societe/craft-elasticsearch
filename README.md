@@ -33,6 +33,48 @@ Elasticsearch plugin will automatically index each entry on your site(s).
 
 It will figure out the best Elasticsearch mapping for you based on your site(s)' language. 
 
+## Supported languages
+
+| Craft language | Elastic analyzer                | Notes                          |
+| -------------- | ------------------------------- | ------------------------------ |
+| ar             | arabic                          |                                |
+| hy             | armenian                        |                                |
+| eu             | basque                          |                                |
+| bn             | bengali                         |                                |
+| pt-BR          | brazilian                       |                                |
+| bg             | bulgarian                       |                                |
+| ca             | catalan                         |                                |
+| zh             | cjk                             |                                |
+| ja             | cjk                             |                                |
+| ko             | cjk                             |                                |
+| cs             | czech                           |                                |
+| da             | danish                          |                                |
+| nl             | dutch                           |                                |
+| en             | english                         |                                |
+| fi             | finnish                         |                                |
+| fr             | french                          |                                |
+| gl             | galician                        |                                |
+| de             | german                          |                                |
+| el             | greek                           |                                |
+| hi             | hindi                           |                                |
+| hu             | hungarian                       |                                |
+| id             | indonesian                      |                                |
+| ga             | irish                           |                                |
+| it             | italian                         |                                |
+| lv             | latvian                         |                                |
+| lt             | lithuanian                      |                                |
+| nb             | norwegian                       |                                |
+| fa             | persian                         |                                |
+| pt             | portuguese                      |                                |
+| ro             | romanian                        |                                |
+| ru             | russian                         |                                |
+| es             | spanish                         |                                |
+| pl             | stempel                         | analysis-stempel plugin needed |
+| sv             | swedish                         |                                |
+| tr             | turkish                         |                                |
+| th             | thai                            |                                |
+
+
 
 
 ## Configuring the Elasticsearch plugin
