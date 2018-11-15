@@ -22,7 +22,7 @@ Just install the plugin from the Craft Plugin Store.
 
 ### Using Composer
 
-  - Install with Composer from your project directory: `composer require la-hautes-societe/craft-elasticsearch`
+  - Install with Composer from your project directory: `composer require la-haute-societe/craft-elasticsearch`
   - In the Craft Control Panel, go to Settings → Plugins and click the **Install** button for Elasticsearch.
  
 
@@ -47,42 +47,46 @@ The [src/config.php](./src/config.php), file is a configuration template to be c
 
 ### In both the configuration file and the CP
 
-#### `http_address`
-Type : _string_
+#### `elasticsearchEndpoint`
+Type: _string_
  
-The hostname and port (colon-separated) used to connect to the Elasticsearch server.
+The Elasticsearch instance endpoint URL (with protocol, host and port).
+Ignored if `elasticsearchComponentConfig` is set.
 
 
-#### `auth_enabled`
-Type : _bool_
+#### `isAuthEnabled`
+Type: _bool_
  
-A boolean indicating whether authentication in required on the Elasticsearch server.
+A boolean indicating whether authentication is required on the Elasticsearch instance.  
+Ignored if `elasticsearchComponentConfig` is set.
 
 
-#### `auth_username`
-Type : _string_
+#### `username`
+Type: _string_
  
-The username used to authenticate on the Elasticsearch server if it's protected by 
-X-Pack Security. Useless if `auth_enabled` is set to `false`.
+The username used to authenticate on the Elasticsearch instance if it's protected by 
+X-Pack Security.  
+Ignored if `isAuthEnabled` is set to `false` or `elasticsearchComponentConfig` is set.
 
 
-#### `auth_password`
-Type : _string_
+#### `password`
+Type: _string_
  
-The password used to authenticate on the Elasticsearch server if it's protected by
-X-Pack Security. Useless if `auth_enabled` is set to `false`.
+The password used to authenticate on the Elasticsearch instance if it's protected by
+X-Pack Security.  
+Ignored if `isAuthEnabled` is set to `false` or `elasticsearchComponentConfig` is set.
 
 
 #### `highlight`
-Type : _array_
+Type: _array_
  
 The elasticsearch configuration used to highlight query results. Only `pre_tags` and 
-`post_tags` are configurable in the CP, advanced config must be done in the file. 
+`post_tags` are configurable in the CP, advanced config must be done in the file.  
 For more options, refer to the [elasticsearch documentation][].
 
 
 #### `blacklistedSections`
-Type : _int_
+Type: _int_
 
 An array of section ids of which entries should not be indexed.
 
@@ -90,19 +94,19 @@ An array of section ids of which entries should not be indexed.
 ### Only in the configuration file
 
 #### `allowedIPs`
-Type : _string[]_
+Type: _string[]_
 
 An array of IP addresses allowed to use the Elasticsearch console commands.
 
 
 #### `allowedHosts`
-Type : _string[]_
+Type: _string[]_
 
 An array of hostnames allowed to use the Elasticsearch console commands.
 
 
 #### `contentExtractorCallback`
-Type : _callable_
+Type: _callable_
 
 A callback (`function(string $entryContent): string`) used to extract the
 content to be indexed from the full HTML source of the entry's page. 
@@ -110,8 +114,20 @@ content to be indexed from the full HTML source of the entry's page.
 The default is to extract the HTML code between those 2 comments: 
 `<!-- BEGIN elasticsearch indexed content -->` and `<!-- END elasticsearch indexed content -->`.
 
-[elasticsearch documentation]: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html
 
+#### `elasticsearchComponentConfig`
+Type: _array_
+
+An associative array passed to the yii2-elasticsearch component Connection class constructor.  
+All public properties of the [yii2-elasticsearch component Connection class][yii2-elasticsearch] 
+can be set.  
+If this is set, the `elasticsearchEndpoint`, `username`, `password` and `isAuthEnabled` settings 
+will be ignored.
+
+     
+     
+[elasticsearch documentation]: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html
+[yii2-elasticsearch]: https://www.yiiframework.com/extension/yiisoft/yii2-elasticsearch/doc/api/2.1/yii-elasticsearch-connection#properties
 
 
 ## Indexable content
