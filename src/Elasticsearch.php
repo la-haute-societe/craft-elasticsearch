@@ -18,6 +18,8 @@ use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\helpers\StringHelper;
+use craft\helpers\UrlHelper;
 use craft\queue\Queue;
 use craft\services\Plugins;
 use craft\services\UserPermissions;
@@ -255,14 +257,17 @@ class Elasticsearch extends Plugin
             $settings = $this->getSettings();
         }
 
+        $protocol = parse_url($settings->elasticsearchEndpoint, PHP_URL_SCHEME);
+        $endpointUrlWithoutProtocol = preg_replace("#^$protocol(?:://)?#", '', $settings->elasticsearchEndpoint);
+
         $definition = [
             'class'             => Connection::class,
             'connectionTimeout' => 10,
             'autodetectCluster' => false,
             'nodes'             => [
                 [
-                    'protocol'     => 'https',
-                    'http_address' => $settings->elasticsearchEndpoint,
+                    'protocol'     => $protocol ?? 'http',
+                    'http_address' => $endpointUrlWithoutProtocol,
                     'http'         => ['publish_address' => $settings->elasticsearchEndpoint],
                 ],
             ],

@@ -24,8 +24,8 @@
 
     {{ forms.textField({
         first:        true,
-        label:        'Host'|t('elasticsearch'),
-        instructions: 'Elasticsearch hostname or IP and port (ie. elastic.example.com:9200)'|t('elasticsearch'),
+        label:        'Elasticsearch endpoint URL'|t('elasticsearch'),
+        instructions: 'The URL of the Elasticsearch instance (ie. elastic.example.com:9200)'|t('elasticsearch'),
         placeholder:  'elastic.example.com:9200',
         id:           'elasticsearchEndpoint',
         name:         'elasticsearchEndpoint',

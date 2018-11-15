@@ -34,7 +34,7 @@ class Settings extends Model
     // Public Properties
     // =========================================================================
 
-    /** @var string The hostname and port (separated by a colon `:`) used to connect to the Elasticsearch server */
+    /** @var string The Elasticsearch instance endpoint URL (with protocol, host and port) */
     public $elasticsearchEndpoint = 'elasticsearch:9200';
 
     /** @var string [optional] The username used to connect to the Elasticsearch server */
@@ -83,10 +83,10 @@ class Settings extends Model
     public function rules()
     {
         return [
-            ['elasticsearchEndpoint', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Host is required')],
-            ['elasticsearchEndpoint', 'string'],
-            ['isAuthEnabled', 'boolean'],
+            ['elasticsearchEndpoint', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Endpoint URL is required')],
+            ['elasticsearchEndpoint', 'url', 'defaultScheme' => 'http'],
             ['elasticsearchEndpoint', 'default', 'value' => 'elasticsearch.example.com:9200'],
+            ['isAuthEnabled', 'boolean'],
             [['username', 'password'], 'string'],
             [['username', 'password'], 'trim'],
         ];
@@ -114,7 +114,7 @@ class Settings extends Model
         } catch (InvalidConfigException $e) {
             $this->addError('global', Craft::t(
                 Elasticsearch::TRANSLATION_CATEGORY,
-                'Could not connect to the Elasticsearch server at {elasticsearchEndpoint}. Please check the host and authentication settings.',
+                'Could not connect to the Elasticsearch server at {elasticsearchEndpoint}. Please check the endpoint URL and authentication settings.',
                 ['elasticsearchEndpoint' => $this->elasticsearchEndpoint]
             ));
         }
