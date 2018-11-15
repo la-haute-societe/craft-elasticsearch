@@ -126,7 +126,7 @@ class Settings extends Model
         } catch (InvalidConfigException $e) {
             $this->addError('global', Craft::t(
                 Elasticsearch::TRANSLATION_CATEGORY,
-                'Could not connect to the Elasticsearch server at {elasticsearchEndpoint}. Please check the endpoint URL and authentication settings.',
+                'Could not connect to the Elasticsearch instance at {elasticsearchEndpoint}. Please check the endpoint URL and authentication settings.',
                 ['elasticsearchEndpoint' => $this->elasticsearchEndpoint]
             ));
         }
