@@ -18,6 +18,11 @@
 
 <div class="elastic-branding-container">
     <h2>{{ 'Elasticsearch connection'|t('elasticsearch') }}</h2>
+
+    {% if settings['elasticsearchComponentConfig'] is not null %}
+        <p class="light">{{ 'These settings will be ignored since <code>elasticsearchComponentConfig</code> is present in the configuration file.'|t('elasticsearch')|raw }}</p>
+    {% endif %}
+
     {% if settings.hasErrors('global') %}
         {% include "_includes/forms/errorList" with { errors: settings.getErrors('global') } %}
     {% endif %}
@@ -31,6 +36,7 @@
         name:         'elasticsearchEndpoint',
         value:        settings['elasticsearchEndpoint'],
         errors:       settings.getErrors('elasticsearchEndpoint'),
+        disabled:     settings['elasticsearchComponentConfig'] is not null,
     }) }}
 
     {{ forms.lightswitchField({
@@ -39,6 +45,7 @@
         name:   'isAuthEnabled',
         on:     settings['isAuthEnabled'],
         toggle: 'auth_settings',
+        disabled:     settings['elasticsearchComponentConfig'] is not null,
     }) }}
 
     <div id="auth_settings"{% if not settings['isAuthEnabled'] %} class="hidden" {% endif %}>
@@ -48,6 +55,7 @@
             name:     'username',
             value:    settings['username'],
             errors:   settings.getErrors('username'),
+            disabled: settings['elasticsearchComponentConfig'] is not null,
         }) }}
 
         {{ forms.passwordField({
@@ -56,6 +64,7 @@
             name:     'password',
             value:    settings['password'],
             errors:   settings.getErrors('password'),
+            disabled: settings['elasticsearchComponentConfig'] is not null,
         }) }}
     </div>
 

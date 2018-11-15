@@ -24,6 +24,7 @@ return [
     // Settings
     'Elasticsearch connection'                                                                                                               => 'Connexion à Elasticsearch',
     'Could not connect to the Elasticsearch instance at {elasticsearchEndpoint}. Please check the endpoint URL and authentication settings.' => "Impossible de se connecter a l'instance Elasticsearch {elasticsearchEndpoint}. Veuillez vérifier le nom d'hôte et les paramètres d'authentification.",
+    'These settings will be ignored since <code>elasticsearchComponentConfig</code> is present in the configuration file.'                   => 'Ces paramètre seront ignorés parce que <code>elasticsearchComponentConfig</code> est présent dans le fichier de configuration.',
     'Elasticsearch endpoint URL'                                                                                                             => "URL de l'instance Elasticsearch",
     'Endpoint URL is required'                                                                                                               => "L'URL de l'instance Elasticsearch est obligatoire",
     'Authentication required'                                                                                                                => 'Authentification requise',

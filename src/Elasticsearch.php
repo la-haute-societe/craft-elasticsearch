@@ -374,4 +374,12 @@ class Elasticsearch extends Plugin
             Craft::$app->getSession()->setError($e->getMessage());
         }
     }
+
+    public function beforeSaveSettings(): bool
+    {
+        /** @var Settings $settings */
+        $settings = $this->getSettings();
+        $settings->elasticsearchComponentConfig = null;
+        return parent::beforeSaveSettings();
+    }
 }
