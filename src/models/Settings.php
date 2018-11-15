@@ -67,6 +67,13 @@ class Settings extends Model
     /** @var array The list of IPs that are allowed to access this module. */
     public $allowedIPs = ['::1', '127.0.0.1'];
 
+    /**
+     * @var array An associative array passed to the yii2-elasticsearch component Connection class constructor.
+     * @note If this is set, the $elasticsearchEndpoint, $username, $password and $isAuthEnabled properties will be ignored.
+     * @see  https://www.yiiframework.com/extension/yiisoft/yii2-elasticsearch/doc/api/2.1/yii-elasticsearch-connection#properties
+     */
+    public $elasticsearchComponentConfig;
+
     // Public Methods
     // =========================================================================
 
@@ -94,12 +101,17 @@ class Settings extends Model
 
     public function afterValidate()
     {
+        if ($this->elasticsearchComponentConfig !== null) {
+            parent::afterValidate();
+            return;
+        }
+
         // Save the current Elasticsearch connector
         $previousElasticConnector = Craft::$app->get(Elasticsearch::APP_COMPONENT_NAME);
 
         // Create a new instance of the Elasticsearch connector with the freshly-submitted url and auth settings
         $elasticsearchPlugin = Elasticsearch::getInstance();
-        assert($elasticsearchPlugin !== null, 'Elasticseach::getInstance() should always return the plugin instance when called from the plugin\'s code.');
+        assert($elasticsearchPlugin !== null, "Elasticsearch::getInstance() should always return the plugin instance when called from the plugin's code.");
 
         try {
             $elasticsearchPlugin->initializeElasticConnector($this);
@@ -118,5 +130,7 @@ class Settings extends Model
                 ['elasticsearchEndpoint' => $this->elasticsearchEndpoint]
             ));
         }
+
+        parent::afterValidate();
     }
 }

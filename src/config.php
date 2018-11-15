@@ -31,11 +31,38 @@ return [
         'post_tags' => '</strong>',
     ],
 
-    'contentExtractorCallback' => function(string $entryContent) {
+    'contentExtractorCallback' => function (string $entryContent) {
         if (preg_match('/<!-- BEGIN elasticsearch indexed content -->(.*)<!-- END elasticsearch indexed content -->/s', $entryContent, $body)) {
-            $entryContent = '<!DOCTYPE html>'.trim($body[1]);
+            $entryContent = '<!DOCTYPE html>' . trim($body[1]);
         }
 
         return $entryContent;
     },
+
+    'elasticsearchEndpoint'        => 'https://long-hash.eu-central-1.aws.cloud.example.com:9243',
+    'username'                     => 'elastic',
+    'password'                     => 'password',
+    'isAuthEnabled'                => true,
+
+
+    // elasticsearchEndpoint, username, password and isAuthEnabled are ignore if this is set
+    'elasticsearchComponentConfig' => [
+        'autodetectCluster' => false,
+        'defaultProtocol'   => 'http',
+
+        'nodes' => [
+            [
+                'protocol'     => 'https',
+                'http_address' => 'long-hash.eu-central-1.aws.cloud.example.com:9243',
+            ],
+        ],
+
+        'auth' => [
+            'username' => 'elastic',
+            'password' => 'password',
+        ],
+
+        'connectionTimeout' => 10,
+        'dataTimeout'       => 30,
+    ],
 ];

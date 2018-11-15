@@ -257,28 +257,48 @@ class Elasticsearch extends Plugin
             $settings = $this->getSettings();
         }
 
-        $protocol = parse_url($settings->elasticsearchEndpoint, PHP_URL_SCHEME);
-        $endpointUrlWithoutProtocol = preg_replace("#^$protocol(?:://)?#", '', $settings->elasticsearchEndpoint);
+        if ($settings->elasticsearchComponentConfig !== null) {
+            $definition = $settings->elasticsearchComponentConfig;
+        } else {
+            $protocol = parse_url($settings->elasticsearchEndpoint, PHP_URL_SCHEME);
+            $endpointUrlWithoutProtocol = preg_replace("#^$protocol(?:://)?#", '', $settings->elasticsearchEndpoint);
 
-        $definition = [
-            'class'             => Connection::class,
-            'connectionTimeout' => 10,
-            'autodetectCluster' => false,
-            'nodes'             => [
-                [
-                    'protocol'     => $protocol ?? 'http',
-                    'http_address' => $endpointUrlWithoutProtocol,
-                    'http'         => ['publish_address' => $settings->elasticsearchEndpoint],
+            $definition = [
+                'connectionTimeout' => 10,
+                'autodetectCluster' => false,
+                'nodes'             => [
+                    [
+                        'protocol'     => $protocol ?? 'http',
+                        'http_address' => $endpointUrlWithoutProtocol,
+                        'http'         => ['publish_address' => $settings->elasticsearchEndpoint],
+                    ],
                 ],
-            ],
-        ];
-
-        if ($settings->isAuthEnabled) {
-            $definition['auth'] = [
-                'username' => $settings->username,
-                'password' => $settings->password,
             ];
+
+            if ($settings->isAuthEnabled) {
+                $definition['auth'] = [
+                    'username' => $settings->username,
+                    'password' => $settings->password,
+                ];
+            }
         }
+
+        $definition['class'] = Connection::class;
+
+        // Fix nodes. When cluster auto detection is disabled, the Elasticsearch component crashes when closing connections…
+        array_walk($definition['nodes'], function (&$node) {
+            if (!isset($node['http'])) {
+                $node['http'] = [];
+            }
+
+            if (!isset($node['http']['publish_address'])) {
+                $node['http']['publish_address'] = sprintf(
+                    '%s://%s',
+                    $node['protocol'] ?? 'http',
+                    $node['http_address']
+                );
+            }
+        });
 
         Craft::$app->set(self::APP_COMPONENT_NAME, $definition);
     }
