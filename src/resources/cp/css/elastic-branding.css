@@ -1,28 +1,28 @@
 .elastic-branding-container {
-    box-sizing: border-box;
-    position: relative;
+    box-sizing:     border-box;
+    position:       relative;
 
-    min-height: 100%;
+    min-height:     100%;
 
     padding-bottom: 3em;
 }
 
 .elastic-branding {
-    display: flex;
+    display:     flex;
     align-items: center;
 
-    position: absolute;
-    bottom: -48px;
-    left: 0;
-    right: 0;
+    position:    absolute;
+    bottom:      -48px;
+    left:        0;
+    right:       0;
 
-    padding: 1em 0;
+    padding:     1em 0;
 }
 
 .elastic-branding__text {
-    position: relative;
-    bottom: 2px;
+    position:     relative;
+    bottom:       2px;
 
-    color: gray;
+    color:        gray;
     padding-left: 0.5em;
 }

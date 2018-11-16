@@ -7,9 +7,9 @@
 namespace lhs\elasticsearch\exceptions;
 
 
-use \Exception;
-use Throwable;
 use Craft;
+use Exception;
+use Throwable;
 use yii\helpers\VarDumper;
 
 class IndexEntryException extends Exception

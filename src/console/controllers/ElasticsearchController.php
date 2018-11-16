@@ -13,7 +13,6 @@ namespace lhs\elasticsearch\console\controllers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Pool;
-use function GuzzleHttp\Psr7\build_query;
 use GuzzleHttp\Psr7\Request;
 use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
@@ -22,6 +21,7 @@ use Psr\Http\Message\ResponseInterface;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\helpers\Console;
+use function GuzzleHttp\Psr7\build_query;
 
 /**
  * Allow various operation for elasticsearch index
@@ -64,7 +64,7 @@ class ElasticsearchController extends Controller
 
         // Ensure that `siteBaseUrl` includes the protocol
         if (!preg_match('|^https?://.+|', $siteBaseUrl)) {
-            $siteBaseUrl = 'http://'.$siteBaseUrl;
+            $siteBaseUrl = 'http://' . $siteBaseUrl;
         }
         $httpClient = new Client();
 
@@ -149,10 +149,10 @@ class ElasticsearchController extends Controller
     {
         $reindexEntryEndpoint = "{$siteBaseUrl}/elasticsearch/reindex-entry";
 
-        $reindexEntryRequests = array_map(function($entry) use ($reindexEntryEndpoint) {
+        $reindexEntryRequests = array_map(function ($entry) use ($reindexEntryEndpoint) {
             return new Request(
                 'GET',
-                $reindexEntryEndpoint.'?'.build_query(['entryId' => $entry->entryId, 'siteId' => $entry->siteId]),
+                $reindexEntryEndpoint . '?' . build_query(['entryId' => $entry->entryId, 'siteId' => $entry->siteId]),
                 ['Accept' => 'application/json']
             );
         }, $entries);
@@ -164,10 +164,10 @@ class ElasticsearchController extends Controller
 
         $reindexEntryRequestPool = new Pool($httpClient, $reindexEntryRequests, [
             'concurrency' => 5,
-            'fulfilled'   => function() use (&$processedEntryCount, $entryCount) {
+            'fulfilled'   => function () use (&$processedEntryCount, $entryCount) {
                 Console::updateProgress(++$processedEntryCount, $entryCount);
             },
-            'rejected'    => function(ServerException $reason, $index) use (&$processedEntryCount, $entryCount, &$errorCount) {
+            'rejected'    => function (ServerException $reason, $index) use (&$processedEntryCount, $entryCount, &$errorCount) {
                 $errorCount++;
                 Console::updateProgress(++$processedEntryCount, $entryCount);
                 $this->printError($reason->getResponse(), $index);
@@ -184,7 +184,7 @@ class ElasticsearchController extends Controller
 
     protected function printError(ResponseInterface $response, int $requestIndex)
     {
-        $this->stderr(PHP_EOL.PHP_EOL);
+        $this->stderr(PHP_EOL . PHP_EOL);
         $this->stderr(sprintf(
             '%s%1$s  Request #%d failed: %d %s%1$s',
             PHP_EOL,
@@ -202,20 +202,20 @@ class ElasticsearchController extends Controller
         }
 
         if (isset($decodedResponse['error'])) {
-            $this->stderr('  '.$decodedResponse['error'].PHP_EOL, Console::BG_RED, Console::FG_GREY);
+            $this->stderr('  ' . $decodedResponse['error'] . PHP_EOL, Console::BG_RED, Console::FG_GREY);
         }
         if (isset($decodedResponse['previousMessage'])) {
-            $this->stderr('  ↳ Caused by: '.$decodedResponse['previousMessage'].PHP_EOL, Console::BG_RED, Console::FG_GREY);
+            $this->stderr('  ↳ Caused by: ' . $decodedResponse['previousMessage'] . PHP_EOL, Console::BG_RED, Console::FG_GREY);
         }
         $this->stderr(PHP_EOL);
 
         if (isset($decodedResponse['trace'])) {
-            $this->stderr(PHP_EOL.'Stack trace:'.PHP_EOL);
-            $this->stderr($decodedResponse['trace'].PHP_EOL);
+            $this->stderr(PHP_EOL . 'Stack trace:' . PHP_EOL);
+            $this->stderr($decodedResponse['trace'] . PHP_EOL);
         }
         if (isset($decodedResponse['previousTrace'])) {
-            $this->stderr(PHP_EOL.'Previous exception stack trace:'.PHP_EOL);
-            $this->stderr($decodedResponse['previousTrace'].PHP_EOL);
+            $this->stderr(PHP_EOL . 'Previous exception stack trace:' . PHP_EOL);
+            $this->stderr($decodedResponse['previousTrace'] . PHP_EOL);
         }
 
         $this->stderr(PHP_EOL);

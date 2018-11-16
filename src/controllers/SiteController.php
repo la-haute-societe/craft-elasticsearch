@@ -117,7 +117,7 @@ class SiteController extends Controller
             }
         }
 
-        Craft::warning('Access to the elasticsearch CLI utility is denied due to IP address restriction. The requesting IP address is '.$ip, __METHOD__);
+        Craft::warning('Access to the elasticsearch CLI utility is denied due to IP address restriction. The requesting IP address is ' . $ip, __METHOD__);
 
         return false;
     }

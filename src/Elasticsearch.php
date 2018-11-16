@@ -32,7 +32,6 @@ use lhs\elasticsearch\services\ReindexQueueManagement;
 use lhs\elasticsearch\utilities\ElasticsearchUtilities;
 use lhs\elasticsearch\variables\ElasticsearchVariable;
 use yii\base\Event;
-use yii\base\InvalidConfigException;
 use yii\elasticsearch\Connection;
 use yii\elasticsearch\DebugPanel;
 use yii\elasticsearch\Exception;

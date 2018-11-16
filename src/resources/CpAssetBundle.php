@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Yohann Bianchi<yohann.b@lahautesociete.com>
- * @date 21/06/2018 17:04
+ * @date   21/06/2018 17:04
  */
 
 namespace lhs\elasticsearch\resources;

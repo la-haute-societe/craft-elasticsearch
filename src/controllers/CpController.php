@@ -126,7 +126,7 @@ class CpController extends Controller
         $entries = Elasticsearch::getInstance()->service->getEnabledEntries($siteIds);
 
         // Re-format entries to keep the JS part as close as possible to Craft SearchIndexUtility's
-        array_walk($entries, function(&$entry) {
+        array_walk($entries, function (&$entry) {
             $entry = ['params' => $entry];
         });
 
