@@ -115,7 +115,7 @@ class ElasticsearchRecord extends ActiveRecord
             'zh'    => 'cjk' //Chinese
         ];
 
-        $siteLanguage = Craft::$app->language;
+        $siteLanguage = Craft::$app->getSites()->getSiteById(static::$siteId)->language;
         if (array_key_exists($siteLanguage, $availableAnalyzers)) {
             $analyzer = $availableAnalyzers[$siteLanguage];
         } else {
