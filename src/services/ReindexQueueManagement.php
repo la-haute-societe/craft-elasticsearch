@@ -11,6 +11,9 @@ use craft\base\Component;
 use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\jobs\IndexElement as IndexElementJob;
 
+/**
+ * @property array $cache
+ */
 class ReindexQueueManagement extends Component
 {
     const CACHE_KEY = Elasticsearch::PLUGIN_HANDLE . '_reindex_jobs';

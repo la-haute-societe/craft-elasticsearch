@@ -224,7 +224,7 @@ class ElasticsearchRecord extends ActiveRecord
         $db = static::getDb();
         $command = $db->createCommand();
         if ($command->indexExists(static::index())) {
-            $command->deleteIndex(static::index(), static::type());
+            $command->deleteIndex(static::index());
         }
     }
 

@@ -10,14 +10,11 @@
 
 namespace lhs\elasticsearch\console\controllers;
 
-use Craft;
-use craft\records\Site;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Pool;
 use function GuzzleHttp\Psr7\build_query;
 use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
 use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\exceptions\IndexEntryException;
@@ -59,7 +56,7 @@ class ElasticsearchController extends Controller
      * @return int A shell exit code. 0 indicated success, anything else indicates an error
      * @throws IndexEntryException If an error occurs while reindexing the entries
      */
-    public function actionReindexAll($siteBaseUrl)
+    public function actionReindexAll($siteBaseUrl): int
     {
         $this->stdout(PHP_EOL);
         $this->stdout('Craft Elasticsearch plugin | Reindex all entries', Console::FG_GREEN);
@@ -148,7 +145,7 @@ class ElasticsearchController extends Controller
      *
      * @return int A shell exit code. 0 indicated success, anything else indicates an error
      */
-    protected function reindexEntries(Client $httpClient, string $siteBaseUrl, array $entries)
+    protected function reindexEntries(Client $httpClient, string $siteBaseUrl, array $entries): int
     {
         $reindexEntryEndpoint = "{$siteBaseUrl}/elasticsearch/reindex-entry";
 
@@ -167,7 +164,7 @@ class ElasticsearchController extends Controller
 
         $reindexEntryRequestPool = new Pool($httpClient, $reindexEntryRequests, [
             'concurrency' => 5,
-            'fulfilled'   => function(Response $response, $index) use (&$processedEntryCount, $entryCount) {
+            'fulfilled'   => function() use (&$processedEntryCount, $entryCount) {
                 Console::updateProgress(++$processedEntryCount, $entryCount);
             },
             'rejected'    => function(ServerException $reason, $index) use (&$processedEntryCount, $entryCount, &$errorCount) {

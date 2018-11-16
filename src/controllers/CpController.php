@@ -17,7 +17,6 @@ use craft\records\Site;
 use craft\web\Controller;
 use craft\web\Request;
 use lhs\elasticsearch\Elasticsearch;
-use yii\elasticsearch\Exception;
 use yii\helpers\VarDumper;
 use yii\web\Response;
 
@@ -53,9 +52,12 @@ class CpController extends Controller
      */
     public function actionTestConnection(): Response
     {
-        $settings = Elasticsearch::getInstance()->getSettings();
+        $elasticsearchPlugin = Elasticsearch::getInstance();
+        assert($elasticsearchPlugin !== null, "Elasticsearch::getInstance() should always return the plugin instance when called from the plugin's code.");
 
-        if (Elasticsearch::getInstance()->service->testConnection() === true) {
+        $settings = $elasticsearchPlugin->getSettings();
+
+        if ($elasticsearchPlugin->service->testConnection() === true) {
             Craft::$app->session->setNotice(Craft::t(
                 Elasticsearch::TRANSLATION_CATEGORY,
                 'Successfully connected to {elasticsearchEndpoint}',
@@ -93,7 +95,7 @@ class CpController extends Controller
             try {
                 $siteIds = $this->getSiteIds($request);
                 Elasticsearch::getInstance()->service->recreateSiteIndex(...$siteIds);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 return $this->asErrorJson($e->getMessage());
             }
 

@@ -13,7 +13,10 @@ namespace lhs\elasticsearch\jobs;
 use Craft;
 use craft\elements\Entry;
 use craft\queue\BaseJob;
+use craft\queue\QueueInterface;
 use lhs\elasticsearch\Elasticsearch;
+use lhs\elasticsearch\exceptions\IndexEntryException;
+use yii\db\Exception;
 use yii\helpers\VarDumper;
 
 /**
@@ -68,6 +71,9 @@ class IndexElement extends BaseJob
      * jobs that needs to be done here.
      *
      * More info: https://github.com/yiisoft/yii2-queue
+     * @param \yii\queue\Queue|QueueInterface $queue The queue the job belongs to
+     * @throws IndexEntryException If an error occurs while getting the indexable content of the entry. Check the previous property of the exception for more details
+     * @throws Exception If an error occurs while saving the record to the Elasticsearch server
      */
     public function execute($queue)
     {

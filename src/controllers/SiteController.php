@@ -24,7 +24,7 @@ class SiteController extends Controller
      * @throws ForbiddenHttpException If the requesting IP or hostname is not
      *                                whitelisted.
      */
-    public function actionReindexEntry()
+    public function actionReindexEntry(): \yii\web\Response
     {
         if (!$this->checkAccess()) {
             throw new ForbiddenHttpException('You are not allowed to view this resource');
@@ -70,11 +70,9 @@ class SiteController extends Controller
 
     /**
      * @return \yii\web\Response
-     *
-     * @throws ForbiddenHttpException If the requesting IP or hostname is not
-     *                                whitelisted.
+     * @throws ForbiddenHttpException If the requesting IP or hostname is not whitelisted.
      */
-    public function actionGetAllEntries()
+    public function actionGetAllEntries(): \yii\web\Response
     {
         if (!$this->checkAccess()) {
             throw new ForbiddenHttpException('You are not allowed to view this resource');
@@ -90,10 +88,13 @@ class SiteController extends Controller
      *
      * @return bool A boolean indicating whether the request is allowed
      */
-    protected function checkAccess()
+    protected function checkAccess(): bool
     {
-        $allowedIPs = Elasticsearch::getInstance()->getSettings()->allowedIPs;
-        $allowedHosts = Elasticsearch::getInstance()->getSettings()->allowedHosts;
+        $elasticsearchPlugin = Elasticsearch::getInstance();
+        assert($elasticsearchPlugin !== null, "Elasticsearch::getInstance() should always return the plugin instance when called from the plugin's code.");
+
+        $allowedIPs = $elasticsearchPlugin->getSettings()->allowedIPs;
+        $allowedHosts = $elasticsearchPlugin->getSettings()->allowedHosts;
         $ip = Craft::$app->getRequest()->getUserIP();
 
         foreach ($allowedIPs as $filter) {

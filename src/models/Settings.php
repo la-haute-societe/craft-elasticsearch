@@ -87,7 +87,7 @@ class Settings extends Model
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             ['elasticsearchEndpoint', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Endpoint URL is required')],
@@ -120,15 +120,16 @@ class Settings extends Model
             if (!$elasticsearchPlugin->service->testConnection()) {
                 throw new InvalidConfigException('Could not connect to the Elasticsearch server.');
             }
-
-            // Clean up the mess we made to run the validation
-            Craft::$app->set(Elasticsearch::APP_COMPONENT_NAME, $previousElasticConnector);
         } catch (InvalidConfigException $e) {
             $this->addError('global', Craft::t(
                 Elasticsearch::TRANSLATION_CATEGORY,
                 'Could not connect to the Elasticsearch instance at {elasticsearchEndpoint}. Please check the endpoint URL and authentication settings.',
                 ['elasticsearchEndpoint' => $this->elasticsearchEndpoint]
             ));
+        } finally {
+            // Clean up the mess we made to run the validation
+            /** @noinspection PhpUnhandledExceptionInspection Shouldn't happen as the component to set is already initialized */
+            Craft::$app->set(Elasticsearch::APP_COMPONENT_NAME, $previousElasticConnector);
         }
 
         parent::afterValidate();

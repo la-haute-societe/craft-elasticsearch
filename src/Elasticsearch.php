@@ -18,8 +18,6 @@ use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
-use craft\helpers\StringHelper;
-use craft\helpers\UrlHelper;
 use craft\queue\Queue;
 use craft\services\Plugins;
 use craft\services\UserPermissions;
@@ -34,6 +32,7 @@ use lhs\elasticsearch\services\ReindexQueueManagement;
 use lhs\elasticsearch\utilities\ElasticsearchUtilities;
 use lhs\elasticsearch\variables\ElasticsearchVariable;
 use yii\base\Event;
+use yii\base\InvalidConfigException;
 use yii\elasticsearch\Connection;
 use yii\elasticsearch\DebugPanel;
 use yii\elasticsearch\Exception;
@@ -248,8 +247,8 @@ class Elasticsearch extends Plugin
 
     /**
      * Initialize the Elasticsearch connector
+     * @noinspection PhpDocMissingThrowsInspection Can't happen since a valid config array is passed
      * @param Settings $settings
-     * @throws \yii\base\InvalidConfigException If the configuration passed to the yii2-elasticsearch module is invalid
      */
     public function initializeElasticConnector($settings = null)
     {
@@ -300,6 +299,7 @@ class Elasticsearch extends Plugin
             }
         });
 
+        /** @noinspection PhpUnhandledExceptionInspection Can't happen since a valid config array is passed */
         Craft::$app->set(self::APP_COMPONENT_NAME, $definition);
     }
 
@@ -360,7 +360,7 @@ class Elasticsearch extends Plugin
     protected function onPluginSettingsSaved()
     {
         /** @noinspection PhpUnhandledExceptionInspection If there was an error in the configuration, it would have prevented validation */
-        $this->initializeElasticConnector();
+        $this->initializeElasticConnector(); //FIXME: Check if this is needed
 
         Craft::debug('Elasticsearch plugin settings saved => re-index all entries', __METHOD__);
         try {
