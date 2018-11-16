@@ -5,7 +5,7 @@
  * Bring the power of Elasticsearch to you Craft 3 CMS project
  *
  * @link      https://www.lahautesociete.com
- * @copyright Copyright (c) 2018 Alban Jubert
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch;
@@ -38,19 +38,6 @@ use yii\elasticsearch\Exception;
 use yii\queue\ExecEvent;
 
 /**
- * Craft plugins are very much like little applications in and of themselves. We’ve made
- * it as simple as we can, but the training wheels are off. A little prior knowledge is
- * going to be required to write a plugin.
- *
- * For the purposes of the plugin docs, we’re going to assume that you know PHP and SQL,
- * as well as some semi-advanced concepts like object-oriented programming and PHP namespaces.
- *
- * https://craftcms.com/docs/plugins/introduction
- *
- * @author    Alban Jubert
- * @package   Elasticsearch
- * @since     1.0.0
- *
  * @property  services\Elasticsearch          service
  * @property  services\ReindexQueueManagement reindexQueueManagementService
  * @property  Settings                        settings
@@ -66,11 +53,7 @@ class Elasticsearch extends Plugin
     const APP_COMPONENT_NAME = self::PLUGIN_HANDLE;
     const TRANSLATION_CATEGORY = self::PLUGIN_HANDLE;
 
-    // Public Methods
-    // =========================================================================
-
-
-    public function init()
+public function init()
     {
         parent::init();
 

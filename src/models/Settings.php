@@ -5,7 +5,7 @@
  * Bring the power of Elasticsearch to you Craft 3 CMS project
  *
  * @link      https://www.lahautesociete.com
- * @copyright Copyright (c) 2018 Alban Jubert
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\models;
@@ -16,25 +16,11 @@ use lhs\elasticsearch\Elasticsearch;
 use yii\base\InvalidConfigException;
 
 /**
- * Elasticsearch Settings Model
- *
- * This is a model used to define the plugin's settings.
- *
- * Models are containers for data. Just about every time information is passed
- * between services, controllers, and templates in Craft, it’s passed via a model.
- *
- * https://craftcms.com/docs/plugins/models
- *
- * @author    Alban Jubert
- * @package   Elasticsearch
- * @since     1.0.0
+ * Define the plugin's settings.
  */
 class Settings extends Model
 {
-    // Public Properties
-    // =========================================================================
-
-    /** @var string The Elasticsearch instance endpoint URL (with protocol, host and port) */
+/** @var string The Elasticsearch instance endpoint URL (with protocol, host and port) */
     public $elasticsearchEndpoint = 'elasticsearch:9200';
 
     /** @var string [optional] The username used to connect to the Elasticsearch server */
@@ -74,17 +60,8 @@ class Settings extends Model
      */
     public $elasticsearchComponentConfig;
 
-    // Public Methods
-    // =========================================================================
-
-    /**
+/**
      * Returns the validation rules for attributes.
-     *
-     * Validation rules are used by [[validate()]] to check if attribute values are valid.
-     * Child classes may override this method to declare different validation rules.
-     *
-     * More info: http://www.yiiframework.com/doc-2.0/guide-input-validation.html
-     *
      * @return array
      */
     public function rules(): array

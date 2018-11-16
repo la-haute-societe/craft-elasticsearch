@@ -5,7 +5,7 @@
  * Bring the power of Elasticsearch to you Craft 3 CMS project
  *
  * @link      https://www.lahautesociete.com
- * @copyright Copyright (c) 2018 Alban Jubert
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\console\controllers;
@@ -24,11 +24,7 @@ use yii\helpers\Console;
 use function GuzzleHttp\Psr7\build_query;
 
 /**
- * Allow various operation for elasticsearch index
- *
- * @author    Alban Jubert
- * @package   Elasticsearch
- * @since     1.0.0
+ * Manage Craft Elasticsearch indexes from the command line
  */
 class ElasticsearchController extends Controller
 {
@@ -43,10 +39,7 @@ class ElasticsearchController extends Controller
         return array_merge(parent::options($actionID), ['publicDomainName']);
     }
 
-    // Public Methods
-    // =========================================================================
-
-    /**
+/**
      * Reindex Craft entries into the Elasticsearch instance
      *
      * @param string $siteBaseUrl The base URL to access the site to index.

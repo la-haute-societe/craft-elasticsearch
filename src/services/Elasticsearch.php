@@ -5,7 +5,7 @@
  * Bring the power of Elasticsearch to you Craft 3 CMS project
  *
  * @link      https://www.lahautesociete.com
- * @copyright Copyright (c) 2018 Alban Jubert
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\services;
@@ -29,17 +29,8 @@ use yii\base\InvalidConfigException;
 use yii\elasticsearch\Exception;
 
 /**
- * Elasticsearch Service
- *
- * All of your plugin’s business logic should go in services, including saving data,
- * retrieving data, etc. They provide APIs that your controllers, template variables,
- * and other plugins can interact with.
- *
- * https://craftcms.com/docs/plugins/services
- *
- * @author    Alban Jubert
- * @package   Elasticsearch
- * @since     1.0.0
+ * Service used to interact with the Elasticsearch instance
+ * @todo: Split into more specialized services (index management, entry indexer…)
  */
 class Elasticsearch extends Component
 {

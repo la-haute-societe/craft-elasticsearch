@@ -1,7 +1,11 @@
 <?php
 /**
- * @author Yohann Bianchi<yohann.b@lahautesociete.com>
- * @date   21/06/2018 17:04
+ * Elasticsearch plugin for Craft CMS 3.x
+ *
+ * Bring the power of Elasticsearch to you Craft 3 CMS project
+ *
+ * @link      https://www.lahautesociete.com
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\resources;
@@ -11,22 +15,7 @@ use craft\web\AssetBundle;
 use craft\web\assets\cp\CpAsset;
 
 /**
- * CpAssetBundle
- *
- * AssetBundle represents a collection of asset files, such as CSS, JS, images.
- *
- * Each asset bundle has a unique name that globally identifies it among all asset bundles used in an application.
- * The name is the [fully qualified class name](http://php.net/manual/en/language.namespaces.rules.php)
- * of the class representing it.
- *
- * An asset bundle can depend on other asset bundles. When registering an asset bundle
- * with a view, all its dependent asset bundles will be automatically registered.
- *
- * http://www.yiiframework.com/doc-2.0/guide-structure-assets.html
- *
- * @author    La Haute Société
- * @package   Elasticsearch
- * @since     1.0.0
+ * AssetBundle used in the Control Panel
  */
 class CpAssetBundle extends AssetBundle
 {

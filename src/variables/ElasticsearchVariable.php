@@ -5,7 +5,7 @@
  * Bring the power of Elasticsearch to you Craft 3 CMS project
  *
  * @link      https://www.lahautesociete.com
- * @copyright Copyright (c) 2018 Alban Jubert
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\variables;
@@ -14,16 +14,7 @@ use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\records\ElasticsearchRecord;
 
 /**
- * Elasticsearch Variable
- *
- * Craft allows plugins to provide their own template variables, accessible from
- * the {{ craft }} global variable (e.g. {{ craft.elasticsearch }}).
- *
- * https://craftcms.com/docs/plugins/variables
- *
- * @author    Alban Jubert
- * @package   Elasticsearch
- * @since     1.0.0
+ * This Twig variable allows running searches from the frontend templates
  */
 class ElasticsearchVariable
 {

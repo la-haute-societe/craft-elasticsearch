@@ -1,6 +1,10 @@
 <?php
 /**
- * @link      http://www.lahautesociete.com
+ * Elasticsearch plugin for Craft CMS 3.x
+ *
+ * Bring the power of Elasticsearch to you Craft 3 CMS project
+ *
+ * @link      https://www.lahautesociete.com
  * @copyright Copyright (c) 2018 La Haute Société
  */
 
@@ -128,7 +132,6 @@ class ElasticsearchRecord extends ActiveRecord
     /**
      * @param bool $runValidation
      * @param null $attributeNames
-     *
      * @return bool
      * @throws InvalidConfigException
      * @throws \yii\db\Exception

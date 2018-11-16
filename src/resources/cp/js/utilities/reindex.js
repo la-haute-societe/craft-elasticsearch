@@ -1,13 +1,10 @@
 /**
- * Elasticsearch plugin for Craft CMS
+ * Elasticsearch plugin for Craft CMS 3.x
  *
- * Elasticsearch Utility JS
+ * Bring the power of Elasticsearch to you Craft 3 CMS project
  *
- * @author    La Haute Société
- * @copyright Copyright (c) 2018 La Haute Société
  * @link      https://www.lahautesociete.com
- * @package   Elasticsearch
- * @since     1.0.0
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 (

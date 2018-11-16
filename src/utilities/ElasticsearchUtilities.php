@@ -18,15 +18,7 @@ use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\resources\CpAssetBundle;
 
 /**
- * Elasticsearch Utility
- *
- * Utility is the base class for classes representing Control Panel utilities.
- *
- * https://craftcms.com/docs/plugins/utilities
- *
- * @author    La Haute Société
- * @package   Elasticsearch
- * @since     1.0.0
+ * A Control Panel utility to force reindexing site entries
  */
 class ElasticsearchUtilities extends Utility
 {

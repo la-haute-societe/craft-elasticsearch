@@ -1,7 +1,11 @@
 <?php
 /**
- * @author Yohann Bianchi<yohann.b@lahautesociete.com>
- * @date   10/07/2018 11:21
+ * Elasticsearch plugin for Craft CMS 3.x
+ *
+ * Bring the power of Elasticsearch to you Craft 3 CMS project
+ *
+ * @link      https://www.lahautesociete.com
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\controllers;
@@ -14,6 +18,11 @@ use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\exceptions\IndexEntryException;
 use yii\web\ForbiddenHttpException;
 
+/**
+ * Controller used only when reindexing using the command line utility.
+ * All actions can be accessed anonymously but only from allowed IP addresses or hosts.
+ * @see the `allowedIPs` and `allowedHosts` settings
+ */
 class SiteController extends Controller
 {
     protected $allowAnonymous = true;

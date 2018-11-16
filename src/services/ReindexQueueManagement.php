@@ -1,7 +1,11 @@
 <?php
 /**
- * @author Yohann Bianchi<yohann.b@lahautesociete.com>
- * @date   2018-10-10 12:39
+ * Elasticsearch plugin for Craft CMS 3.x
+ *
+ * Bring the power of Elasticsearch to you Craft 3 CMS project
+ *
+ * @link      https://www.lahautesociete.com
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\services;
@@ -12,6 +16,8 @@ use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\jobs\IndexElement as IndexElementJob;
 
 /**
+ * Service used to manage the reindex job queue.
+ * It allows clearing failed reindexing jobs before reindexing all entries.
  * @property array $cache
  */
 class ReindexQueueManagement extends Component

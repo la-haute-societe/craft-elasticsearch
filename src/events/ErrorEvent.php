@@ -1,7 +1,11 @@
 <?php
 /**
- * @author Yohann Bianchi<yohann.b@lahautesociete.com>
- * @date   2018-11-14 13:20
+ * Elasticsearch plugin for Craft CMS 3.x
+ *
+ * Bring the power of Elasticsearch to you Craft 3 CMS project
+ *
+ * @link      https://www.lahautesociete.com
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\events;

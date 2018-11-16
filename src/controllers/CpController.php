@@ -5,7 +5,7 @@
  * Bring the power of Elasticsearch to you Craft 3 CMS project
  *
  * @link      https://www.lahautesociete.com
- * @copyright Copyright (c) 2018 Alban Jubert
+ * @copyright Copyright (c) 2018 La Haute Société
  */
 
 namespace lhs\elasticsearch\controllers;
@@ -21,31 +21,11 @@ use yii\helpers\VarDumper;
 use yii\web\Response;
 
 /**
- * Elasticsearch Controller
- *
- * Generally speaking, controllers are the middlemen between the front end of
- * the CP/website and your plugin’s services. They contain action methods which
- * handle individual tasks.
- *
- * A common pattern used throughout Craft involves a controller action gathering
- * post data, saving it on a model, passing the model off to a service, and then
- * responding to the request appropriately depending on the service method’s response.
- *
- * Action methods begin with the prefix “action”, followed by a description of what
- * the method does (for example, actionSaveIngredient()).
- *
- * https://craftcms.com/docs/plugins/controllers
- *
- * @author    Alban Jubert
- * @package   Elasticsearch
- * @since     1.0.0
+ * Control Panel controller
  */
 class CpController extends Controller
 {
-    // Public Methods
-    // =========================================================================
-
-    /**
+/**
      * Test the elasticsearch connection
      *
      * @return Response
