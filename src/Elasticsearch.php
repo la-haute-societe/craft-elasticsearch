@@ -27,7 +27,7 @@ use lhs\elasticsearch\exceptions\IndexEntryException;
 use lhs\elasticsearch\models\Settings;
 use lhs\elasticsearch\services\Elasticsearch as ElasticsearchService;
 use lhs\elasticsearch\services\ReindexQueueManagement;
-use lhs\elasticsearch\utilities\ElasticsearchUtilities;
+use lhs\elasticsearch\utilities\RefreshElasticsearchIndexUtility;
 use lhs\elasticsearch\variables\ElasticsearchVariable;
 use yii\base\Event;
 use yii\elasticsearch\Connection;
@@ -136,7 +136,7 @@ class Elasticsearch extends Plugin
             Utilities::class,
             Utilities::EVENT_REGISTER_UTILITY_TYPES,
             function (RegisterComponentTypesEvent $event) {
-                $event->types[] = ElasticsearchUtilities::class;
+                $event->types[] = RefreshElasticsearchIndexUtility::class;
             }
         );
 

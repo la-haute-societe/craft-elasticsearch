@@ -34,6 +34,7 @@ return [
 
 
     // Utility
+    'Refresh Elasticsearch index'                                                                                                            => "Rafraîchir l'index Elasticsearch",
     'Elasticsearch index is out of sync!'                                                                                                    => "L'index Elasticsearch n'est plus synchronisé !",
     'Reindex selected'                                                                                                                       => 'Réindexer les sites sélectionnés',
     'Sites'                                                                                                                                  => 'Sites',

@@ -30,11 +30,11 @@ class CpController extends Controller
      * Test the elasticsearch connection
      *
      * @return Response
-     * @throws \yii\web\ForbiddenHttpException If the user doesn't have the utility:elasticsearch-utilities permission
+     * @throws \yii\web\ForbiddenHttpException If the user doesn't have the utility:refresh-elasticsearch-index permission
      */
     public function actionTestConnection(): Response
     {
-        $this->requirePermission('utility:elasticsearch-utilities');
+        $this->requirePermission('utility:refresh-elasticsearch-index');
 
         $elasticsearchPlugin = Elasticsearch::getInstance();
         assert($elasticsearchPlugin !== null, "Elasticsearch::getInstance() should always return the plugin instance when called from the plugin's code.");
@@ -68,7 +68,7 @@ class CpController extends Controller
      */
     public function actionReindexPerformAction(): Response
     {
-        $this->requirePermission('utility:elasticsearch-utilities');
+        $this->requirePermission('utility:refresh-elasticsearch-index');
 
         $request = Craft::$app->getRequest();
         $params = $request->getRequiredBodyParam('params');
