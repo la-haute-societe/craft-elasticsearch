@@ -88,7 +88,7 @@
     <hr>
 
     <h2>{{ 'Blacklisted sections'|t('elasticsearch') }}</h2>
-    <p>{{ 'Never index entries in the folowing sections:'|t('elasticsearch') }}</p>
+    <p>{{ 'Never index entries in the following sections:'|t('elasticsearch') }}</p>
     {% for site in craft.app.sites.getAllSites() %}
         {{ forms.checkboxSelectField({
             label:   site.name,

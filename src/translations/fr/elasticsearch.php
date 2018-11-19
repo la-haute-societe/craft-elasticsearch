@@ -30,7 +30,7 @@ return [
     'Before'                                                                                                                                 => 'Avant',
     'After'                                                                                                                                  => 'Après',
     'Blacklisted sections'                                                                                                                   => 'Sections exclues',
-    'Never index entries in the folowing sections:'                                                                                          => 'Ne pas indexer les entrées dans les sections suivantes :',
+    'Never index entries in the following sections:'                                                                                          => 'Ne pas indexer les entrées dans les sections suivantes :',
 
 
     // Utility
