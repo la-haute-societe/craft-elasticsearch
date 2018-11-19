@@ -1,3 +1,5 @@
+[![Elastic](resources/img/elastic-logo.png)][elastic-site]  
+
 # Elasticsearch plugin for Craft CMS 3.x
 
 Bring the power of Elasticsearch to you Craft 3 CMS project.
@@ -282,7 +284,6 @@ Reindex all sites
 
 Brought to you by [![LHS Logo](resources/img/lhs.png) La Haute Société][lhs-site].
 
-[![Elastic](resources/img/elastic-logo.png)][elastic-site]  
 Elasticsearch is a trademark of Elasticsearch BV, registered in the U.S. and in
 other countries.
 
