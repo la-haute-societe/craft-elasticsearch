@@ -17,10 +17,8 @@ use craft\elements\Entry;
 use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
-use craft\events\RegisterUserPermissionsEvent;
 use craft\queue\Queue;
 use craft\services\Plugins;
-use craft\services\UserPermissions;
 use craft\services\Utilities;
 use craft\web\Application;
 use craft\web\twig\variables\CraftVariable;
@@ -46,14 +44,13 @@ use yii\queue\ExecEvent;
 class Elasticsearch extends Plugin
 {
     const EVENT_ERROR_NO_ATTACHMENT_PROCESSOR = 'errorNoAttachmentProcessor';
-
-    public $name = 'Elasticsearch';
-
     const PLUGIN_HANDLE = 'elasticsearch';
     const APP_COMPONENT_NAME = self::PLUGIN_HANDLE;
     const TRANSLATION_CATEGORY = self::PLUGIN_HANDLE;
 
-public function init()
+    public $hasCpSettings = true;
+
+    public function init()
     {
         parent::init();
 
@@ -143,22 +140,6 @@ public function init()
             }
         );
 
-        // Register CP permissions
-        Event::on(
-            UserPermissions::class,
-            UserPermissions::EVENT_REGISTER_PERMISSIONS,
-            function (RegisterUserPermissionsEvent $event) {
-                $event->permissions['elasticsearch'] = [
-                    'reindex' => [
-                        'label' => Craft::t(
-                            self::TRANSLATION_CATEGORY,
-                            'Refresh Elasticsearch index'
-                        ),
-                    ],
-                ];
-            }
-        );
-
         // Register our CP routes
         Event::on(
             UrlManager::class,
@@ -231,6 +212,7 @@ public function init()
      * Initialize the Elasticsearch connector
      * @noinspection PhpDocMissingThrowsInspection Can't happen since a valid config array is passed
      * @param Settings $settings
+     * @throws \yii\base\InvalidConfigException If the configuration passed to the yii2-elasticsearch module is invalid
      */
     public function initializeElasticConnector($settings = null)
     {

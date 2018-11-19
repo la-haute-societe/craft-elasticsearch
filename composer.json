@@ -11,8 +11,10 @@
     "elasticsearch"
   ],
   "support": {
-    "docs": "https://github.com/la-haute-societe/craft-elasticsearch/blob/master/README.md",
-    "issues": "https://github.com/la-haute-societe/craft-elasticsearch/issues"
+    "docs": "https://github.com/la-haute-societe/craft-elasticsearch",
+    "issues": "https://github.com/la-haute-societe/craft-elasticsearch/issues?state=open",
+    "email": "dev@lahautesociete.com",
+    "source": "https://github.com/la-haute-societe/craft-elasticsearch"
   },
   "license": "Craft",
   "authors": [
@@ -37,9 +39,6 @@
     "name": "Elasticsearch",
     "handle": "elasticsearch",
     "schemaVersion": "1.0.0",
-    "hasCpSettings": true,
-    "hasCpSection": false,
-    "changelogUrl": "https://raw.githubusercontent.com/la-haute-societe/craft-elasticsearch/master/CHANGELOG.md",
     "components": {
       "elasticsearch": "lhs\\elasticsearch\\services\\Elasticsearch"
     },

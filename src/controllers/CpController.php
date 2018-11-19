@@ -25,13 +25,17 @@ use yii\web\Response;
  */
 class CpController extends Controller
 {
-/**
+    public $allowAnonymous = [ 'testConnection', 'reindexPerformAction' ];
+    /**
      * Test the elasticsearch connection
      *
      * @return Response
+     * @throws \yii\web\ForbiddenHttpException If the user doesn't have the utility:elasticsearch-utilities permission
      */
     public function actionTestConnection(): Response
     {
+        $this->requirePermission('utility:elasticsearch-utilities');
+
         $elasticsearchPlugin = Elasticsearch::getInstance();
         assert($elasticsearchPlugin !== null, "Elasticsearch::getInstance() should always return the plugin instance when called from the plugin's code.");
 
@@ -64,7 +68,7 @@ class CpController extends Controller
      */
     public function actionReindexPerformAction(): Response
     {
-        $this->requirePermission('elasticsearch:reindex');
+        $this->requirePermission('utility:elasticsearch-utilities');
 
         $request = Craft::$app->getRequest();
         $params = $request->getRequiredBodyParam('params');

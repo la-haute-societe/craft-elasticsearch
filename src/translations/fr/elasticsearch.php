@@ -49,10 +49,6 @@ return [
     'Index a page in Elasticsearch'                                                                                                          => "Indexation d'une page dans Elasticsearch",
 
 
-    // Permissions
-    'Refresh Elasticsearch index'                                                                                                            => "Rafraîcher l'index Elasticsearch",
-
-
     // Exceptions
     'Cannot reindex entry {entryUrl}: {previousExceptionMessage}'                                                                            => "Impossible de réindexer l'entrée {entryUrl}: {previousExceptionMessage}",
     'Cannot fetch the id of the current site. Please make sure at least one site is enabled.'                                                => "Impossible de récupérer l'id du site actuel. Assurez-vous qu'au moins un site est activé.",

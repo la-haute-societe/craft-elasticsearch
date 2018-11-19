@@ -19,14 +19,14 @@
         </p>
     {% elseif not inSync %}
         <p class="error">
-            <strong>{{ "Elasticsearch index is out of sync!"|t('elasticsearch') }}</strong>
+            <strong>{{ 'Elasticsearch index is out of sync!'|t('elasticsearch') }}</strong>
         </p>
     {% endif %}
 
     <form
             id="elasticsearch-utility"
             class="utility"
-            action="{{ url('elasticsearch/cp/reindex-perform-action') }}"
+            action="{{ actionUrl('elasticsearch/cp/reindex-perform-action') }}"
             method="post"
             accept-charset="UTF-8"
     >
