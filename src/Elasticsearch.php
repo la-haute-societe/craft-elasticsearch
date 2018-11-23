@@ -36,10 +36,10 @@ use yii\elasticsearch\Exception;
 use yii\queue\ExecEvent;
 
 /**
- * @property  services\Elasticsearch          service
+ * @property  services\Elasticsearch service
  * @property  services\ReindexQueueManagement reindexQueueManagementService
- * @property  Settings                        settings
- * @property  Connection                      elasticsearch
+ * @property  Settings settings
+ * @property  Connection elasticsearch
  */
 class Elasticsearch extends Plugin
 {
@@ -66,6 +66,110 @@ class Elasticsearch extends Plugin
             $this->controllerNamespace = 'lhs\elasticsearch\console\controllers';
         }
 
+        if (Craft::$app->getRequest()->getIsCpRequest()) {
+            // Remove entry from the index upon deletion
+            Event::on(
+                Entry::class,
+                Entry::EVENT_AFTER_DELETE,
+                function (Event $event) {
+                    /** @var entry $entry */
+                    $entry = $event->sender;
+                    try {
+                        $this->service->deleteEntry($entry);
+                    } catch (Exception $e) {
+                        // Noop, the element must have already been deleted
+                    }
+                }
+            );
+
+            // Index entry upon save (creation or update)
+            Event::on(
+                Entry::class,
+                Entry::EVENT_AFTER_SAVE,
+                function (Event $event) {
+                    /** @var Entry $entry */
+                    $entry = $event->sender;
+                    if ($entry->enabled) {
+                        $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId);
+                    } else {
+                        try {
+                            $this->service->deleteEntry($entry);
+                        } catch (Exception $e) {
+                            // Noop, the element must have already been deleted
+                        }
+                    }
+                }
+            );
+
+            // Re-index all entries when plugin settings are saved
+            Event::on(
+                Plugins::class,
+                Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
+                function (PluginEvent $event) {
+                    if ($event->plugin === $this) {
+                        $this->onPluginSettingsSaved();
+                    }
+                }
+            );
+
+            // On reindex job success, remove its id from the cache (cache is used to keep track of reindex jobs and clear those having failed before reindexing all entries)
+            Event::on(
+                Queue::class,
+                Queue::EVENT_AFTER_EXEC,
+                function (ExecEvent $event) {
+                    $this->reindexQueueManagementService->removeJob($event->id);
+                }
+            );
+
+            // Register the plugin's CP utility
+            Event::on(
+                Utilities::class,
+                Utilities::EVENT_REGISTER_UTILITY_TYPES,
+                function (RegisterComponentTypesEvent $event) {
+                    $event->types[] = RefreshElasticsearchIndexUtility::class;
+                }
+            );
+
+            // Register our CP routes
+            Event::on(
+                UrlManager::class,
+                UrlManager::EVENT_REGISTER_CP_URL_RULES,
+                function (RegisterUrlRulesEvent $event) {
+                    $event->rules['elasticsearch/cp/test-connection'] = 'elasticsearch/cp/test-connection';
+                    $event->rules['elasticsearch/cp/reindex-perform-action'] = 'elasticsearch/cp/reindex-perform-action';
+                }
+            );
+
+            // Display a flash message if the ingest attachment plugin isn't activated on the Elasticsearch instance
+            Event::on(
+                self::class,
+                self::EVENT_ERROR_NO_ATTACHMENT_PROCESSOR,
+                function () {
+                    $application = Craft::$app;
+
+                    if ($application instanceof \yii\web\Application) {
+                        $application->getSession()->setError(Craft::t(
+                            self::TRANSLATION_CATEGORY,
+                            'The ingest-attachment plugin seems to be missing on your Elasticsearch instance.'
+                        ));
+                    }
+                }
+            );
+
+            if (YII_DEBUG) {
+                // Add the Elasticsearch panel to the Yii debug bar
+                Event::on(
+                    Application::class,
+                    Application::EVENT_BEFORE_REQUEST,
+                    function () {
+                        /** @var \yii\debug\Module $debugModule */
+                        $debugModule = Craft::$app->getModule('debug');
+                        $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
+                    }
+                );
+            }
+        }
+
         // Register variables
         Event::on(
             CraftVariable::class,
@@ -74,79 +178,6 @@ class Elasticsearch extends Plugin
                 /** @var CraftVariable $variable */
                 $variable = $event->sender;
                 $variable->set('elasticsearch', ElasticsearchVariable::class);
-            }
-        );
-
-        // Remove entry from the index upon deletion
-        Event::on(
-            Entry::class,
-            Entry::EVENT_AFTER_DELETE,
-            function (Event $event) {
-                /** @var entry $entry */
-                $entry = $event->sender;
-                try {
-                    $this->service->deleteEntry($entry);
-                } catch (Exception $e) {
-                    // Noop, the element must have already been deleted
-                }
-            }
-        );
-
-        // Index entry upon save (creation or update)
-        Event::on(
-            Entry::class,
-            Entry::EVENT_AFTER_SAVE,
-            function (Event $event) {
-                /** @var Entry $entry */
-                $entry = $event->sender;
-                if ($entry->enabled) {
-                    $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId);
-                } else {
-                    try {
-                        $this->service->deleteEntry($entry);
-                    } catch (Exception $e) {
-                        // Noop, the element must have already been deleted
-                    }
-                }
-            }
-        );
-
-        // Re-index all entries when plugin settings are saved
-        Event::on(
-            Plugins::class,
-            Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
-            function (PluginEvent $event) {
-                if ($event->plugin === $this) {
-                    $this->onPluginSettingsSaved();
-                }
-            }
-        );
-
-        // On reindex job success, remove its id from the cache (cache is used to keep track of reindex jobs and clear those having failed before reindexing all entries)
-        Event::on(
-            Queue::class,
-            Queue::EVENT_AFTER_EXEC,
-            function (ExecEvent $event) {
-                $this->reindexQueueManagementService->removeJob($event->id);
-            }
-        );
-
-        // Register the plugin's CP utility
-        Event::on(
-            Utilities::class,
-            Utilities::EVENT_REGISTER_UTILITY_TYPES,
-            function (RegisterComponentTypesEvent $event) {
-                $event->types[] = RefreshElasticsearchIndexUtility::class;
-            }
-        );
-
-        // Register our CP routes
-        Event::on(
-            UrlManager::class,
-            UrlManager::EVENT_REGISTER_CP_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
-                $event->rules['elasticsearch/cp/test-connection'] = 'elasticsearch/cp/test-connection';
-                $event->rules['elasticsearch/cp/reindex-perform-action'] = 'elasticsearch/cp/reindex-perform-action';
             }
         );
 
@@ -160,35 +191,6 @@ class Elasticsearch extends Plugin
                 $event->rules['elasticsearch/reindex-entry'] = 'elasticsearch/site/reindex-entry';
             }
         );
-
-        // Display a flash message if the ingest attachment plugin isn't activated on the Elasticsearch instance
-        Event::on(
-            self::class,
-            self::EVENT_ERROR_NO_ATTACHMENT_PROCESSOR,
-            function () {
-                $application = Craft::$app;
-
-                if ($application instanceof \yii\web\Application) {
-                    $application->getSession()->setError(Craft::t(
-                        self::TRANSLATION_CATEGORY,
-                        'The ingest-attachment plugin seems to be missing on your Elasticsearch instance.'
-                    ));
-                }
-            }
-        );
-
-        if (YII_DEBUG) {
-            // Add the Elasticsearch panel to the Yii debug bar
-            Event::on(
-                Application::class,
-                Application::EVENT_BEFORE_REQUEST,
-                function () {
-                    /** @var \yii\debug\Module $debugModule */
-                    $debugModule = Craft::$app->getModule('debug');
-                    $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
-                }
-            );
-        }
 
         Craft::info("{$this->name} plugin loaded", __METHOD__);
     }
