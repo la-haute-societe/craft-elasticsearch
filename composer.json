@@ -23,11 +23,9 @@
       "homepage": "https://www.lahautesociete.com"
     }
   ],
-  "minimum-stability": "dev",
-  "prefer-stable": true,
   "require": {
     "craftcms/cms": "^3.0.0-RC1",
-    "yiisoft/yii2-elasticsearch": "^2.1.0-dev",
+    "la-haute-societe/yii2-elasticsearch": "2.1.0",
     "guzzlehttp/guzzle": "~6.3.3"
   },
   "autoload": {
