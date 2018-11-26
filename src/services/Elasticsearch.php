@@ -12,9 +12,9 @@ namespace lhs\elasticsearch\services;
 
 use Craft;
 use craft\base\Component;
-use craft\db\Query;
 use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
+use craft\helpers\ArrayHelper;
 use craft\records\Site;
 use craft\services\Sites;
 use craft\web\Application;
@@ -476,17 +476,17 @@ class Elasticsearch extends Component
             $siteIds = Craft::$app->getSites()->getAllSiteIds();
         }
 
-        $entryQuery = (new Query())
-            ->select(['{{%elements}}.id entryId', 'siteId'])
-            ->from('{{%elements}}')
-            ->join('inner join', '{{%elements_sites}}', '{{%elements}}.id = elementId')
-            ->where([
-                '{{%elements}}.type'    => Entry::class,
-                '{{%elements}}.enabled' => true,
-                'siteId'                => $siteIds,
-            ]);
+        $entries = [];
+        foreach ($siteIds as $siteId) {
+            $siteEntries = Entry::find()
+                ->select(['{{%elements}}.id as entryId', '{{%elements_sites}}.siteId'])
+                ->siteId($siteId)
+                ->asArray(true)
+                ->all();
+            $entries = ArrayHelper::merge($entries, $siteEntries);
+        }
 
-        return $entryQuery->all();
+        return $entries;
     }
 
     /**
