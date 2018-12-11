@@ -80,17 +80,17 @@ class Elasticsearch extends Component
                     return false;
                 }
 
+                /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
+                $blacklistedEntryTypes = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
+
                 $sites = Craft::$app->getSites();
                 foreach ($sites->getAllSites() as $site) {
                     $sites->setCurrentSite($site);
                     ElasticsearchRecord::$siteId = $site->id;
 
-                    /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
-                    $blacklistedSections = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections[$site->id];
-
                     $countEntries = (int)Entry::find()
                         ->status(Entry::STATUS_ENABLED)
-                        ->where(['not in', 'sectionId', $blacklistedSections])
+                        ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                         ->count();
                     $countEsRecords = (int)ElasticsearchRecord::find()->count();
 
@@ -355,7 +355,11 @@ class Elasticsearch extends Component
 
         try {
             $sectionSiteSettings = $entry->getSection()->getSiteSettings();
-            $templateName = $sectionSiteSettings[$entry->siteId]->template;
+
+            $templateName = null;
+            if (array_key_exists($entry->siteId, $sectionSiteSettings)) {
+                $templateName = $sectionSiteSettings[$entry->siteId]->template;
+            }
 
             if ($templateName === null) {
                 return false;
@@ -454,9 +458,9 @@ class Elasticsearch extends Component
         }
 
         /** @noinspection NullPointerExceptionInspection NPE cannot happen here. */
-        $blacklist = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedSections;
-        if (isset($blacklist[$entry->siteId]) && in_array($entry->sectionId, $blacklist[$entry->siteId], false)) {
-            $message = "Not indexing entry #{$entry->id} since it's in a blacklisted section.";
+        $blacklist = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
+        if (in_array($entry->typeId, $blacklist)) {
+            $message = "Not indexing entry #{$entry->id} since it's in a blacklisted entry types.";
             Craft::debug($message, __METHOD__);
             return $message;
         }

@@ -17,6 +17,7 @@ use craft\elements\Entry;
 use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
+use craft\helpers\ArrayHelper;
 use craft\queue\Queue;
 use craft\services\Plugins;
 use craft\services\Utilities;
@@ -277,26 +278,21 @@ class Elasticsearch extends Plugin
      */
     protected function createSettingsModel(): Settings
     {
-        $siteIds = Craft::$app->sites->getAllSiteIds();
         $settings = new Settings();
-
-        // Ensure all sites have a blacklist (at least an empty one)
-        $settings->blacklistedSections = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedSections']);
-
         return $settings;
     }
 
-    public function setSettings(array $settings)
-    {
-        // Ensure all sites have a blacklist (at least an empty one)
-        $siteIds = Craft::$app->sites->getAllSiteIds();
-        if (!isset($settings['blacklistedSections'])) {
-            $settings['blacklistedSections'] = [];
-        }
-        $settings['blacklistedSections'] = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedSections']);
-
-        parent::setSettings($settings);
-    }
+    //    public function setSettings(array $settings)
+    //    {
+    //        // Ensure all sites have a blacklist (at least an empty one)
+    //        $siteIds = Craft::$app->sites->getAllSiteIds();
+    //        if (!isset($settings['blacklistedSections'])) {
+    //            $settings['blacklistedSections'] = [];
+    //        }
+    //        $settings['blacklistedSections'] = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedEntryTypes']);
+    //
+    //        parent::setSettings($settings);
+    //    }
 
 
     /**
@@ -309,10 +305,13 @@ class Elasticsearch extends Plugin
      */
     protected function settingsHtml(): string
     {
-        $sections = [];
-        array_map(function ($section) use (&$sections) {
-            $sections[$section->id] = Craft::t('site', $section->name);
-        }, Craft::$app->sections->getAllSections());
+        $sections = ArrayHelper::map(Craft::$app->sections->getAllSections(), 'id', function ($data) {
+            $output = ['label' => Craft::t('site', $data->name)];
+            $output['types'] = ArrayHelper::map($data->getEntryTypes(), 'id', function ($data) {
+                return ['label' => Craft::t('site', $data->name)];
+            });
+            return $output;
+        });
 
         return Craft::$app->view->renderTemplate(
             'elasticsearch/cp/settings',

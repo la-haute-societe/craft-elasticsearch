@@ -44,8 +44,8 @@ class Settings extends Model
         'post_tags' => null,
     ];
 
-    /** @var array The list of IDs of sections which entries should not be indexed */
-    public $blacklistedSections = [];
+    /** @var array The list of IDs of which entries types should not be indexed */
+    public $blacklistedEntryTypes = [];
 
     /** @var array The list of hosts that are allowed to access this module. */
     public $allowedHosts = ['localhost'];
@@ -73,6 +73,7 @@ class Settings extends Model
             ['isAuthEnabled', 'boolean'],
             [['username', 'password'], 'string'],
             [['username', 'password'], 'trim'],
+            [['blacklistedEntryTypes'], 'safe']
         ];
     }
 

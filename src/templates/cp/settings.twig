@@ -12,7 +12,19 @@
 
 {% do view.registerAssetBundle("lhs\\elasticsearch\\resources\\CpAssetBundle") %}
 {% import "_includes/forms" as forms %}
+<style>
+    table.editable tbody tr td {
+        text-align: left;
+    }
 
+    .fieldlayoutform {
+        text-transform: none;
+    }
+
+    .fieldlayoutform h2 {
+        text-transform: uppercase;
+    }
+</style>
 <div class="elastic-branding-container">
     <h2>{{ 'Elasticsearch connection'|t('elasticsearch') }}</h2>
 
@@ -87,16 +99,40 @@
 
     <hr>
 
-    <h2>{{ 'Blacklisted sections'|t('elasticsearch') }}</h2>
-    <p>{{ 'Never index entries in the following sections:'|t('elasticsearch') }}</p>
-    {% for site in craft.app.sites.getAllSites() %}
-        {{ forms.checkboxSelectField({
-            label:   site.name,
-            name:    "blacklistedSections[#{site.id}]",
-            options: sections,
-            values:  settings['blacklistedSections'][site.id],
-        }) }}
-    {% endfor %}
+    <h2>{{ 'Blacklisted entries types'|t('elasticsearch') }}</h2>
+    <p class="light">{{ 'Never index:'|t('elasticsearch') }}</p>
+    <div class="field">
+        <table id="sites" class="shadow-box editable">
+            <thead>
+            <tr>
+                <th scope="col" class="thin">{{ 'Type'|t('elasticsearch') }}</th>
+                <th scope="col">{{ 'Section'|t('elasticsearch') }}</th>
+                <th scope="col">{{ 'Entry Type'|t('elasticsearch') }}</th>
+                <th scope="col" class="thin"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for section in craft.app.sections.allSections %}
+                {% for entryType in section.entryTypes %}
+                    <tr data-id="default">
+                        <th>{{ section.type|ucfirst }}</th>
+                        <td>{{ section.name }}</td>
+                        <td>{{ entryType.name }}</td>
+                        <td>
+                            {% if entryType.id in settings['blacklistedEntryTypes'] %}
+                                {% set switchState = 1 %}
+                            {% else %}
+                                {% set switchState = 0 %}
+                            {% endif %}
+                            {{ forms.lightswitch({"name": "blacklistedEntryTypes[]", "value": entryType.id, "on": switchState, "small": true}) }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 
     {% include 'elasticsearch/components/elastic-branding' %}
 </div>
