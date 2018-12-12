@@ -13,7 +13,7 @@ Bring the power of Elasticsearch to you Craft 3 CMS project.
 This plugin requires **Craft CMS 3.0.0-RC1** or later.
 
 In order to index data, you will need an **Elasticsearch 6.0** (or later) 
-instance, with the Ingest attachment processor plugin activated.
+instance, with the **Ingest attachment processor** plugin activated.
 
 
 ## Installation
@@ -129,10 +129,10 @@ The elasticsearch configuration used to highlight query results. Only `pre_tags`
 For more options, refer to the [elasticsearch documentation][].
 
 
-#### `blacklistedSections`
-Type: _int_
+#### `blacklistedEntryTypes`
+Type: _int[]_
 
-An array of section ids of which entries should not be indexed.
+An array of entry type ids of which entries should not be indexed.
 
 
 ### Only in the configuration file
@@ -276,11 +276,23 @@ Reindex all sites
 ````
 
 
+## About yii2-elasticsearch library
+
+At the time of the release of this plugin, no stable 2.1 version of the `yiisoft/yii2-elasticsearch` was released yet. However, that version is mandatory in order to connect to Elasticsearch instances 5 or upper.
+
+To simplify the installation process, a `la-haute-societe/yii2-elasticsearch` fork was made and flagged as stable. Please, note that **this fork was tested and intended to work with this plugin only**.
+
+
+## Licensing
+
+This plugin is free to try in development environments, but requires payment to be used in production environments. The license fee for this plugin is $99 (license + one year of updates) via the Craft Plugin Store, then $29 per year for updates (optional).
+
 
 ## Elasticsearch plugin Roadmap
 
 * Handle dependencies update 
 * Detect need for re-indexation
+* Switch form `la-haute-societe/yii2-elasticsearch` to official 2.1 `yiisoft/yii2-elasticsearch` library as soon as a stable version will be released
 
 Brought to you by [![LHS Logo](resources/img/lhs.png) La Haute Société][lhs-site].
 
