@@ -2,7 +2,7 @@
 
 # Elasticsearch plugin for Craft CMS 3.x
 
-Bring the power of Elasticsearch to you Craft 3 CMS project.
+Bring the power of Elasticsearch to your Craft 3 CMS project.
 
 ![Plugin screenshot](resources/img/plugin-screenshot.png)
 
