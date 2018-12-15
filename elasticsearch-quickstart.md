@@ -1,6 +1,6 @@
 # Elasticsearch quickstart
 
-The craft-elasticsearch plugin is useless if you don't have an Elasticsearch server to connect to.
+The craft-elasticsearch plugin isn't very useless without an Elasticsearch server to connect to.
 
 In this guide we'll walk you through the steps to set up both a development and a production Elasticsearch instance.
 
