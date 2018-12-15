@@ -25,7 +25,7 @@ Kibana at <http://localhost:5601>.
 
 ## Production
 
-If you need a hassle-free, secure, scalable & production-ready solution, [Elastic Cloud](elasticsearch-cloud) is the way
+If you need a hassle-free, secure, scalable & production-ready solution, [Elastic Cloud][elasticsearch-cloud] is the way
 to go.
 
 [elasticsearch-cloud]: https://www.elastic.co/cloud/elasticsearch-service
