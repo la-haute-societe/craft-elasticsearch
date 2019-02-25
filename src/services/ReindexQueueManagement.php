@@ -36,7 +36,7 @@ class ReindexQueueManagement extends Component
             $jobIds[] = Craft::$app->getQueue()->push(new IndexElementJob([
                 'siteId'    => $element['siteId'],
                 'elementId' => $element['elementId'],
-                'type'      => $element['elementType']
+                'type'      => $element['type']
             ]));
         }
 
