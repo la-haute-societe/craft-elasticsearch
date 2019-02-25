@@ -94,7 +94,7 @@ class Elasticsearch extends Plugin
                     /** @var Entry $entry */
                     $entry = $event->sender;
                     if ($entry->enabled) {
-                        $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId);
+                        $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId, Entry::class);
                     } else {
                         try {
                             $this->service->deleteEntry($entry);
@@ -114,8 +114,7 @@ class Elasticsearch extends Plugin
                         /** @var Product $product */
                         $product = $event->sender;
                         if ($product->enabled) {
-                            //$this->reindexQueueManagementService->enqueueJob($product->id, $product->siteId);
-                            $this->service->indexElement($product);
+                            $this->reindexQueueManagementService->enqueueJob($product->id, $product->siteId, Product::class);
                         } else {
                             try {
                                 $this->service->deleteEntry($product);

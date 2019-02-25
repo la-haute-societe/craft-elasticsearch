@@ -70,11 +70,12 @@ class ReindexQueueManagement extends Component
         $this->removeJobIdFromCache($id);
     }
 
-    public function enqueueJob(int $entryId, int $siteId)
+    public function enqueueJob(int $entryId, int $siteId, string $type)
     {
         $jobId = Craft::$app->queue->push(new IndexElementJob([
             'siteId'    => $siteId,
             'elementId' => $entryId,
+            'type'      => $type
         ]));
 
         $this->addJobIdToCache($jobId);
