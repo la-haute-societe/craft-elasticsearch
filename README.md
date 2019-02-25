@@ -290,7 +290,8 @@ This plugin is free to try in development environments, but requires payment to 
 
 ## Elasticsearch plugin Roadmap
 
-* Craft Commerce products support
+* Be able to customise Elasticsearch schema
+* Additional fields support
 * Handle dependencies update 
 * Detect need for re-indexation
 * Switch form `la-haute-societe/yii2-elasticsearch` to official 2.1 `yiisoft/yii2-elasticsearch` library as soon as a stable version will be released
