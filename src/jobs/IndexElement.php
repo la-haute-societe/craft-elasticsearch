@@ -11,10 +11,10 @@
 namespace lhs\elasticsearch\jobs;
 
 use Craft;
+use craft\commerce\elements\Product;
 use craft\elements\Entry;
 use craft\queue\BaseJob;
 use lhs\elasticsearch\Elasticsearch;
-use yii\helpers\VarDumper;
 
 /**
  * Reindex a single entry
@@ -27,6 +27,9 @@ class IndexElement extends BaseJob
     /*** @var int Id of the element to index */
     public $elementId;
 
+    /*** @var string Type of Element to index */
+    public $type;
+
     /**
      * @inheritdoc
      */
@@ -34,13 +37,18 @@ class IndexElement extends BaseJob
     {
         $sites = Craft::$app->getSites();
         $site = $sites->getSiteById($this->siteId);
-
         $sites->setCurrentSite($site);
-        $entry = Entry::findOne($this->elementId);
-        Craft::debug(VarDumper::dumpAsString($entry), __METHOD__);
 
-        if ($entry) {
-            Elasticsearch::getInstance()->service->indexEntry($entry);
+        switch ($this->type) {
+            case 'Product':
+                $element = Product::findOne($this->elementId);
+                break;
+            default:
+                $element = Entry::findOne($this->elementId);
+        }
+
+        if ($element) {
+            Elasticsearch::getInstance()->service->indexElement($element);
         }
     }
 

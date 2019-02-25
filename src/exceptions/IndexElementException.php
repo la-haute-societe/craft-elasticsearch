@@ -16,7 +16,7 @@ use Exception;
 use Throwable;
 use yii\helpers\VarDumper;
 
-class IndexEntryException extends Exception
+class IndexElementException extends Exception
 {
     public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
     {

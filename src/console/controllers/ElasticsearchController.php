@@ -16,7 +16,7 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
-use lhs\elasticsearch\exceptions\IndexEntryException;
+use lhs\elasticsearch\exceptions\IndexElementException;
 use Psr\Http\Message\ResponseInterface;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -47,7 +47,7 @@ class ElasticsearchController extends Controller
      *                            If not http:// will be prepended.
      *
      * @return int A shell exit code. 0 indicated success, anything else indicates an error
-     * @throws IndexEntryException If an error occurs while reindexing the entries
+ * @throws IndexElementException If an error occurs while reindexing the entries
      */
     public function actionReindexAll($siteBaseUrl): int
     {
@@ -82,7 +82,7 @@ class ElasticsearchController extends Controller
     /**
      * Remove index & create an empty one for all sites
      *
-     * @throws IndexEntryException If an error occurs while recreating the indices on the Elasticsearch instance
+     * @throws IndexElementException If an error occurs while recreating the indices on the Elasticsearch instance
      */
     public function actionRecreateEmptyIndexes()
     {
@@ -99,7 +99,7 @@ class ElasticsearchController extends Controller
      *                            If not http:// will be prepended.
      *
      * @return array An associative arrays representing the entries to reindex
-     * @throws IndexEntryException If an error occurs while fetching the list of entries to reindex
+     * @throws IndexElementException If an error occurs while fetching the list of entries to reindex
      */
     protected function getEntriesToReindex(Client $httpClient, string $siteBaseUrl): array
     {
@@ -110,16 +110,16 @@ class ElasticsearchController extends Controller
         $statusCode = $response->getStatusCode();
         if ($statusCode !== 200) {
             $reason = $response->getReasonPhrase();
-            throw new IndexEntryException("Unexpected response from endpoint: {$statusCode} {$reason}");
+            throw new IndexElementException("Unexpected response from endpoint: {$statusCode} {$reason}");
         }
 
         $decodedResponse = json_decode($response->getBody());
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new IndexEntryException('Invalid JSON received from endpoint.');
+            throw new IndexElementException('Invalid JSON received from endpoint.');
         }
 
         if (!property_exists($decodedResponse, 'entries')) {
-            throw new IndexEntryException('Unexpected JSON content received from endpoint.');
+            throw new IndexElementException('Unexpected JSON content received from endpoint.');
         }
 
         return $decodedResponse->entries;

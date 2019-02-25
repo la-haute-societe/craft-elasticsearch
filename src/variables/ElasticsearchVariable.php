@@ -23,7 +23,7 @@ class ElasticsearchVariable
      *     {{ craft.elasticsearch.results(query) }}
      * @param string $query String to search for
      * @return ElasticsearchRecord[]
-     * @throws \lhs\elasticsearch\exceptions\IndexEntryException
+     * @throws \lhs\elasticsearch\exceptions\IndexElementException
      */
     public function search($query): array
     {

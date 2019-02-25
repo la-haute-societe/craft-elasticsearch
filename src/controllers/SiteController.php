@@ -15,7 +15,7 @@ use Craft;
 use craft\elements\Entry;
 use craft\web\Controller;
 use lhs\elasticsearch\Elasticsearch;
-use lhs\elasticsearch\exceptions\IndexEntryException;
+use lhs\elasticsearch\exceptions\IndexElementException;
 use yii\web\ForbiddenHttpException;
 
 /**
@@ -45,14 +45,14 @@ class SiteController extends Controller
             $entry = Entry::find()->id($entryId)->siteId($siteId)->one();
 
             if ($entry === null) {
-                throw new IndexEntryException(Craft::t(
+                throw new IndexElementException(Craft::t(
                     Elasticsearch::TRANSLATION_CATEGORY,
                     'No such entry (entry #{entryId} / site #{siteId}',
                     ['entryId' => $entryId, 'siteId' => $siteId]
                 ));
             }
 
-            $reason = Elasticsearch::getInstance()->service->indexEntry($entry);
+            $reason = Elasticsearch::getInstance()->service->indexElement($entry);
 
             if ($reason !== null) {
                 return $this->asJson([

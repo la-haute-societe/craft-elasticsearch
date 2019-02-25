@@ -26,16 +26,17 @@ class ReindexQueueManagement extends Component
 
     /**
      * Add reindex job for the given entries
-     * @param array $entries An array of entries. Each entry is an associative array having, at least, the `siteId`
-     *                       and `entryId` keys
+     * @param array $elements An array of elements. Each entry is an associative array having, at least, the `siteId`
+     *                       `elementId` and `elementType` keys
      */
-    public function enqueueReindexJobs(array $entries)
+    public function enqueueReindexJobs(array $elements)
     {
         $jobIds = [];
-        foreach ($entries as $entry) {
+        foreach ($elements as $element) {
             $jobIds[] = Craft::$app->getQueue()->push(new IndexElementJob([
-                'siteId'    => $entry['siteId'],
-                'elementId' => $entry['entryId'],
+                'siteId'    => $element['siteId'],
+                'elementId' => $element['elementId'],
+                'type'      => $element['elementType']
             ]));
         }
 

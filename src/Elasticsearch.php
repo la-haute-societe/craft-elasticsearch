@@ -12,6 +12,7 @@ namespace lhs\elasticsearch;
 
 use Craft;
 use craft\base\Plugin;
+use craft\commerce\elements\Product;
 use craft\console\Application as ConsoleApplication;
 use craft\elements\Entry;
 use craft\events\PluginEvent;
@@ -24,7 +25,7 @@ use craft\services\Utilities;
 use craft\web\Application;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
-use lhs\elasticsearch\exceptions\IndexEntryException;
+use lhs\elasticsearch\exceptions\IndexElementException;
 use lhs\elasticsearch\models\Settings;
 use lhs\elasticsearch\services\Elasticsearch as ElasticsearchService;
 use lhs\elasticsearch\services\ReindexQueueManagement;
@@ -54,6 +55,8 @@ class Elasticsearch extends Plugin
     public function init()
     {
         parent::init();
+
+        $isCommerceEnabled = $this->isCommerceEnabled();
 
         $this->setComponents([
             'service'                       => ElasticsearchService::class,
@@ -101,6 +104,28 @@ class Elasticsearch extends Plugin
                     }
                 }
             );
+
+            if ($isCommerceEnabled) {
+                // Index product upon save (creation or update)
+                Event::on(
+                    Product::class,
+                    Product::EVENT_AFTER_SAVE,
+                    function (Event $event) {
+                        /** @var Product $product */
+                        $product = $event->sender;
+                        if ($product->enabled) {
+                            //$this->reindexQueueManagementService->enqueueJob($product->id, $product->siteId);
+                            $this->service->indexElement($product);
+                        } else {
+                            try {
+                                $this->service->deleteEntry($product);
+                            } catch (Exception $e) {
+                                // Noop, the element must have already been deleted
+                            }
+                        }
+                    }
+                );
+            }
 
             // Re-index all entries when plugin settings are saved
             Event::on(
@@ -334,7 +359,10 @@ class Elasticsearch extends Plugin
             // Remove previous reindexing jobs as all entries will be reindexed anyway
             $this->reindexQueueManagementService->clearJobs();
             $this->reindexQueueManagementService->enqueueReindexJobs($this->service->getEnabledEntries());
-        } catch (IndexEntryException $e) {
+            if ($this->isCommerceEnabled()) {
+                $this->reindexQueueManagementService->enqueueReindexJobs($this->service->getEnabledProducts());
+            }
+        } catch (IndexElementException $e) {
             /** @noinspection PhpUnhandledExceptionInspection This method should only be called in a web context so Craft::$app->getSession() will never throw */
             Craft::$app->getSession()->setError($e->getMessage());
         }
@@ -346,5 +374,14 @@ class Elasticsearch extends Plugin
         $settings = $this->getSettings();
         $settings->elasticsearchComponentConfig = null;
         return parent::beforeSaveSettings();
+    }
+
+    /**
+     * Check for presence of Craft Commerce Plugin
+     * @return bool
+     */
+    public function isCommerceEnabled(): bool
+    {
+        return class_exists(\craft\commerce\Plugin::class);
     }
 }

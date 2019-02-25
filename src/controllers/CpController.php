@@ -11,12 +11,14 @@
 namespace lhs\elasticsearch\controllers;
 
 use Craft;
+use craft\commerce\elements\Product;
 use craft\elements\Entry;
 use craft\helpers\UrlHelper;
 use craft\records\Site;
 use craft\web\Controller;
 use craft\web\Request;
 use lhs\elasticsearch\Elasticsearch;
+use yii\helpers\ArrayHelper;
 use yii\helpers\VarDumper;
 use yii\web\Response;
 
@@ -25,7 +27,8 @@ use yii\web\Response;
  */
 class CpController extends Controller
 {
-    public $allowAnonymous = [ 'testConnection', 'reindexPerformAction' ];
+    public $allowAnonymous = ['testConnection', 'reindexPerformAction'];
+
     /**
      * Test the elasticsearch connection
      *
@@ -87,7 +90,7 @@ class CpController extends Controller
         }
 
         // Process the given element
-        $reason = $this->reindexEntry();
+        $reason = $this->reindexElement();
 
         if ($reason !== null) {
             return $this->asJson([
@@ -107,15 +110,17 @@ class CpController extends Controller
      */
     protected function getReindexQueue(array $siteIds): Response
     {
-        $entries = Elasticsearch::getInstance()->service->getEnabledEntries($siteIds);
-
-        // Re-format entries to keep the JS part as close as possible to Craft SearchIndexUtility's
-        array_walk($entries, function (&$entry) {
-            $entry = ['params' => $entry];
+        $elements = Elasticsearch::getInstance()->service->getEnabledEntries($siteIds);
+        if (Elasticsearch::getInstance()->isCommerceEnabled()) {
+            $elements = ArrayHelper::merge($elements, Elasticsearch::getInstance()->service->getEnabledProducts());
+        }
+        // Re-format elements to keep the JS part as close as possible to Craft SearchIndexUtility's
+        array_walk($elements, function (&$element) {
+            $element = ['params' => $element];
         });
 
         return $this->asJson([
-            'entries' => [$entries],
+            'entries' => [$elements],
         ]);
     }
 
@@ -145,18 +150,24 @@ class CpController extends Controller
      * @throws \Exception If reindexing the entry fails for some reason.
      * @throws \yii\web\BadRequestHttpException if the request body is missing a `params` property
      */
-    protected function reindexEntry()
+    protected function reindexElement()
     {
         $request = Craft::$app->getRequest();
 
-        $entryId = $request->getRequiredBodyParam('params.entryId');
+        $elementId = $request->getRequiredBodyParam('params.elementId');
         $siteId = $request->getRequiredBodyParam('params.siteId');
-        $entry = Entry::find()->id($entryId)->siteId($siteId)->one();
-
+        $type = $request->getRequiredBodyParam('params.type');
+        switch ($type) {
+            case Product::class:
+                $element = Product::find()->id($elementId)->siteId($siteId)->one();
+                break;
+            default:
+                $element = Entry::find()->id($elementId)->siteId($siteId)->one();
+        }
         try {
-            return Elasticsearch::getInstance()->service->indexEntry($entry);
+            return Elasticsearch::getInstance()->service->indexElement($element);
         } catch (\Exception $e) {
-            Craft::error("Error while re-indexing entry {$entry->url}: {$e->getMessage()}", __METHOD__);
+            Craft::error("Error while re-indexing element {$element->url}: {$e->getMessage()}", __METHOD__);
             Craft::error(VarDumper::dumpAsString($e), __METHOD__);
 
             throw $e;
