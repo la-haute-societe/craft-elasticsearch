@@ -21,6 +21,11 @@ fetch images).
 Once this is done, you can access your Elasticsearch local instance at <http://localhost:9200> and 
 Kibana at <http://localhost:5601>.
 
+> **Note**:
+> If you want to be able to index your contents with this plugin from your docker php container, don't forget to add the relevant `extra_hosts` 
+to your docker-compose php container definition so it points your apache host to your localhost public IP.
+For example, if your Craft CMS instance is accessible through `http://docker.test`, you will define an extra_hosts entry as follow: `- "docker.test:xxx.xxx.xxx.xxx"` where xxx.xxx.xxx.xxx represent your public IP.
+
 
 
 ## Production
