@@ -39,13 +39,7 @@ class IndexElement extends BaseJob
         $site = $sites->getSiteById($this->siteId);
         $sites->setCurrentSite($site);
 
-        switch ($this->type) {
-            case 'Product':
-                $element = Product::findOne($this->elementId);
-                break;
-            default:
-                $element = Entry::findOne($this->elementId);
-        }
+        $element = $this->type === Product::class ? Product::findOne($this->elementId) : Entry::findOne($this->elementId);
 
         if ($element) {
             Elasticsearch::getInstance()->service->indexElement($element);

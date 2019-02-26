@@ -20,14 +20,12 @@ use craft\helpers\ArrayHelper;
 use craft\records\Site;
 use craft\services\Sites;
 use craft\web\Application;
-use craft\web\View;
-use DateTime;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\events\ErrorEvent;
 use lhs\elasticsearch\exceptions\IndexElementException;
 use lhs\elasticsearch\records\ElasticsearchRecord;
-use Twig_Error_Loader;
-use yii\base\InvalidConfigException;
 use yii\elasticsearch\Exception;
 
 /**
@@ -187,17 +185,17 @@ class Elasticsearch extends Component
     // =========================================================================
 
     /**
-     * Index the given `$entry` into Elasticsearch
+     * Index the given `$element` into Elasticsearch
      * @param Element $element
      * @return string|null A string explaining why the entry wasn't reindexed or `null` if it was reindexed
-     * @throws IndexElementException If an error occurs while getting the indexable content of the entry. Check the previous property of the exception for more details
      * @throws Exception If an error occurs while saving the record to the Elasticsearch server
+     * @throws IndexElementException If an error occurs while getting the indexable content of the entry. Check the previous property of the exception for more details
+     * @throws \Throwable
      */
     public function indexElement(Element $element)
     {
         $reason = $this->getReasonForNotReindexing($element);
         if ($reason !== null) {
-            die($reason);
             return $reason;
         }
 
@@ -207,7 +205,7 @@ class Elasticsearch extends Component
         $esRecord->title = $element->title;
         $esRecord->url = $element->url;
 
-        $html = $this->getEntryIndexableContent($element);
+        $html = $this->getElementIndexableContent($element);
         if ($html === false) {
             $message = "Not indexing entry #{$element->id} since it doesn't have a template.";
             Craft::debug($message, __METHOD__);
@@ -319,108 +317,137 @@ class Elasticsearch extends Component
         return $esRecord;
     }
 
+
     /**
-     * @param Entry $element
-     * @return string|false The indexable content of the entry or `false` if the entry doesn't have a template (ie. is not indexable)
+     * @param Element $element
+     * @return bool|string The indexable content of the entry or `false` if the entry doesn't have a template (ie. is not indexable)
      * @throws IndexElementException If anything goes wrong. Check the previous property of the exception to get more details
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    protected function getEntryIndexableContent(Element $element): string
+    protected function getElementIndexableContent(Element $element)
     {
-        $sitesService = Craft::$app->getSites();
-        $view = Craft::$app->getView();
-
-        $site = $sitesService->getSiteById($element->siteId);
-        if (!$site) {
-            throw new IndexElementException(Craft::t(
-                ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'Invalid site id: {siteId}',
-                ['siteId' => $element->siteId]
-            ));
-        }
-        $sitesService->setCurrentSite($site);
-
-        Craft::$app->language = $site->language;
-
-        if (!$element->postDate) {
-            $element->postDate = new DateTime();
-        }
-
-        // Have this entry override any freshly queried entries with the same ID/site ID
-        $elementsService = Craft::$app->getElements();
-        $elementsService->setPlaceholderElement($element);
-
-        // Switch to site template rendering mode
+        Craft::debug('Getting element page content : ' . $element->url, __METHOD__);
+        $client = new Client([
+            'connect_timeout' => 10
+        ]);
         try {
-            $view->setTemplateMode(View::TEMPLATE_MODE_SITE);
-        } catch (\yii\base\Exception $e) {
-            // Shouldn't happen as a constant is used for the templateMode parameter
+            $res = $client->request('GET', $element->url);
+            if ($res->getStatusCode() === 200) {
+                return $this->extractIndexablePart($res->getBody());
+            }
+        } catch (RequestException $e) {
+            $response = $e->getResponse();
+            Craft::error('Could not get element content: ' . $response->getStatusCode() . ' - ' . $response->getReasonPhrase(), __METHOD__);
             throw new IndexElementException($e->getMessage(), 0, $e);
-        }
-        // Disable template caching before rendering.
-        // Without this, templates using the `{% cache %}` Twig tag may have a strange behavior.
-        $craftGeneralConfig = Craft::$app->getConfig()->getGeneral();
-        $craftGeneralConfig->enableTemplateCaching = false;
-
-        try {
-            if ($element instanceof Product) {
-                $siteSettings = $element->getType()->getSiteSettings();
-            } else {
-                $siteSettings = $element->getSection()->getSiteSettings();
-            }
-
-            $templateName = null;
-            if (array_key_exists($element->siteId, $siteSettings)) {
-                $templateName = $siteSettings[$element->siteId]->template;
-            }
-
-            if ($templateName === null) {
-                return false;
-            }
-
-            try {
-                $params = [];
-                if ($element instanceof Product) {
-                    $params['product'] = $element;
-                } else {
-                    $params['entry'] = $element;
-                }
-
-                $html = trim($view->renderTemplate($templateName, $params));
-
-                // Re-enable template caching. On est pas des bêtes !
-                $craftGeneralConfig->enableTemplateCaching = false;
-                // Restore template rendering mode
-                try {
-                    $view->setTemplateMode(View::TEMPLATE_MODE_CP);
-                } catch (\yii\base\Exception $e) {
-                    // Shouldn't happen as a constant is used for the templateMode parameter
-                    throw new IndexElementException($e->getMessage(), 0, $e);
-                }
-
-                $html = $this->extractIndexablePart($html);
-
-                return $html;
-            } catch (Twig_Error_Loader $e) {
-                throw new IndexElementException(Craft::t(
-                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                    'The element #{elementId} uses an invalid Twig template: {twigTemplateName}',
-                    ['elementId' => $element->id, 'twigTemplateName' => $templateName]
-                ), 0, $e);
-            } catch (\yii\base\Exception $e) {
-                throw new IndexElementException(Craft::t(
-                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                    'An error occurred while rendering the {twigTemplateName} Twig template: {previousExceptionMessage}',
-                    ['twigTemplateName' => $templateName, 'previousExceptionMessage' => $e->getMessage()]
-                ), 0, $e);
-            }
-        } catch (InvalidConfigException $e) {
+        } catch (\Exception $e) {
             throw new IndexElementException(Craft::t(
                 ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'The entry #{elementId} has an incorrect section id: #{sectionId}',
-                ['elementId' => $element->id, 'sectionId' => $element->sectionId]
+                'An error occurred while parsing the element page content: {previousExceptionMessage}',
+                ['previousExceptionMessage' => $e->getMessage()]
             ), 0, $e);
         }
+        return false;
     }
+
+    //    protected function getEntryIndexableContent(Element $element): string
+    //    {
+    //        $sitesService = Craft::$app->getSites();
+    //        $view = Craft::$app->getView();
+    //
+    //        $site = $sitesService->getSiteById($element->siteId);
+    //        if (!$site) {
+    //            throw new IndexElementException(Craft::t(
+    //                ElasticsearchPlugin::TRANSLATION_CATEGORY,
+    //                'Invalid site id: {siteId}',
+    //                ['siteId' => $element->siteId]
+    //            ));
+    //        }
+    //        $sitesService->setCurrentSite($site);
+    //
+    //        Craft::$app->language = $site->language;
+    //
+    //        if (!$element->postDate) {
+    //            $element->postDate = new DateTime();
+    //        }
+    //
+    //        // Have this entry override any freshly queried entries with the same ID/site ID
+    //        $elementsService = Craft::$app->getElements();
+    //        $elementsService->setPlaceholderElement($element);
+    //
+    //        // Switch to site template rendering mode
+    //        try {
+    //            $view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+    //        } catch (\yii\base\Exception $e) {
+    //            // Shouldn't happen as a constant is used for the templateMode parameter
+    //            throw new IndexElementException($e->getMessage(), 0, $e);
+    //        }
+    //        // Disable template caching before rendering.
+    //        // Without this, templates using the `{% cache %}` Twig tag may have a strange behavior.
+    //        $craftGeneralConfig = Craft::$app->getConfig()->getGeneral();
+    //        $craftGeneralConfig->enableTemplateCaching = false;
+    //
+    //        try {
+    //            if ($element instanceof Product) {
+    //                $siteSettings = $element->getType()->getSiteSettings();
+    //            } else {
+    //                $siteSettings = $element->getSection()->getSiteSettings();
+    //            }
+    //
+    //            $templateName = null;
+    //            if (array_key_exists($element->siteId, $siteSettings)) {
+    //                $templateName = $siteSettings[$element->siteId]->template;
+    //            }
+    //
+    //            if ($templateName === null) {
+    //                return false;
+    //            }
+    //
+    //            try {
+    //                $params = [];
+    //                if ($element instanceof Product) {
+    //                    $params['product'] = $element;
+    //                    $params['cart'] = CommercePlugin::getInstance()->getCarts()->getCart();
+    //                } else {
+    //                    $params['entry'] = $element;
+    //                }
+    //
+    //                $html = trim($view->renderTemplate($templateName, $params));
+    //
+    //                // Re-enable template caching. On est pas des bêtes !
+    //                $craftGeneralConfig->enableTemplateCaching = false;
+    //                // Restore template rendering mode
+    //                try {
+    //                    $view->setTemplateMode(View::TEMPLATE_MODE_CP);
+    //                } catch (\yii\base\Exception $e) {
+    //                    // Shouldn't happen as a constant is used for the templateMode parameter
+    //                    throw new IndexElementException($e->getMessage(), 0, $e);
+    //                }
+    //
+    //                $html = $this->extractIndexablePart($html);
+    //
+    //                return $html;
+    //            } catch (Twig_Error_Loader $e) {
+    //                throw new IndexElementException(Craft::t(
+    //                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
+    //                    'The element #{elementId} uses an invalid Twig template: {twigTemplateName}',
+    //                    ['elementId' => $element->id, 'twigTemplateName' => $templateName]
+    //                ), 0, $e);
+    //            } catch (\yii\base\Exception $e) {
+    //                throw new IndexElementException(Craft::t(
+    //                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
+    //                    'An error occurred while rendering the {twigTemplateName} Twig template: {previousExceptionMessage}',
+    //                    ['twigTemplateName' => $templateName, 'previousExceptionMessage' => $e->getMessage()]
+    //                ), 0, $e);
+    //            }
+    //
+    //        } catch (InvalidConfigException $e) {
+    //            throw new IndexElementException(Craft::t(
+    //                ElasticsearchPlugin::TRANSLATION_CATEGORY,
+    //                'The entry #{elementId} has an incorrect section id: #{sectionId}',
+    //                ['elementId' => $element->id, 'sectionId' => $element->sectionId]
+    //            ), 0, $e);
+    //        }
+    //    }
 
     /**
      * @param $html
@@ -437,7 +464,7 @@ class Elasticsearch extends Component
             $html = '<!DOCTYPE html>' . trim($body[1]);
         }
 
-        return $html;
+        return trim($html);
     }
 
     /**
