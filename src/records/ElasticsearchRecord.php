@@ -11,28 +11,39 @@
 namespace lhs\elasticsearch\records;
 
 use Craft;
+use craft\base\Element;
 use craft\helpers\ArrayHelper;
 use lhs\elasticsearch\Elasticsearch;
+use lhs\elasticsearch\events\CreateIndexEvent;
+use lhs\elasticsearch\events\SaveElementEvent;
 use yii\base\InvalidConfigException;
 use yii\elasticsearch\ActiveRecord;
 use yii\helpers\Json;
+use yii\helpers\VarDumper;
 
 /**
- * @property string       title
- * @property string       url
- * @property mixed        section
- * @property object|array content
+ * @property string $title
+ * @property string $url
+ * @property mixed $section
+ * @property object|array $content
  */
 class ElasticsearchRecord extends ActiveRecord
 {
     public static $siteId;
+
+    private $_schema;
+    private $_attributes = ['title', 'url', 'section', 'content'];
+    private $_element;
+
+    CONST EVENT_BEFORE_CREATE_INDEX = 'beforeCreateIndex';
+    CONST EVENT_BEFORE_SAVE = 'beforeSave';
 
     /**
      * @inheritdoc
      */
     public function attributes(): array
     {
-        return ['title', 'url', 'section', 'content'];
+        return $this->_attributes;
     }
 
     /**
@@ -140,25 +151,36 @@ class ElasticsearchRecord extends ActiveRecord
      */
     public function save($runValidation = true, $attributeNames = null): bool
     {
-        self::checkIndex();
+        if (!self::indexExists()) {
+            $this->createESIndex();
+        }
+        $this->trigger(self::EVENT_BEFORE_SAVE, new SaveElementEvent());
         if (!$this->getIsNewRecord()) {
             $this->delete(); // pipeline in not supported by Document Update API :(
         }
         return $this->insert($runValidation, $attributeNames, ['pipeline' => 'attachment']);
     }
 
+    public function createESIndex()
+    {
+        $this->setSchema([
+            'mappings' => static::mapping(),
+        ]);
+        $this->trigger(self::EVENT_BEFORE_CREATE_INDEX, new CreateIndexEvent());
+        Craft::debug('Before create event - site: ' . self::$siteId . ' schema: ' . VarDumper::dumpAsString($this->getSchema()), __METHOD__);
+        self::createIndex($this->getSchema());
+    }
+
     /**
-     * Check if the Elasticsearch index already exists or create it if not
+     * Return if the Elasticsearch index already exists or not
+     * @return bool
      * @throws InvalidConfigException If the `$siteId` isn't set*
-     * @throws \yii\elasticsearch\Exception If the Elasticsearch index can't be created
      */
-    protected static function checkIndex()
+    protected static function indexExists(): bool
     {
         $db = static::getDb();
         $command = $db->createCommand();
-        if (!$command->indexExists(static::index())) {
-            self::createIndex();
-        }
+        return (bool)$command->indexExists(static::index());
     }
 
     /**
@@ -183,11 +205,12 @@ class ElasticsearchRecord extends ActiveRecord
 
     /**
      * Create this model's index in Elasticsearch
+     * @param array $schema The Elascticsearch index definition schema
      * @param bool $force
      * @throws InvalidConfigException If the `$siteId` isn't set
      * @throws \yii\elasticsearch\Exception If an error occurs while communicating with the Elasticsearch server
      */
-    public static function createIndex($force = false)
+    public static function createIndex(array $schema, $force = false)
     {
         $db = static::getDb();
         $command = $db->createCommand();
@@ -213,9 +236,7 @@ class ElasticsearchRecord extends ActiveRecord
                 ],
             ],
         ]));
-        $command->createIndex(static::index(), [
-            'mappings' => static::mapping(),
-        ]);
+        $command->createIndex(static::index(), $schema);
     }
 
     /**
@@ -238,8 +259,7 @@ class ElasticsearchRecord extends ActiveRecord
     public static function mapping(): array
     {
         $analyzer = self::siteAnalyzer();
-
-        return [
+        $mapping = [
             static::type() => [
                 'properties' => [
                     'title'      => [
@@ -272,5 +292,44 @@ class ElasticsearchRecord extends ActiveRecord
                 ],
             ],
         ];
+
+        return $mapping;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSchema()
+    {
+        return $this->_schema;
+    }
+
+    /**
+     * @param mixed $schema
+     */
+    public function setSchema($schema)
+    {
+        $this->_schema = $schema;
+    }
+
+    public function addAttributes(array $attributes)
+    {
+        $this->_attributes = ArrayHelper::merge($this->_attributes, $attributes);
+    }
+
+    /**
+     * @return Element
+     */
+    public function getElement(): Element
+    {
+        return $this->_element;
+    }
+
+    /**
+     * @param mixed $element
+     */
+    public function setElement(Element $element)
+    {
+        $this->_element = $element;
     }
 }

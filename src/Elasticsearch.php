@@ -79,7 +79,7 @@ class Elasticsearch extends Plugin
                     /** @var entry $entry */
                     $entry = $event->sender;
                     try {
-                        $this->service->deleteEntry($entry);
+                        $this->service->deleteElement($entry);
                     } catch (Exception $e) {
                         // Noop, the element must have already been deleted
                     }
@@ -95,9 +95,10 @@ class Elasticsearch extends Plugin
                     $entry = $event->sender;
                     if ($entry->enabled) {
                         $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId, Entry::class);
+                        //$this->service->indexElement($entry);
                     } else {
                         try {
-                            $this->service->deleteEntry($entry);
+                            $this->service->deleteElement($entry);
                         } catch (Exception $e) {
                             // Noop, the element must have already been deleted
                         }
@@ -115,9 +116,10 @@ class Elasticsearch extends Plugin
                         $product = $event->sender;
                         if ($product->enabled) {
                             $this->reindexQueueManagementService->enqueueJob($product->id, $product->siteId, Product::class);
+                            //$this->service->indexElement($product);
                         } else {
                             try {
-                                $this->service->deleteEntry($product);
+                                $this->service->deleteElement($product);
                             } catch (Exception $e) {
                                 // Noop, the element must have already been deleted
                             }
