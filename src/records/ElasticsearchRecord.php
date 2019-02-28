@@ -14,8 +14,7 @@ use Craft;
 use craft\base\Element;
 use craft\helpers\ArrayHelper;
 use lhs\elasticsearch\Elasticsearch;
-use lhs\elasticsearch\events\CreateIndexEvent;
-use lhs\elasticsearch\events\SaveElementEvent;
+use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\elasticsearch\ActiveRecord;
 use yii\helpers\Json;
@@ -154,7 +153,7 @@ class ElasticsearchRecord extends ActiveRecord
         if (!self::indexExists()) {
             $this->createESIndex();
         }
-        $this->trigger(self::EVENT_BEFORE_SAVE, new SaveElementEvent());
+        $this->trigger(self::EVENT_BEFORE_SAVE, new Event());
         if (!$this->getIsNewRecord()) {
             $this->delete(); // pipeline in not supported by Document Update API :(
         }
@@ -166,7 +165,7 @@ class ElasticsearchRecord extends ActiveRecord
         $this->setSchema([
             'mappings' => static::mapping(),
         ]);
-        $this->trigger(self::EVENT_BEFORE_CREATE_INDEX, new CreateIndexEvent());
+        $this->trigger(self::EVENT_BEFORE_CREATE_INDEX, new Event());
         Craft::debug('Before create event - site: ' . self::$siteId . ' schema: ' . VarDumper::dumpAsString($this->getSchema()), __METHOD__);
         self::createIndex($this->getSchema());
     }

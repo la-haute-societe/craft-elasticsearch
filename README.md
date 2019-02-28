@@ -275,6 +275,52 @@ Reindex all sites
 ./craft elasticsearch/elasticsearch/reindex-all http://example.com
 ````
 
+## Index additional data
+
+This plugin gives you the opportunity to index any additional data.
+
+To do so, you can listen to the following events in a project module:
+*   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX`: That event is triggered before the Elasticsearch index is created. 
+Once you get a reference to the Elasticsearch Record instance, the following methods can be used to customise the schema as needed: 
+    * `getSchema()` method can be used to get the current default Elasticsearch schema.
+    * `setSchema(array $schema)` method can be used to set the customized schema
+    
+    For example, if you want to add a 'color' property, you could do something like:
+    ```php
+    Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX, function (Event $event) {
+        /** @var ElasticsearchRecord $esRecord */
+        $esRecord = $event->sender;
+        $schema = $esRecord->getSchema();
+        $schema['mappings']['elasticsearch-record']['properties']['color'] = [
+            'type'  => 'text',
+            'store' => true
+        ];
+        $esRecord->setSchema($schema);
+    });
+    ```
+*   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_INIT`: That event can be used to add additional attributes you wish to handle in your indexes.
+    You can use the `addAttributes(array $additionalAttributes)` to add the list of additional fields.
+    This is mandatory in order to get or set any additional properties you declared in your schema in the previous step.
+    For example, if you wish to declare the 'color' attribute, you could do:
+    ```php
+    Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_INIT, function (Event $event) {
+        /** @var ElasticsearchRecord $esRecord */
+        $esRecord = $event->sender;
+        $esRecord->addAttributes(['color']);
+    });
+    ```
+*   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_SAVE`: By listening to that event, you get a chance to set the value of your additional fields declared in the previous step.
+    You can access the related `Element` by using the `getElement()` method.
+    For example, if you wish to set the value the 'color' attribute to be indexed, given that 'color' attribute is a Craft color field type, you could do:
+    ```php
+    Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SAVE, function (Event $event) {
+        /** @var ElasticsearchRecord $esRecord */
+        $esRecord = $event->sender;
+        $element = $esRecord->getElement();
+        $esRecord->color = ArrayHelper::getValue($element, 'color.hex');
+    });
+    ```    
+
 
 ## About yii2-elasticsearch library
 
