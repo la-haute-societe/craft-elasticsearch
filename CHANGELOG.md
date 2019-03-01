@@ -2,7 +2,8 @@
 
 ## 1.1.0 - Unreleased
 ### Added
-- Craft Commerce product support
+- Craft Commerce product support (Enh #1)
+- Ability to index and search additional data (Enh #2)
 
 ### Changed
 - IndexEntryException has been replaced by IndexElementException
