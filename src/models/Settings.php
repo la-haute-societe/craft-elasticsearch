@@ -38,6 +38,12 @@ class Settings extends Model
      */
     public $contentExtractorCallback;
 
+    /**
+     * @var callable A callback used to prepare and format the Elasticsearch result object in order to be used by the results twig view.
+     *               Expect two arguments: first, an array represented initial formatted results, the second, a Elasticsearch record result object.
+     */
+    public $resultFormatterCallback;
+
     /** @var array The tags inserted before and after the search term to highlight in search results */
     public $highlight = [
         'pre_tags'  => null,

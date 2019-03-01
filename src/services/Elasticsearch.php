@@ -270,16 +270,22 @@ class Elasticsearch extends Component
 
         ElasticsearchRecord::$siteId = $siteId;
         try {
-            $results = ElasticsearchRecord::search($query);
+            $esRecord = new ElasticsearchRecord();
+            $results = $esRecord->search($query);
             $output = [];
+            $callback = ElasticsearchPlugin::getInstance()->getSettings()->resultFormatterCallback;
             foreach ($results as $result) {
-                $output[] = [
+                $formattedResult = [
                     'id'         => $result->getPrimaryKey(),
                     'title'      => $result->title,
                     'url'        => $result->url,
                     'score'      => $result->score,
                     'highlights' => $result->highlight['attachment.content'] ?? [],
                 ];
+                if ($callback) {
+                    $formattedResult = $callback($formattedResult, $result);
+                }
+                $output[] = $formattedResult;
             }
 
             return $output;

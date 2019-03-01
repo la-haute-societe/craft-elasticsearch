@@ -152,12 +152,18 @@ An array of hostnames allowed to use the Elasticsearch console commands.
 #### `contentExtractorCallback`
 Type: _callable_
 
-A callback (`function(string $entryContent): string`) used to extract the
+A callback function (`function(string $entryContent): string`) used to extract the
 content to be indexed from the full HTML source of the entry's page. 
 
 The default is to extract the HTML code between those 2 comments: 
 `<!-- BEGIN elasticsearch indexed content -->` and `<!-- END elasticsearch indexed content -->`.
 
+
+#### `resultFormatterCallback`
+Type: _callable_
+
+A callback function (`function (array $formattedResult, $result)`) used to prepare and
+format the Elasticsearch result object in order to be used by the results twig view.
 
 #### `elasticsearchComponentConfig`
 Type: _array_
@@ -281,7 +287,7 @@ This plugin gives you the opportunity to index any additional data.
 
 To do so, you can listen to the following events in a project module:
 *   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX`: That event is triggered before the Elasticsearch index is created. 
-Once you get a reference to the Elasticsearch Record instance, the following methods can be used to customise the schema as needed: 
+    Once you get a reference to the Elasticsearch Record instance, the following methods can be used to customise the schema as needed: 
     * `getSchema()` method can be used to get the current default Elasticsearch schema.
     * `setSchema(array $schema)` method can be used to set the customized schema
     
@@ -298,6 +304,7 @@ Once you get a reference to the Elasticsearch Record instance, the following met
         $esRecord->setSchema($schema);
     });
     ```
+    >Note: Do not alter the following defaults properties: `title`, `url`, `section` and `content`. Also, do not alter the default `attachment` processor.
 *   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_INIT`: That event can be used to add additional attributes you wish to handle in your indexes.
     You can use the `addAttributes(array $additionalAttributes)` to add the list of additional fields.
     This is mandatory in order to get or set any additional properties you declared in your schema in the previous step.
@@ -319,7 +326,36 @@ Once you get a reference to the Elasticsearch Record instance, the following met
         $element = $esRecord->getElement();
         $esRecord->color = ArrayHelper::getValue($element, 'color.hex');
     });
-    ```    
+    ```
+*   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_SEARCH`: That `lhs\elasticsearch\events\SearchEvent` event type is triggered just before a query is sent to Elasticsearch, typically when you call the `craft.elasticsearch.search('Something to search')` variable from your Twig views.
+    During that event, you can use the following methods to forge your Elasticsearch query request to your needs:
+    * `getQueryParams($query)` and `setQueryParams($queryParams)` can be used to alter the default Elasticsearch query parameters (see example below)
+    * `getHighlightParams()` and `setHighlightParams($highlightParams)` can be used to alter the default Elasticsearch highlighter parameters (see example below)
+    For example, if you wish to add the 'color' attribute to your query, given that 'color' attribute is a Craft color field type, you could do:
+    ```php
+    Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SEARCH, function (SearchEvent $event) {
+        /** @var ElasticsearchRecord $esRecord */
+        $esRecord = $event->sender;
+        $query = $event->query;
+        // Customise the query params
+        $queryParams = $esRecord->getQueryParams($query);
+        $queryParams['multi_match']['fields'] = ArrayHelper::merge($queryParams['multi_match']['fields'], ['color']);
+        $esRecord->setQueryParams($queryParams);
+        // Customise the highlighter params
+        $highlightParams = $esRecord->getHighlightParams();
+        $highlightParams['fields'] = ArrayHelper::merge($highlightParams['fields'], ['color' => (object)[]]);
+        $esRecord->setHighlightParams($highlightParams);
+    });
+    ```
+    >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results. For example, to add the 'color' field you could do:
+    >```php
+    > ...
+    >'resultFormatterCallback'  => function (array $formattedResult, $result) {
+    >    $formattedResult['color'] = $result->color;
+    >    return $formattedResult;
+    >}
+    >...
+    >```
 
 
 ## About yii2-elasticsearch library

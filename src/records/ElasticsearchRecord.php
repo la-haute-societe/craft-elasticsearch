@@ -14,6 +14,7 @@ use Craft;
 use craft\base\Element;
 use craft\helpers\ArrayHelper;
 use lhs\elasticsearch\Elasticsearch;
+use lhs\elasticsearch\events\SearchEvent;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\elasticsearch\ActiveRecord;
@@ -33,9 +34,12 @@ class ElasticsearchRecord extends ActiveRecord
     private $_schema;
     private $_attributes = ['title', 'url', 'section', 'content'];
     private $_element;
+    private $_queryParams;
+    private $_highlightParams;
 
     CONST EVENT_BEFORE_CREATE_INDEX = 'beforeCreateIndex';
     CONST EVENT_BEFORE_SAVE = 'beforeSave';
+    CONST EVENT_BEFORE_SEARCH = 'beforeSearch';
 
     /**
      * @inheritdoc
@@ -52,23 +56,11 @@ class ElasticsearchRecord extends ActiveRecord
      * @throws InvalidConfigException
      * @throws \yii\elasticsearch\Exception
      */
-    public static function search(string $query): array
+    public function search(string $query)
     {
-        $queryParams = [
-            'multi_match' => [
-                'fields'   => ['attachment.content', 'title'],
-                'query'    => $query,
-                'analyzer' => self::siteAnalyzer(),
-                'operator' => 'and',
-            ],
-        ];
-
-        $highlightParams = ArrayHelper::merge(Elasticsearch::getInstance()->settings->highlight, [
-            'fields' => [
-                'title'              => (object)['type' => 'plain'],
-                'attachment.content' => (object)[],
-            ],
-        ]);
+        $this->trigger(self::EVENT_BEFORE_SEARCH, new SearchEvent(['query' => $query]));
+        $queryParams = $this->getQueryParams($query);
+        $highlightParams = $this->getHighlightParams();
         return self::find()->query($queryParams)->highlight($highlightParams)->limit(self::find()->count())->all();
     }
 
@@ -330,5 +322,57 @@ class ElasticsearchRecord extends ActiveRecord
     public function setElement(Element $element)
     {
         $this->_element = $element;
+    }
+
+    /**
+     * @param $query the search value input
+     * @return mixed
+     * @throws InvalidConfigException
+     */
+    public function getQueryParams($query)
+    {
+        if (is_null($this->_queryParams)) {
+            $this->_queryParams = [
+                'multi_match' => [
+                    'fields'   => ['attachment.content', 'title'],
+                    'query'    => $query,
+                    'analyzer' => self::siteAnalyzer(),
+                    'operator' => 'and',
+                ],
+            ];
+        }
+        return $this->_queryParams;
+    }
+
+    /**
+     * @param mixed $queryParams
+     */
+    public function setQueryParams($queryParams)
+    {
+        $this->_queryParams = $queryParams;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHighlightParams()
+    {
+        if (is_null($this->_highlightParams)) {
+            $this->_highlightParams = ArrayHelper::merge(Elasticsearch::getInstance()->settings->highlight, [
+                'fields' => [
+                    'title'              => (object)['type' => 'plain'],
+                    'attachment.content' => (object)[],
+                ],
+            ]);
+        }
+        return $this->_highlightParams;
+    }
+
+    /**
+     * @param mixed $highlightParams
+     */
+    public function setHighlightParams($highlightParams)
+    {
+        $this->_highlightParams = $highlightParams;
     }
 }
