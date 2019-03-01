@@ -2,7 +2,7 @@
     "name": "la-haute-societe/craft-elasticsearch",
     "description": "Bring the power of Elasticsearch to your Craft CMS projects.",
     "type": "craft-plugin",
-    "version": "1.0.0",
+    "version": "1.1.0-beta.1",
     "keywords": [
         "craft",
         "cms",
@@ -36,7 +36,7 @@
     "extra": {
         "name": "Elasticsearch",
         "handle": "elasticsearch",
-        "schemaVersion": "1.0.0",
+        "schemaVersion": "1.1.0-beta.1",
         "components": {
             "elasticsearch": "lhs\\elasticsearch\\services\\Elasticsearch"
         },
