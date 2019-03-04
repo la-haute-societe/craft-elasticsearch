@@ -64,5 +64,21 @@ return [
 
         'connectionTimeout' => 10,
         'dataTimeout'       => 30,
+        //        'resultFormatterCallback'  => function (array $formattedResult, $result) {
+        //
+        //        },
+        //        'extraFields'              => [
+        //            'fieldOne' => [
+        //                'mapping'     => [
+        //                    'type'  => 'text',
+        //                    'analyzer' => 'standard',
+        //                    'store' => true
+        //                ],
+        //                'highlighter' => (object)['type' => 'plain'],
+        //                'value'       => function (\craft\base\Element $element) {
+        //
+        //                }
+        //            ]
+        //        ]
     ],
 ];

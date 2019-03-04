@@ -13,7 +13,7 @@ namespace lhs\elasticsearch\records;
 use Craft;
 use craft\base\Element;
 use craft\helpers\ArrayHelper;
-use lhs\elasticsearch\Elasticsearch;
+use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\events\SearchEvent;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
@@ -36,6 +36,7 @@ class ElasticsearchRecord extends ActiveRecord
     private $_element;
     private $_queryParams;
     private $_highlightParams;
+    private $_searchFields = ['attachment.content', 'title'];
 
     CONST EVENT_BEFORE_CREATE_INDEX = 'beforeCreateIndex';
     CONST EVENT_BEFORE_SAVE = 'beforeSave';
@@ -49,6 +50,17 @@ class ElasticsearchRecord extends ActiveRecord
         return $this->_attributes;
     }
 
+    public function init()
+    {
+        parent::init();
+
+        // add extra fields as additional attributes
+        $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
+        if (!empty($extraFields)) {
+            $this->addAttributes(array_keys($extraFields));
+        }
+    }
+
     /**
      * Return an array of Elasticsearch records for the given query
      * @param string $query
@@ -58,6 +70,22 @@ class ElasticsearchRecord extends ActiveRecord
      */
     public function search(string $query)
     {
+        // Add extra fields to search parameters
+        $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
+        $extraHighlighParams = [];
+        if (!empty($extraFields)) {
+            $this->setSearchFields(ArrayHelper::merge($this->getSearchFields(), array_keys($extraFields)));
+            foreach ($extraFields as $fieldName => $fieldParams) {
+                $fieldHighlighter = ArrayHelper::getValue($fieldParams, 'highlighter');
+                if (!empty($fieldHighlighter)) {
+                    $extraHighlighParams[$fieldName] = $fieldHighlighter;
+                }
+            }
+        }
+        $highlightParams = $this->getHighlightParams();
+        $highlightParams['fields'] = ArrayHelper::merge($highlightParams['fields'], $extraHighlighParams);
+        $this->setHighlightParams($highlightParams);
+
         $this->trigger(self::EVENT_BEFORE_SEARCH, new SearchEvent(['query' => $query]));
         $queryParams = $this->getQueryParams($query);
         $highlightParams = $this->getHighlightParams();
@@ -145,6 +173,22 @@ class ElasticsearchRecord extends ActiveRecord
         if (!self::indexExists()) {
             $this->createESIndex();
         }
+
+        // Get the value of each extra field
+        $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
+        if (!empty($extraFields)) {
+            foreach ($extraFields as $fieldName => $fieldParams) {
+                $fieldValue = ArrayHelper::getValue($fieldParams, 'value');
+                if (!empty($fieldValue)) {
+                    if (is_callable($fieldValue)) {
+                        $this->$fieldName = $fieldValue($this->getElement());
+                    } else {
+                        $this->$fieldName = $fieldValue;
+                    }
+                }
+            }
+        }
+
         $this->trigger(self::EVENT_BEFORE_SAVE, new Event());
         if (!$this->getIsNewRecord()) {
             $this->delete(); // pipeline in not supported by Document Update API :(
@@ -154,8 +198,25 @@ class ElasticsearchRecord extends ActiveRecord
 
     public function createESIndex()
     {
+        $mapping = static::mapping();
+        // Add extra fields to the mapping definition
+        $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
+        if (!empty($extraFields)) {
+            foreach ($extraFields as $fieldName => $fieldParams) {
+                $fieldMapping = ArrayHelper::getValue($fieldParams, 'mapping');
+                if (!empty($fieldMapping)) {
+                    $mapping[static::type()]['properties'][$fieldName] = $fieldMapping;
+                } else {
+                    $mapping[static::type()]['properties'][$fieldName] = [
+                        'type'  => 'text',
+                        'store' => true
+                    ];
+                }
+            }
+        }
+        // Set the schema
         $this->setSchema([
-            'mappings' => static::mapping(),
+            'mappings' => $mapping,
         ]);
         $this->trigger(self::EVENT_BEFORE_CREATE_INDEX, new Event());
         Craft::debug('Before create event - site: ' . self::$siteId . ' schema: ' . VarDumper::dumpAsString($this->getSchema()), __METHOD__);
@@ -179,7 +240,7 @@ class ElasticsearchRecord extends ActiveRecord
      */
     public static function getDb()
     {
-        return Elasticsearch::getConnection();
+        return ElasticsearchPlugin::getConnection();
     }
 
     /**
@@ -331,10 +392,10 @@ class ElasticsearchRecord extends ActiveRecord
      */
     public function getQueryParams($query)
     {
-        if (is_null($this->_queryParams)) {
+        if ($this->_queryParams === null) {
             $this->_queryParams = [
                 'multi_match' => [
-                    'fields'   => ['attachment.content', 'title'],
+                    'fields'   => $this->getSearchFields(),
                     'query'    => $query,
                     'analyzer' => self::siteAnalyzer(),
                     'operator' => 'and',
@@ -358,7 +419,7 @@ class ElasticsearchRecord extends ActiveRecord
     public function getHighlightParams()
     {
         if (is_null($this->_highlightParams)) {
-            $this->_highlightParams = ArrayHelper::merge(Elasticsearch::getInstance()->settings->highlight, [
+            $this->_highlightParams = ArrayHelper::merge(ElasticsearchPlugin::getInstance()->settings->highlight, [
                 'fields' => [
                     'title'              => (object)['type' => 'plain'],
                     'attachment.content' => (object)[],
@@ -374,5 +435,21 @@ class ElasticsearchRecord extends ActiveRecord
     public function setHighlightParams($highlightParams)
     {
         $this->_highlightParams = $highlightParams;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSearchFields(): array
+    {
+        return $this->_searchFields;
+    }
+
+    /**
+     * @param array $searchFields
+     */
+    public function setSearchFields(array $searchFields)
+    {
+        $this->_searchFields = $searchFields;
     }
 }

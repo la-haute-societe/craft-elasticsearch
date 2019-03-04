@@ -66,6 +66,27 @@ class Settings extends Model
      */
     public $elasticsearchComponentConfig;
 
+    /**
+     * @var array An associative array defining additional fields to be index along with the defaults one.
+     * Each additional field should be declared as the name of the attribute as the key and an associative array for the value
+     * in which the keys can be:
+     * - `mapping`: an array providing the elasticsearch mapping definition for the field. For example:
+     *   ```php
+     *   [
+     *        'type'  => 'text',
+     *        'store' => true
+     *   ]
+     *   ```
+     * - `highlighter` : an object defining the elasticsearch highlighter behavior for the field. For example: `(object)[]`
+     * - `value` : either a string or a callable function taking one argument of \craft\base\Element type and returning the value of the field, for example:
+     *   ```php
+     *   function (\craft\base\Element $element) {
+     *       return ArrayHelper::getValue($element, 'color.hex');
+     *   }
+     *   ```
+     */
+    public $extraFields = [];
+
 /**
      * Returns the validation rules for attributes.
      * @return array

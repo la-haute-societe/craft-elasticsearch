@@ -174,6 +174,11 @@ can be set.
 If this is set, the `elasticsearchEndpoint`, `username`, `password` and `isAuthEnabled` settings 
 will be ignored.
 
+#### `extraFields`
+Type: _array_
+
+An associative array allowing to declare additional fields to be indexed along with the defaults ones.
+See [Index additional data](#indexing-additional-data) for more details.
      
      
 [elasticsearch documentation]: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html
@@ -281,11 +286,40 @@ Reindex all sites
 ./craft elasticsearch/elasticsearch/reindex-all http://example.com
 ````
 
-## Index additional data
+## Indexing of additional data
 
-This plugin gives you the opportunity to index any additional data.
+### Simple solution using the configuration file
 
-To do so, you can listen to the following events in a project module:
+To easily index additional data, you can declare them using the `extraFields` parameter in the plugin configuration file.
+
+Each field should be declared by using associative array with keys representing fields names and value as an associative array
+to configure the field behavior:
+
+*   `mapping`: an associative array providing the elasticsearch mapping definition for the field.
+*   `highlighter`: an object defining the elasticsearch highlighter behavior for the field.
+*   `value`: either a string or a callable function taking one argument of \craft\base\Element type and returning the value of the field.
+
+For example, to declare a `color` field in the configuration file, one could do:
+```php
+...
+  'extraFields'              => [
+    'color' => [
+        'mapping'     => [
+            'type'  => 'text',
+            'store' => true
+        ],
+        'highlighter' => (object)[],
+        'value'       => function (\craft\base\Element $element) {
+            return ArrayHelper::getValue($element, 'color.hex');
+        }
+    ]
+  ...
+```
+
+### More complex solution to get even more control over the indexing of additional data
+
+You can get even more control over your additional data by listening to the following events in a project module:
+
 *   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX`: That event is triggered before the Elasticsearch index is created. 
     Once you get a reference to the Elasticsearch Record instance, the following methods can be used to customise the schema as needed: 
     * `getSchema()` method can be used to get the current default Elasticsearch schema.
