@@ -178,7 +178,7 @@ will be ignored.
 Type: _array_
 
 An associative array allowing to declare additional fields to be indexed along with the defaults ones.
-See [Index additional data](#indexing-additional-data) for more details.
+See [Index additional data](#indexing-of-additional-data) for more details.
      
      
 [elasticsearch documentation]: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html
