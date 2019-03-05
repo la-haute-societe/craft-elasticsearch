@@ -251,7 +251,7 @@ Each entry consists of the following attributes:
 
 ## Auto indexing
 
-The plugin automatically indexes entries (created, updated or removed), as long as they're not in a blacklisted entry types,
+The plugin automatically indexes entries and Craft Commerce products (created, updated or removed), as long as they're not in a blacklisted entry types,
 or disabled.
 
 
