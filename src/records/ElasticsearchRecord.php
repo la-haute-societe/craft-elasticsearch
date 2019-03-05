@@ -181,7 +181,7 @@ class ElasticsearchRecord extends ActiveRecord
                 $fieldValue = ArrayHelper::getValue($fieldParams, 'value');
                 if (!empty($fieldValue)) {
                     if (is_callable($fieldValue)) {
-                        $this->$fieldName = $fieldValue($this->getElement());
+                        $this->$fieldName = $fieldValue($this->getElement(), $this);
                     } else {
                         $this->$fieldName = $fieldValue;
                     }

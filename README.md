@@ -31,7 +31,7 @@ Just install the plugin from the Craft Plugin Store.
  
 ## Elasticsearch plugin Overview
 
-Elasticsearch plugin will automatically index each entry on your site(s).
+Elasticsearch plugin will automatically index each entry and Craft Commerce product (if installed) on your site(s).
 
 It will figure out the best Elasticsearch mapping for you based on your site(s)' language. 
 
@@ -221,8 +221,8 @@ For instance, in a template `search/index.twig`:
             <p>
                 <small><a href="{{ result.url|raw }}">{{ result.url }}</a><br/>
                     {% if result.highlights|length %}
-                        {% for highligh in result.highlights %}
-                            {{ highligh|raw }}<br/>
+                        {% for highlight in result.highlights %}
+                            {{ highlight|raw }}<br/>
                         {% endfor %}
                     {% endif %}
                 </small>
@@ -288,16 +288,17 @@ Reindex all sites
 
 ## Indexing of additional data
 
-### Simple solution using the configuration file
+### Simple way using the configuration file
 
 To easily index additional data, you can declare them using the `extraFields` parameter in the plugin configuration file.
 
 Each field should be declared by using associative array with keys representing fields names and value as an associative array
 to configure the field behavior:
 
-*   `mapping`: an associative array providing the elasticsearch mapping definition for the field.
-*   `highlighter`: an object defining the elasticsearch highlighter behavior for the field.
-*   `value`: either a string or a callable function taking one argument of \craft\base\Element type and returning the value of the field.
+*   `mapping` (optional): an associative array providing the elasticsearch mapping definition for the field.
+*   `highlighter` (optional): an object defining the elasticsearch highlighter behavior for the field.
+*   `value`: either a string or a callable function taking one argument of `craft\base\Element` type and returning the value of the field. 
+    Second argument can be used to access the related `lhs\elasticsearch\record\ElasticsearchRecord` instance.
 
 For example, to declare a `color` field in the configuration file, one could do:
 ```php
@@ -309,14 +310,15 @@ For example, to declare a `color` field in the configuration file, one could do:
             'store' => true
         ],
         'highlighter' => (object)[],
-        'value'       => function (\craft\base\Element $element) {
+        'value'       => function (\craft\base\Element $element, \lhs\elasticsearch\record\ElasticsearchRecord $esRecord) {
+            // $esRecord->whatEverMethod();
             return ArrayHelper::getValue($element, 'color.hex');
         }
     ]
   ...
 ```
 
-### More complex solution to get even more control over the indexing of additional data
+### More complex way to get even more control
 
 You can get even more control over your additional data by listening to the following events in a project module:
 

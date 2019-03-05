@@ -274,6 +274,11 @@ class Elasticsearch extends Component
             $results = $esRecord->search($query);
             $output = [];
             $callback = ElasticsearchPlugin::getInstance()->getSettings()->resultFormatterCallback;
+
+            // Get the list of extra fields
+            $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
+            $additionalFields = empty($extraFields) ? [] : array_keys($extraFields);
+
             foreach ($results as $result) {
                 $formattedResult = [
                     'id'         => $result->getPrimaryKey(),
@@ -282,6 +287,14 @@ class Elasticsearch extends Component
                     'score'      => $result->score,
                     'highlights' => $result->highlight['attachment.content'] ?? [],
                 ];
+
+                // Add extra fields to the current result
+                $additionalFormattedResult = [];
+                foreach ($additionalFields as $additionalField) {
+                    $additionalFormattedResult[$additionalField] = $result->$additionalField;
+                }
+                $formattedResult = ArrayHelper::merge($additionalFormattedResult, $formattedResult); // Do not override the default results
+
                 if ($callback) {
                     $formattedResult = $callback($formattedResult, $result);
                 }

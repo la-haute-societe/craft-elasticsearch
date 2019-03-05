@@ -65,7 +65,7 @@ return [
         'connectionTimeout' => 10,
         'dataTimeout'       => 30,
         //        'resultFormatterCallback'  => function (array $formattedResult, $result) {
-        //
+        //                // Do something
         //        },
         //        'extraFields'              => [
         //            'fieldOne' => [
@@ -75,8 +75,8 @@ return [
         //                    'store' => true
         //                ],
         //                'highlighter' => (object)['type' => 'plain'],
-        //                'value'       => function (\craft\base\Element $element) {
-        //
+        //                'value'       => function (\craft\base\Element $element, \lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
+        //                        // Return something
         //                }
         //            ]
         //        ]
