@@ -452,7 +452,7 @@ class Elasticsearch extends Component
         $entries = [];
         foreach ($siteIds as $siteId) {
             $siteEntries = Entry::find()
-                ->select(['{{%elements}}.id as elementId', '{{%elements_sites}}.siteId'])
+                ->select(['elements.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
                 ->asArray(true)
                 ->all();
@@ -481,7 +481,7 @@ class Elasticsearch extends Component
         $products = [];
         foreach ($siteIds as $siteId) {
             $siteEntries = Product::find()
-                ->select(['{{%commerce_products}}.id as elementId', '{{%elements_sites}}.siteId'])
+                ->select(['commerce_products.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
                 ->asArray(true)
                 ->all();
@@ -502,13 +502,15 @@ class Elasticsearch extends Component
     {
         $siteIds = Site::find()->select('id')->column();
 
-        try {
-            $this->recreateSiteIndex(...$siteIds);
-        } catch (\Exception $e) {
-            throw new IndexElementException(Craft::t(
-                ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'Cannot recreate empty indexes for all sites'
-            ), 0, $e);
+        if (!empty($siteIds)) {
+            try {
+                $this->recreateSiteIndex(...$siteIds);
+            } catch (\Exception $e) {
+                throw new IndexElementException(Craft::t(
+                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                    'Cannot recreate empty indexes for all sites'
+                ), 0, $e);
+            }
         }
 
         Craft::$app->getCache()->delete(self::getSyncCachekey()); // Invalidate cache
