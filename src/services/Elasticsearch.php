@@ -426,11 +426,13 @@ class Elasticsearch extends Component
         }
 
         /** @noinspection NullPointerExceptionInspection NPE cannot happen here. */
-        $blacklist = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
-        if (in_array($element->typeId, $blacklist)) {
-            $message = "Not indexing entry #{$element->id} since it's in a blacklisted entry types.";
-            Craft::debug($message, __METHOD__);
-            return $message;
+        if ($element instanceof Entry) {
+            $blacklist = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
+            if (in_array($element->typeId, $blacklist)) {
+                $message = "Not indexing entry #{$element->id} since it's in a blacklisted entry types.";
+                Craft::debug($message, __METHOD__);
+                return $message;
+            }
         }
 
         return null;
@@ -490,7 +492,6 @@ class Elasticsearch extends Component
         array_walk($products, function (&$product) {
             $product['type'] = Product::class;
         });
-
         return $products;
     }
 

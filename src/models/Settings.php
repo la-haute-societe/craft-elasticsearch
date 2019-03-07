@@ -100,7 +100,7 @@ class Settings extends Model
             ['isAuthEnabled', 'boolean'],
             [['username', 'password'], 'string'],
             [['username', 'password'], 'trim'],
-            [['blacklistedEntryTypes'], 'safe']
+            [['blacklistedEntryTypes', 'highlight'], 'safe']
         ];
     }
 
