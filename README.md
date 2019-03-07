@@ -247,7 +247,7 @@ Each entry consists of the following attributes:
   - `score`: entry result score
   - `highlights`: array of highlighted content matching the query terms
 
-
+>Note: To add additional attributes, see [Index additional data](#indexing-of-additional-data) for more details.
 
 ## Auto indexing
 
@@ -414,7 +414,7 @@ This plugin is free to try in development environments, but requires payment to 
 * Detect need for re-indexation
 * Switch form `la-haute-societe/yii2-elasticsearch` to official 2.1 `yiisoft/yii2-elasticsearch` library as soon as a stable version will be released
 
-Brought to you by [![La Haute Société](resources/img/lhs.png)][lhs-site]
+Brought to you by [![Logo](resources/img/lhs.png)][lhs-site] La Haute Société
 
 Elasticsearch is a trademark of Elasticsearch BV, registered in the U.S. and in
 other countries.
