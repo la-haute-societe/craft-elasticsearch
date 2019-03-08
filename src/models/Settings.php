@@ -20,7 +20,7 @@ use yii\base\InvalidConfigException;
  */
 class Settings extends Model
 {
-/** @var string The Elasticsearch instance endpoint URL (with protocol, host and port) */
+    /** @var string The Elasticsearch instance endpoint URL (with protocol, host and port) */
     public $elasticsearchEndpoint = 'elasticsearch:9200';
 
     /** @var string [optional] The username used to connect to the Elasticsearch server */
@@ -87,7 +87,7 @@ class Settings extends Model
      */
     public $extraFields = [];
 
-/**
+    /**
      * Returns the validation rules for attributes.
      * @return array
      */
@@ -136,6 +136,11 @@ class Settings extends Model
             /** @noinspection PhpUnhandledExceptionInspection Shouldn't happen as the component to set is already initialized */
             Craft::$app->set(Elasticsearch::APP_COMPONENT_NAME, $previousElasticConnector);
         }
+
+        // Cleanup blacklistedEntryTypes to remove empty values
+        $this->blacklistedEntryTypes = array_filter($this->blacklistedEntryTypes, function ($value) {
+            return !empty($value);
+        });
 
         parent::afterValidate();
     }
