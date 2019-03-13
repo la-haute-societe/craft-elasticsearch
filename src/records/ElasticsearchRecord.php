@@ -24,7 +24,7 @@ use yii\helpers\VarDumper;
 /**
  * @property string $title
  * @property string $url
- * @property mixed $section
+ * @property string $elementHandle
  * @property object|array $content
  */
 class ElasticsearchRecord extends ActiveRecord
@@ -32,7 +32,7 @@ class ElasticsearchRecord extends ActiveRecord
     public static $siteId;
 
     private $_schema;
-    private $_attributes = ['title', 'url', 'section', 'content'];
+    private $_attributes = ['title', 'url', 'elementHandle', 'content'];
     private $_element;
     private $_queryParams;
     private $_highlightParams;
@@ -312,25 +312,25 @@ class ElasticsearchRecord extends ActiveRecord
         $mapping = [
             static::type() => [
                 'properties' => [
-                    'title'      => [
+                    'title'         => [
                         'type'     => 'text',
                         'analyzer' => $analyzer,
                         'store'    => true,
                     ],
-                    'section'    => [
-                        'type'  => 'keyword',
-                        'store' => true,
-                    ],
-                    'url'        => [
+                    'url'           => [
                         'type'  => 'text',
                         'store' => true,
                     ],
-                    'content'    => [
+                    'content'       => [
                         'type'     => 'text',
                         'analyzer' => $analyzer,
                         'store'    => true,
                     ],
-                    'attachment' => [
+                    'elementHandle' => [
+                        'type'  => 'keyword',
+                        'store' => 'true'
+                    ],
+                    'attachment'    => [
                         'properties' => [
                             'content' => [
                                 'type'     => 'text',

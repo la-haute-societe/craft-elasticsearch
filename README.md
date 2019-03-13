@@ -244,8 +244,10 @@ Each entry consists of the following attributes:
   - `id`: unique ID of the result
   - `title`: page title
   - `url`: full url to the page
+  - `elementHandle`: the element handle name. Can be either `entry` or `product`
   - `score`: entry result score
   - `highlights`: array of highlighted content matching the query terms
+  - `rawResult`: the ElasticsearchRecord raw result object
 
 >Note: To add additional attributes, see [Index additional data](#indexing-of-additional-data) for more details.
 
@@ -290,15 +292,24 @@ Reindex all sites
 
 ### Simple way using the configuration file
 
-To easily index additional data, you can declare them using the `extraFields` parameter in the plugin configuration file.
+To easily index additional data (elasticsearch fields), you can declare them using the `extraFields` parameter in the plugin configuration file.
 
 Each field should be declared by using associative array with keys representing fields names and value as an associative array
 to configure the field behavior:
 
 *   `mapping` (optional): an associative array providing the elasticsearch mapping definition for the field.
+    >   Note: If not provided, the mapping will default to:
+    >   ```php
+    >   [
+    >       'type'     => 'text',
+    >       'store'    => true,
+    >       'analyzer' => 'english' // site analyzer based on Craft site language
+    >   ];
+    >   ```
 *   `highlighter` (optional): an object defining the elasticsearch highlighter behavior for the field.
+    To know more about that configuration, refer to the documentation [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/search-request-highlighting.html).
 *   `value`: either a string or a callable function taking one argument of `craft\base\Element` type and returning the value of the field. 
-    Second argument can be used to access the related `lhs\elasticsearch\record\ElasticsearchRecord` instance.
+    Second argument can be used to access the related `lhs\elasticsearch\records\ElasticsearchRecord` instance.
 
 For example, to declare a `color` field in the configuration file, one could do:
 ```php
@@ -320,19 +331,20 @@ For example, to declare a `color` field in the configuration file, one could do:
 
 ### More complex way to get even more control
 
-You can get even more control over your additional data by listening to the following events in a project module:
+You can get even more control over your additional data by listening to the following events in some project module:
 
 *   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX`: That event is triggered before the Elasticsearch index is created. 
     Once you get a reference to the Elasticsearch Record instance, the following methods can be used to customise the schema as needed: 
     * `getSchema()` method can be used to get the current default Elasticsearch schema.
     * `setSchema(array $schema)` method can be used to set the customized schema
     
-    For example, if you want to add a 'color' property, you could do something like:
+    For example, if you want to add a 'color' field, you could do something like:
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
         $esRecord = $event->sender;
         $schema = $esRecord->getSchema();
+        // Modify the original schema to add the additional field
         $schema['mappings']['elasticsearch-record']['properties']['color'] = [
             'type'  => 'text',
             'store' => true
@@ -340,26 +352,27 @@ You can get even more control over your additional data by listening to the foll
         $esRecord->setSchema($schema);
     });
     ```
-    >Note: Do not alter the following defaults properties: `title`, `url`, `section` and `content`. Also, do not alter the default `attachment` processor.
-*   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_INIT`: That event can be used to add additional attributes you wish to handle in your indexes.
-    You can use the `addAttributes(array $additionalAttributes)` to add the list of additional fields.
-    This is mandatory in order to get or set any additional properties you declared in your schema in the previous step.
-    For example, if you wish to declare the 'color' attribute, you could do:
+    >Note: Do not alter the following defaults properties: `title`, `url`, `elementHandle` and `content`. Also, do not alter the default `attachment` processor.
+*   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_INIT`: That event can be used to add additional attributes to the ElasticsearchRecord instance to handle your indexes.
+    You can use the `addAttributes(array $additionalAttributes)` to add the list of additional attributes.
+    This is mandatory in order to get or set any additional fields you declared in your schema in the previous step.
+    For example, if you wish to declare the 'color' field, you could do:
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_INIT, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
         $esRecord = $event->sender;
-        $esRecord->addAttributes(['color']);
+        $esRecord->addAttributes(['color']); // Adds an additional attribute named `color`
     });
     ```
 *   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_SAVE`: By listening to that event, you get a chance to set the value of your additional fields declared in the previous step.
-    You can access the related `Element` by using the `getElement()` method.
-    For example, if you wish to set the value the 'color' attribute to be indexed, given that 'color' attribute is a Craft color field type, you could do:
+    You can access the related Craft `Element` by using the `getElement()` method.
+    For example, if you wish to set the value the 'color' attribute to be indexed, given that 'color' attribute corresponds to a Craft color field type, you could do:
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SAVE, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
         $esRecord = $event->sender;
         $element = $esRecord->getElement();
+        // Set the color attributes value to be saved in Elasticsearch index
         $esRecord->color = ArrayHelper::getValue($element, 'color.hex');
     });
     ```
@@ -367,7 +380,7 @@ You can get even more control over your additional data by listening to the foll
     During that event, you can use the following methods to forge your Elasticsearch query request to your needs:
     * `getQueryParams($query)` and `setQueryParams($queryParams)` can be used to alter the default Elasticsearch query parameters (see example below)
     * `getHighlightParams()` and `setHighlightParams($highlightParams)` can be used to alter the default Elasticsearch highlighter parameters (see example below)
-    For example, if you wish to add the 'color' attribute to your query, given that 'color' attribute is a Craft color field type, you could do:
+    For example, if you wish to add the 'color' field to your query, given that 'color' attribute is a Craft color field type, you could do:
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SEARCH, function (SearchEvent $event) {
         /** @var ElasticsearchRecord $esRecord */
@@ -383,7 +396,7 @@ You can get even more control over your additional data by listening to the foll
         $esRecord->setHighlightParams($highlightParams);
     });
     ```
-    >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results. For example, to add the 'color' field you could do:
+    >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results. For example, to add the 'color' field result you could do:
     >```php
     > ...
     >'resultFormatterCallback'  => function (array $formattedResult, $result) {

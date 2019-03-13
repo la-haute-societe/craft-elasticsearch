@@ -207,6 +207,7 @@ class Elasticsearch extends Component
         $esRecord = $this->getElasticRecordForElement($element);
         $esRecord->title = $element->title;
         $esRecord->url = $element->url;
+        $esRecord->elementHandle = $element->refHandle();
 
         $html = $this->getElementIndexableContent($element);
         if ($html === false) {
