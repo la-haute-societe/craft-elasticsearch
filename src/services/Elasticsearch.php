@@ -285,7 +285,8 @@ class Elasticsearch extends Component
                     'title'      => $result->title,
                     'url'        => $result->url,
                     'score'      => $result->score,
-                    'highlights' => $result->highlight['attachment.content'] ?? [],
+                    'highlights' => $result->highlight ? array_merge(...array_values($result->highlight)) : [],
+                    'rawResult'  => $result
                 ];
 
                 // Add extra fields to the current result

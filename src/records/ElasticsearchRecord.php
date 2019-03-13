@@ -203,15 +203,13 @@ class ElasticsearchRecord extends ActiveRecord
         $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
         if (!empty($extraFields)) {
             foreach ($extraFields as $fieldName => $fieldParams) {
-                $fieldMapping = ArrayHelper::getValue($fieldParams, 'mapping');
-                if (!empty($fieldMapping)) {
-                    $mapping[static::type()]['properties'][$fieldName] = $fieldMapping;
-                } else {
-                    $mapping[static::type()]['properties'][$fieldName] = [
-                        'type'  => 'text',
-                        'store' => true
-                    ];
-                }
+                $fieldMapping = ArrayHelper::getValue($fieldParams, 'mapping', []);
+                $defaultMapping = [
+                    'type'     => 'text',
+                    'store'    => true,
+                    'analyzer' => self::siteAnalyzer()
+                ];
+                $mapping[static::type()]['properties'][$fieldName] = ArrayHelper::merge($defaultMapping, $fieldMapping);
             }
         }
         // Set the schema
@@ -421,7 +419,6 @@ class ElasticsearchRecord extends ActiveRecord
         if (is_null($this->_highlightParams)) {
             $this->_highlightParams = ArrayHelper::merge(ElasticsearchPlugin::getInstance()->settings->highlight, [
                 'fields' => [
-                    'title'              => (object)['type' => 'plain'],
                     'attachment.content' => (object)[],
                 ],
             ]);
