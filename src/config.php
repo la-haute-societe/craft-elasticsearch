@@ -67,6 +67,9 @@ return [
         //        'resultFormatterCallback'  => function (array $formattedResult, $result) {
         //                // Do something
         //        },
+        //        'elementContentCallback' => function (\craft\base\ElementInterface $element) {
+        //            return '<span>Some HTML element content to index</span>';
+        //        },
         //        'extraFields'              => [
         //            'fieldOne' => [
         //                'mapping'     => [
@@ -75,7 +78,7 @@ return [
         //                    'store' => true
         //                ],
         //                'highlighter' => (object)['type' => 'plain'],
-        //                'value'       => function (\craft\base\Element $element, \lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
+        //                'value'       => function (\craft\base\ElementInterface $element, \lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
         //                        // Return something
         //                }
         //            ]

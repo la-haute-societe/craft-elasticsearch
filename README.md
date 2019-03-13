@@ -159,10 +159,20 @@ The default is to extract the HTML code between those 2 comments:
 `<!-- BEGIN elasticsearch indexed content -->` and `<!-- END elasticsearch indexed content -->`.
 
 
+#### `elementContentCallback`
+Type: _callable_
+
+A callback function (`function (\craft\base\ElementInterface $element): string`) used to get the HTML content for the given element to index.
+
+>   Note: 
+>   * If this parameter is not set or null, the default Guzzle client implementation will be used to get the HTML content of the element.
+>   If set, you will have to handle that part yourself.
+>   * Content should be returned as HTML content in order to be correctly indexed.
+
 #### `resultFormatterCallback`
 Type: _callable_
 
-A callback function (`function (array $formattedResult, $result)`) used to prepare and
+A callback function (`function (array $formattedResult, $result): array`) used to prepare and
 format the Elasticsearch result object in order to be used by the results twig view.
 
 #### `elasticsearchComponentConfig`
@@ -321,7 +331,7 @@ For example, to declare a `color` field in the configuration file, one could do:
             'store' => true
         ],
         'highlighter' => (object)[],
-        'value'       => function (\craft\base\Element $element, \lhs\elasticsearch\record\ElasticsearchRecord $esRecord) {
+        'value'       => function (\craft\base\ElementInterface $element, \lhs\elasticsearch\record\ElasticsearchRecord $esRecord) {
             // $esRecord->whatEverMethod();
             return ArrayHelper::getValue($element, 'color.hex');
         }

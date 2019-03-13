@@ -209,7 +209,12 @@ class Elasticsearch extends Component
         $esRecord->url = $element->url;
         $esRecord->elementHandle = $element->refHandle();
 
-        $html = $this->getElementIndexableContent($element);
+        if ($callback = ElasticsearchPlugin::getInstance()->getSettings()->elementContentCallback) {
+            $html = $callback($element);
+        } else {
+            $html = $this->getElementIndexableContent($element);
+        }
+
         if ($html === false) {
             $message = "Not indexing entry #{$element->id} since it doesn't have a template.";
             Craft::debug($message, __METHOD__);

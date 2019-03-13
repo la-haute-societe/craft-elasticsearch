@@ -39,6 +39,12 @@ class Settings extends Model
     public $contentExtractorCallback;
 
     /**
+     * @var callable A callback used to get the HTML content of the element to index.
+     *               If null, the default Guzzle Client implementation will be used instead to get the content.
+     */
+    public $elementContentCallback;
+
+    /**
      * @var callable A callback used to prepare and format the Elasticsearch result object in order to be used by the results twig view.
      *               Expect two arguments: first, an array represented initial formatted results, the second, a Elasticsearch record result object.
      */
