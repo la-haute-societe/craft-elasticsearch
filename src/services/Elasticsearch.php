@@ -282,12 +282,13 @@ class Elasticsearch extends Component
 
             foreach ($results as $result) {
                 $formattedResult = [
-                    'id'         => $result->getPrimaryKey(),
-                    'title'      => $result->title,
-                    'url'        => $result->url,
-                    'score'      => $result->score,
-                    'highlights' => $result->highlight ? array_merge(...array_values($result->highlight)) : [],
-                    'rawResult'  => $result
+                    'id'            => $result->getPrimaryKey(),
+                    'title'         => $result->title,
+                    'url'           => $result->url,
+                    'elementHandle' => $result->elementHandle,
+                    'score'         => $result->score,
+                    'highlights'    => $result->highlight ? array_merge(...array_values($result->highlight)) : [],
+                    'rawResult'     => $result
                 ];
 
                 // Add extra fields to the current result
