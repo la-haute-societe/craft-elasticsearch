@@ -203,13 +203,13 @@ class ElasticsearchRecord extends ActiveRecord
         $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
         if (!empty($extraFields)) {
             foreach ($extraFields as $fieldName => $fieldParams) {
-                $fieldMapping = ArrayHelper::getValue($fieldParams, 'mapping', []);
-                $defaultMapping = [
-                    'type'     => 'text',
-                    'store'    => true,
-                    'analyzer' => self::siteAnalyzer()
-                ];
-                $mapping[static::type()]['properties'][$fieldName] = ArrayHelper::merge($defaultMapping, $fieldMapping);
+                $fieldMapping = ArrayHelper::getValue($fieldParams, 'mapping');
+                if ($fieldMapping) {
+                    if (is_callable($fieldMapping)) {
+                        $fieldMapping = $fieldMapping($this);
+                    }
+                    $mapping[static::type()]['properties'][$fieldName] = $fieldMapping;
+                }
             }
         }
         // Set the schema

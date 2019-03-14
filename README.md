@@ -259,7 +259,9 @@ Each entry consists of the following attributes:
   - `highlights`: array of highlighted content matching the query terms
   - `rawResult`: the ElasticsearchRecord raw result object
 
->Note: To add additional attributes, see [Index additional data](#indexing-of-additional-data) for more details.
+>   Note: 
+>   * To add additional attributes, see [Index additional data](#indexing-of-additional-data) for more details.
+>   * To customize the Elasticsearch query, see [More complex way to get even more control](#more-complex-way-to-get-even-more-control)
 
 ## Auto indexing
 
@@ -308,14 +310,19 @@ Each field should be declared by using associative array with keys representing 
 to configure the field behavior:
 
 *   `mapping` (optional): an associative array providing the elasticsearch mapping definition for the field.
-    >   Note: If not provided, the mapping will default to:
-    >   ```php
-    >   [
-    >       'type'     => 'text',
-    >       'store'    => true,
-    >       'analyzer' => 'english' // site analyzer based on Craft site language
-    >   ];
-    >   ```
+    For more complex mapping, you can also use a callback (`function (\lhs\elasticsearch\records\ElasticsearchRecord $esRecord)`) to return the associative array. 
+    For example:
+    ```php
+    ...
+    'mapping' => function (\lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
+        return [
+            'type'     => 'text',
+            'store'    => true,
+            'analyzer' => $esRecord::siteAnalyzer()
+        ];
+    }
+    ...
+    ```
 *   `highlighter` (optional): an object defining the elasticsearch highlighter behavior for the field.
     To know more about that configuration, refer to the documentation [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/search-request-highlighting.html).
 *   `value`: either a string or a callable function taking one argument of `craft\base\Element` type and returning the value of the field. 
