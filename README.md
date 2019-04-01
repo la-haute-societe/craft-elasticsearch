@@ -312,6 +312,7 @@ to configure the field behavior:
 *   `mapping` (optional): an associative array providing the elasticsearch mapping definition for the field.
     For more complex mapping, you can also use a callback (`function (\lhs\elasticsearch\records\ElasticsearchRecord $esRecord)`) to return the associative array. 
     For example:
+    
     ```php
     ...
     'mapping' => function (\lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
@@ -329,6 +330,7 @@ to configure the field behavior:
     Second argument can be used to access the related `lhs\elasticsearch\records\ElasticsearchRecord` instance.
 
 For example, to declare a `color` field in the configuration file, one could do:
+
 ```php
 ...
   'extraFields'              => [
@@ -356,6 +358,7 @@ You can get even more control over your additional data by listening to the foll
     * `setSchema(array $schema)` method can be used to set the customized schema
     
     For example, if you want to add a 'color' field, you could do something like:
+    
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
@@ -374,6 +377,7 @@ You can get even more control over your additional data by listening to the foll
     You can use the `addAttributes(array $additionalAttributes)` to add the list of additional attributes.
     This is mandatory in order to get or set any additional fields you declared in your schema in the previous step.
     For example, if you wish to declare the 'color' field, you could do:
+    
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_INIT, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
@@ -384,6 +388,7 @@ You can get even more control over your additional data by listening to the foll
 *   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_SAVE`: By listening to that event, you get a chance to set the value of your additional fields declared in the previous step.
     You can access the related Craft `Element` by using the `getElement()` method.
     For example, if you wish to set the value the 'color' attribute to be indexed, given that 'color' attribute corresponds to a Craft color field type, you could do:
+    
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SAVE, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
@@ -398,6 +403,7 @@ You can get even more control over your additional data by listening to the foll
     * `getQueryParams($query)` and `setQueryParams($queryParams)` can be used to alter the default Elasticsearch query parameters (see example below)
     * `getHighlightParams()` and `setHighlightParams($highlightParams)` can be used to alter the default Elasticsearch highlighter parameters (see example below)
     For example, if you wish to add the 'color' field to your query, given that 'color' attribute is a Craft color field type, you could do:
+    
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SEARCH, function (SearchEvent $event) {
         /** @var ElasticsearchRecord $esRecord */
@@ -414,6 +420,7 @@ You can get even more control over your additional data by listening to the foll
     });
     ```
     >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results. For example, to add the 'color' field result you could do:
+    
     >```php
     > ...
     >'resultFormatterCallback'  => function (array $formattedResult, $result) {
@@ -429,6 +436,37 @@ You can get even more control over your additional data by listening to the foll
 At the time of the release of this plugin, no stable 2.1 version of the `yiisoft/yii2-elasticsearch` was released yet. However, that version is mandatory in order to connect to Elasticsearch instances 5 or upper.
 
 To simplify the installation process, a `la-haute-societe/yii2-elasticsearch` fork was made and flagged as stable. Please, note that **this fork was tested and intended to work with this plugin only**.
+
+
+## Troubleshooting
+
+- When saving the settings, if you get a `Could not connect to the Elasticsearch instance at http://somedomain:9200.` `Please check the endpoint URL and authentication settings.` error :
+	- If you are using an external Elasticsearch instance, check: 
+		- that the instance is running 
+		- the domain name/IP address and ports are correct
+		- your firewall settings allow access to the server and port
+	- If you are using a docker-compose setup, check:
+		- that your containers are running correctly once the `docker-compose up` has been executed. Execute a `docker ps` command to see if the containers appear in the list. If they are not, chances are there are some issues preventing the containers from starting and you should check those errors in the first place.
+		- that you can access the instance by going to `http://localhost:9200`. You should see some default json payload like the following: 
+		  
+		  ```
+		  {
+			  "name" : "szLA31y",
+			  "cluster_name" : "yii2-test-cluster",
+			  "cluster_uuid" : "gvvwC9WvSjOrwRi8laBc6w",
+			  "version" : {
+			    "number" : "6.1.4",
+			    "build_hash" : "d838f2d",
+			    "build_date" : "2018-03-14T08:28:22.470Z",
+			    "build_snapshot" : false,
+			    "lucene_version" : "7.1.0",
+			    "minimum_wire_compatibility_version" : "5.6.0",
+			    "minimum_index_compatibility_version" : "5.0.0"
+			  },
+			  "tagline" : "You Know, for Search"
+			}
+			```
+		- that all the containers are running on the same shared network (see the networks parameter in the `docker-compose.yml` file, in our example, it is named `app_tier`).
 
 
 ## Licensing
