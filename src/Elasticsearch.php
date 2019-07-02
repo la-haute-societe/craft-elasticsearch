@@ -93,14 +93,21 @@ class Elasticsearch extends Plugin
                 function (Event $event) {
                     /** @var Entry $entry */
                     $entry = $event->sender;
-                    if ($entry->enabled) {
-                        $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId, Entry::class);
-                        //$this->service->indexElement($entry);
-                    } else {
-                        try {
-                            $this->service->deleteElement($entry);
-                        } catch (Exception $e) {
-                            // Noop, the element must have already been deleted
+                    // Handle drafts and revisions for Craft 3.2 and upper
+                    $notDraftOrRevision = true;
+                    if ($entry->hasMethod('getIsDraft')) {
+                        $notDraftOrRevision = !$entry->getIsDraft() && !$entry->getIsRevision();
+                    }
+                    if ($notDraftOrRevision) {
+                        if ($entry->enabled) {
+                            $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId, Entry::class);
+                            //$this->service->indexElement($entry);
+                        } else {
+                            try {
+                                $this->service->deleteElement($entry);
+                            } catch (Exception $e) {
+                                // Noop, the element must have already been deleted
+                            }
                         }
                     }
                 }
@@ -114,14 +121,21 @@ class Elasticsearch extends Plugin
                     function (Event $event) {
                         /** @var Product $product */
                         $product = $event->sender;
-                        if ($product->enabled) {
-                            $this->reindexQueueManagementService->enqueueJob($product->id, $product->siteId, Product::class);
-                            //$this->service->indexElement($product);
-                        } else {
-                            try {
-                                $this->service->deleteElement($product);
-                            } catch (Exception $e) {
-                                // Noop, the element must have already been deleted
+                        // Handle drafts and revisions for Craft 3.2 and upper
+                        $notDraftOrRevision = true;
+                        if ($product->hasMethod('getIsDraft')) {
+                            $notDraftOrRevision = !$product->getIsDraft() && !$product->getIsRevision();
+                        }
+                        if ($notDraftOrRevision) {
+                            if ($product->enabled) {
+                                $this->reindexQueueManagementService->enqueueJob($product->id, $product->siteId, Product::class);
+                                //$this->service->indexElement($product);
+                            } else {
+                                try {
+                                    $this->service->deleteElement($product);
+                                } catch (Exception $e) {
+                                    // Noop, the element must have already been deleted
+                                }
                             }
                         }
                     }
@@ -326,8 +340,9 @@ class Elasticsearch extends Plugin
      * block on the settings page.
      *
      * @return string The rendered settings HTML
-     * @throws \Twig_Error_Loader
-     * @throws \yii\base\Exception
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
     protected function settingsHtml(): string
     {

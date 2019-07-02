@@ -204,9 +204,17 @@ class Elasticsearch extends Component
 
         Craft::info("Indexing entry {$element->url}", __METHOD__);
 
+        /** @var Entry $esRecord */
+        //Craft::debug(VarDumper::dumpAsString($element), __METHOD__);
         $esRecord = $this->getElasticRecordForElement($element);
         $esRecord->title = $element->title;
         $esRecord->url = $element->url;
+        if (($element instanceof craft\elements\Entry) || ($element instanceof craft\commerce\Product)) {
+            $esRecord->postDate = $element->postDate ? $element->postDate->format('Y-m-d H:i:s') : null;
+            $esRecord->noPostDate = $element->postDate ? false : true;
+            $esRecord->expiryDate = $element->expiryDate ? $element->expiryDate->format('Y-m-d H:i:s') : null;
+            $esRecord->noExpiryDate = $element->expiryDate ? false : true;
+        }
         $esRecord->elementHandle = $element->refHandle();
 
         if ($callback = ElasticsearchPlugin::getInstance()->getSettings()->elementContentCallback) {
@@ -353,11 +361,16 @@ class Elasticsearch extends Component
     protected function getElementIndexableContent(Element $element)
     {
         Craft::debug('Getting element page content : ' . $element->url, __METHOD__);
+
+        $response = Craft::$app->runAction('entries/share-entry', ['entryId' => $element->id, 'siteId' => $element->siteId]);
+
+        $url = $response->headers['location'] ?: $response->headers['x-redirect'];
+
         $client = new Client([
             'connect_timeout' => 10
         ]);
         try {
-            $res = $client->request('GET', $element->url);
+            $res = $client->request('GET', $url);
             if ($res->getStatusCode() === 200) {
                 return $this->extractIndexablePart($res->getBody());
             }

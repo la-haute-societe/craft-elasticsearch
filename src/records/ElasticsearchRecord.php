@@ -13,6 +13,7 @@ namespace lhs\elasticsearch\records;
 use Craft;
 use craft\base\Element;
 use craft\helpers\ArrayHelper;
+use craft\helpers\Db;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\events\SearchEvent;
 use yii\base\Event;
@@ -26,13 +27,17 @@ use yii\helpers\VarDumper;
  * @property string $url
  * @property string $elementHandle
  * @property object|array $content
+ * @property string $postDate
+ * @property boolean $noPostDate
+ * @property string $expiryDate
+ * @property boolean $noExpiryDate
  */
 class ElasticsearchRecord extends ActiveRecord
 {
     public static $siteId;
 
     private $_schema;
-    private $_attributes = ['title', 'url', 'elementHandle', 'content'];
+    private $_attributes = ['title', 'url', 'elementHandle', 'content', 'postDate', 'expiryDate', 'noPostDate', 'noExpiryDate'];
     private $_element;
     private $_queryParams;
     private $_highlightParams;
@@ -317,6 +322,24 @@ class ElasticsearchRecord extends ActiveRecord
                         'analyzer' => $analyzer,
                         'store'    => true,
                     ],
+                    'postDate'      => [
+                        'type'   => 'date',
+                        'format' => 'yyyy-MM-dd HH:mm:ss',
+                        'store'  => true
+                    ],
+                    'noPostDate'    => [
+                        'type'  => 'boolean',
+                        'store' => true
+                    ],
+                    'expiryDate'    => [
+                        'type'   => 'date',
+                        'format' => 'yyyy-MM-dd HH:mm:ss',
+                        'store'  => true
+                    ],
+                    'noExpiryDate'  => [
+                        'type'  => 'boolean',
+                        'store' => true
+                    ],
                     'url'           => [
                         'type'  => 'text',
                         'store' => true,
@@ -328,7 +351,7 @@ class ElasticsearchRecord extends ActiveRecord
                     ],
                     'elementHandle' => [
                         'type'  => 'keyword',
-                        'store' => 'true'
+                        'store' => true
                     ],
                     'attachment'    => [
                         'properties' => [
@@ -391,13 +414,52 @@ class ElasticsearchRecord extends ActiveRecord
     public function getQueryParams($query)
     {
         if ($this->_queryParams === null) {
+            $currentTimeDb = Db::prepareDateForDb(new \DateTime());
             $this->_queryParams = [
-                'multi_match' => [
-                    'fields'   => $this->getSearchFields(),
-                    'query'    => $query,
-                    'analyzer' => self::siteAnalyzer(),
-                    'operator' => 'and',
-                ],
+                'bool' => [
+                    'must'   => [
+                        [
+                            'multi_match' => [
+                                'fields'   => $this->getSearchFields(),
+                                'query'    => $query,
+                                'analyzer' => self::siteAnalyzer(),
+                                'operator' => 'and',
+                            ]
+                        ]
+                    ],
+                    'filter' => [
+                        'bool' => [
+                            'must' => [
+                                [
+                                    'range' => [
+                                        'postDate' => [
+                                            'lte' => $currentTimeDb
+                                        ]
+                                    ],
+                                ],
+                                [
+                                    'bool' => [
+                                        'should' => [
+                                            [
+                                                'range' => [
+                                                    'expiryDate' => [
+                                                        'gt' => $currentTimeDb
+                                                    ]
+                                                ]
+                                            ],
+                                            [
+                                                'term' => [
+                                                    'noExpiryDate' => true
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+
+                            ]
+                        ]
+                    ]
+                ]
             ];
         }
         return $this->_queryParams;

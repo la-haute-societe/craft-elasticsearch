@@ -404,21 +404,21 @@ You can get even more control over your additional data by listening to the foll
     * `getHighlightParams()` and `setHighlightParams($highlightParams)` can be used to alter the default Elasticsearch highlighter parameters (see example below)
     For example, if you wish to add the 'color' field to your query, given that 'color' attribute is a Craft color field type, you could do:
     
-    ```php
-    Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SEARCH, function (SearchEvent $event) {
-        /** @var ElasticsearchRecord $esRecord */
-        $esRecord = $event->sender;
-        $query = $event->query;
-        // Customise the query params
-        $queryParams = $esRecord->getQueryParams($query);
-        $queryParams['multi_match']['fields'] = ArrayHelper::merge($queryParams['multi_match']['fields'], ['color']);
-        $esRecord->setQueryParams($queryParams);
-        // Customise the highlighter params
-        $highlightParams = $esRecord->getHighlightParams();
-        $highlightParams['fields'] = ArrayHelper::merge($highlightParams['fields'], ['color' => (object)[]]);
-        $esRecord->setHighlightParams($highlightParams);
-    });
-    ```
+        ```php
+        Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SEARCH, function (SearchEvent $event) {
+            /** @var ElasticsearchRecord $esRecord */
+            $esRecord = $event->sender;
+            $query = $event->query;
+            // Customise the query params
+            $queryParams = $esRecord->getQueryParams($query);
+            $queryParams['multi_match']['fields'] = ArrayHelper::merge($queryParams['multi_match']['fields'], ['color']);
+            $esRecord->setQueryParams($queryParams);
+            // Customise the highlighter params
+            $highlightParams = $esRecord->getHighlightParams();
+            $highlightParams['fields'] = ArrayHelper::merge($highlightParams['fields'], ['color' => (object)[]]);
+            $esRecord->setHighlightParams($highlightParams);
+        });
+        ```
     >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results. For example, to add the 'color' field result you could do:
     
     >```php
