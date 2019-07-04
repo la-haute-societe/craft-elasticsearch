@@ -254,6 +254,8 @@ Each entry consists of the following attributes:
   - `id`: unique ID of the result
   - `title`: page title
   - `url`: full url to the page
+  - `postDate` : date of element publication start date
+  - `expiryDate` : date of element expiration date 
   - `elementHandle`: the element handle name. Can be either `entry` or `product`
   - `score`: entry result score
   - `highlights`: array of highlighted content matching the query terms
@@ -411,7 +413,7 @@ You can get even more control over your additional data by listening to the foll
             $query = $event->query;
             // Customise the query params
             $queryParams = $esRecord->getQueryParams($query);
-            $queryParams['multi_match']['fields'] = ArrayHelper::merge($queryParams['multi_match']['fields'], ['color']);
+            $queryParams['bool']['must'][0]['multi_match']['fields'] = ArrayHelper::merge($queryParams['bool']['must'][0]['multi_match']['fields'], ['color']);
             $esRecord->setQueryParams($queryParams);
             // Customise the highlighter params
             $highlightParams = $esRecord->getHighlightParams();

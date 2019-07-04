@@ -18,6 +18,12 @@ class m190602_000000_recreate_indexes extends Migration
 {
     public function safeUp()
     {
-        Elasticsearch::getInstance()->service->recreateIndexesForAllSites();
+        // Indexes need to be updated to take new fields in consideration
+        $elasticsearch = Elasticsearch::getInstance();
+        $elasticsearch->service->recreateIndexesForAllSites();
+        $elasticsearch->reindexQueueManagementService->enqueueReindexJobs($elasticsearch->service->getEnabledEntries());
+        if ($elasticsearch->isCommerceEnabled()) {
+            $elasticsearch->reindexQueueManagementService->enqueueReindexJobs($elasticsearch->service->getEnabledProducts());
+        }
     }
 }

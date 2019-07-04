@@ -187,7 +187,6 @@ class Elasticsearch extends Plugin
                 self::EVENT_ERROR_NO_ATTACHMENT_PROCESSOR,
                 function () {
                     $application = Craft::$app;
-
                     if ($application instanceof \yii\web\Application) {
                         $application->getSession()->setError(Craft::t(
                             self::TRANSLATION_CATEGORY,
@@ -197,18 +196,19 @@ class Elasticsearch extends Plugin
                 }
             );
 
-            if (YII_DEBUG) {
-                // Add the Elasticsearch panel to the Yii debug bar
-                Event::on(
-                    Application::class,
-                    Application::EVENT_BEFORE_REQUEST,
-                    function () {
-                        /** @var \yii\debug\Module $debugModule */
-                        $debugModule = Craft::$app->getModule('debug');
-                        $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
-                    }
-                );
-            }
+        }
+
+        if (YII_DEBUG) {
+            // Add the Elasticsearch panel to the Yii debug bar
+            Event::on(
+                Application::class,
+                Application::EVENT_BEFORE_REQUEST,
+                function () {
+                    /** @var \yii\debug\Module $debugModule */
+                    $debugModule = Craft::$app->getModule('debug');
+                    $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
+                }
+            );
         }
 
         // Register variables

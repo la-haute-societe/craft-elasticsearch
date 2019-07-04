@@ -89,12 +89,14 @@ class Elasticsearch extends Component
                     ElasticsearchRecord::$siteId = $site->id;
 
                     $countEntries = (int)Entry::find()
-                        ->status(Entry::STATUS_ENABLED)
+                        ->anyStatus()
+                        ->enabledForSite()
                         ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                         ->count();
                     if (ElasticsearchPlugin::getInstance()->isCommerceEnabled()) {
                         $countEntries += (int)Product::find()
-                            ->status(Entry::STATUS_ENABLED)
+                            ->anyStatus()
+                            ->enabledForSite()
                             ->count();
                     }
                     $countEsRecords = (int)ElasticsearchRecord::find()->count();
@@ -484,6 +486,8 @@ class Elasticsearch extends Component
             $siteEntries = Entry::find()
                 ->select(['elements.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
+                ->anyStatus()
+                ->enabledForSite()
                 ->asArray(true)
                 ->all();
             $entries = ArrayHelper::merge($entries, $siteEntries);
@@ -513,6 +517,8 @@ class Elasticsearch extends Component
             $siteEntries = Product::find()
                 ->select(['commerce_products.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
+                ->anyStatus()
+                ->enabledForSite()
                 ->asArray(true)
                 ->all();
             $products = ArrayHelper::merge($products, $siteEntries);

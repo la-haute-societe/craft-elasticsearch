@@ -1,5 +1,24 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
+## 1.2.0 - 2019-06-04
+
+> {warning} This update introduce a way to honor post and expiry date for entries and products.
+The default search query has been updated in order to filter indexed elements based on that fields.
+If you used `ElasticsearchRecord::EVENT_BEFORE_SEARCH` event to alter the search query, please be sure to update to reflect these changes.
+See README for more infos.
+After plugin update, Elastisearch indexes will be rebuilt in order to take these changes in consideration.
+
+### Added
+- Craft CMS 3.2 compatibility
+
+### Changed
+- `postDate` and `expiryDate` are now available in search results
+- Default search query has been updated in order to filter live elements
+- All enabled entries and products are indexed now regardless of there live status. 
+
+### Fixed
+- The search method now honor `postDate` and `expiryDate` to only show live elements
+
 ## 1.1.0 - 2019-03-25
 
 > {warning} The way page content are indexed have changed and now rely on a Guzzle client implementation. 
