@@ -12,7 +12,6 @@ namespace lhs\elasticsearch\jobs;
 
 use Craft;
 use craft\commerce\elements\Product;
-use craft\elements\Entry;
 use craft\queue\BaseJob;
 use lhs\elasticsearch\Elasticsearch;
 
@@ -39,10 +38,12 @@ class IndexElement extends BaseJob
         $site = $sites->getSiteById($this->siteId);
         $sites->setCurrentSite($site);
 
-        $element = $this->type === Product::class ? Product::findOne($this->elementId) : Entry::findOne($this->elementId);
+        $element = $this->type === Product::class ? craft\commerce\Plugin::getInstance()->getProducts()->getProductById($this->elementId, $this->siteId) : Craft::$app->getEntries()->getEntryById($this->elementId, $this->siteId);
 
         if ($element) {
             Elasticsearch::getInstance()->service->indexElement($element);
+        } else {
+            Craft::warning('Not indexing ' . $this->type . ' ID #' . $this->elementId . ' because it was not found.', __METHOD__);
         }
     }
 

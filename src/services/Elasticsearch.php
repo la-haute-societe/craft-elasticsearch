@@ -357,12 +357,19 @@ class Elasticsearch extends Component
      * @return bool|string The indexable content of the entry or `false` if the entry doesn't have a template (ie. is not indexable)
      * @throws IndexElementException If anything goes wrong. Check the previous property of the exception to get more details
      * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \yii\base\InvalidRouteException
+     * @throws \yii\console\Exception
      */
     protected function getElementIndexableContent(Element $element)
     {
         Craft::debug('Getting element page content : ' . $element->url, __METHOD__);
 
-        $response = Craft::$app->runAction('entries/share-entry', ['entryId' => $element->id, 'siteId' => $element->siteId]);
+        // Request a shared url for entry in order to index unpublished ones
+        if ($element instanceof Product) {
+            $response = Craft::$app->runAction('commerce/products-preview/share-product', ['productId' => $element->id, 'siteId' => $element->siteId]);
+        } else {
+            $response = Craft::$app->runAction('entries/share-entry', ['entryId' => $element->id, 'siteId' => $element->siteId]);
+        }
 
         $url = $response->headers['location'] ?: $response->headers['x-redirect'];
 
@@ -419,11 +426,11 @@ class Elasticsearch extends Component
             return $message;
         }
 
-        if ($element->status !== Entry::STATUS_LIVE) {
-            $message = "Not indexing entry #{$element->id} since it is not published.";
-            Craft::debug($message, __METHOD__);
-            return $message;
-        }
+        //        if ($element->status !== Entry::STATUS_LIVE) {
+        //            $message = "Not indexing entry #{$element->id} since it is not published.";
+        //            Craft::debug($message, __METHOD__);
+        //            return $message;
+        //        }
 
         if (!$element->enabledForSite) {
             /** @var Sites $sitesService */
