@@ -1,0 +1,51 @@
+version: '3.6'
+
+services:
+
+    elasticsearch:
+        build: ./elasticsearch-build
+        container_name: ddev-${DDEV_SITENAME}-elasticsearch
+        environment:
+            - cluster.name=yii2-test-cluster
+            - bootstrap.memory_lock=true
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+            - ELASTIC_PASSWORD=9kMf8NWZRXxV
+            - VIRTUAL_HOST=$DDEV_HOSTNAME # This defines the host name the service should be accessible from. This will be sitename.ddev.local
+            - HTTP_EXPOSE=9200
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        restart: on-failure
+        volumes:
+            - es6-data:/usr/share/elasticsearch/data
+        ports:
+            - 9200
+        labels:
+            com.ddev.site-name: ${DDEV_SITENAME}
+            com.ddev.approot: $DDEV_APPROOT
+            com.ddev.app-url: $DDEV_URL
+
+
+    kibana:
+        image: docker.elastic.co/kibana/kibana:6.1.4
+        container_name: ddev-${DDEV_SITENAME}-kibana
+        environment:
+            - elasticsearch.password=9kMf8NWZRXxV
+            - VIRTUAL_HOST=$DDEV_HOSTNAME # This defines the host name the service should be accessible from. This will be sitename.ddev.local
+            - HTTP_EXPOSE=5601
+        ports:
+            - 5601
+        labels:
+            com.ddev.site-name: ${DDEV_SITENAME}
+            com.ddev.approot: $DDEV_APPROOT
+            com.ddev.app-url: $DDEV_URL
+
+    web:
+        links:
+            - elasticsearch:$DDEV_HOSTNAME
+            - kibana:$DDEV_HOSTNAME
+
+volumes:
+    es6-data:
+        driver: local
