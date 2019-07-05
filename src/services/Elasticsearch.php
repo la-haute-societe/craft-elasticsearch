@@ -300,6 +300,8 @@ class Elasticsearch extends Component
                     'id'            => $result->getPrimaryKey(),
                     'title'         => $result->title,
                     'url'           => $result->url,
+                    'postDate'      => $result->postDate,
+                    'expiryDate'    => $result->expiryDate,
                     'elementHandle' => $result->elementHandle,
                     'score'         => $result->score,
                     'highlights'    => $result->highlight ? array_merge(...array_values($result->highlight)) : [],

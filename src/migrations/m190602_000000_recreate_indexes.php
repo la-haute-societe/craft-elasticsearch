@@ -19,6 +19,16 @@ class m190602_000000_recreate_indexes extends Migration
     public function safeUp()
     {
         // Indexes need to be updated to take new fields in consideration
+        $this->_rebuildElasticsearchIndexes();
+    }
+
+    public function safeDown()
+    {
+        $this->_rebuildElasticsearchIndexes();
+    }
+
+    private function _rebuildElasticsearchIndexes()
+    {
         $elasticsearch = Elasticsearch::getInstance();
         $elasticsearch->service->recreateIndexesForAllSites();
         $elasticsearch->reindexQueueManagementService->enqueueReindexJobs($elasticsearch->service->getEnabledEntries());

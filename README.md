@@ -421,8 +421,10 @@ You can get even more control over your additional data by listening to the foll
             $esRecord->setHighlightParams($highlightParams);
         });
         ```
-    >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results. For example, to add the 'color' field result you could do:
-    
+    >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results. 
+    > 
+    >For example, to add the 'color' field result you could do:
+    >
     >```php
     > ...
     >'resultFormatterCallback'  => function (array $formattedResult, $result) {
@@ -432,6 +434,23 @@ You can get even more control over your additional data by listening to the foll
     >...
     >```
 
+## Tips
+
+### Enable fuzziness
+
+As of the other search query parameters, you can set fuzziness by altering default search query as follow:
+
+```php
+Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SEARCH, function (SearchEvent $event) {
+    /** @var ElasticsearchRecord $esRecord */
+    $esRecord = $event->sender;
+    $query = $event->query;
+    // Customise the query params
+    $queryParams = $esRecord->getQueryParams($query);
+    $queryParams['bool']['must'][0]['multi_match']['fuzziness'] = 'AUTO' // Adjust value to your needs here
+    $esRecord->setQueryParams($queryParams);
+});
+```
 
 ## About yii2-elasticsearch library
 
