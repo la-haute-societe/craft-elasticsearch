@@ -227,9 +227,9 @@ class Elasticsearch extends Plugin
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
             function (RegisterUrlRulesEvent $event) {
-                $event->rules['elasticsearch/get-all-entries'] = 'elasticsearch/site/get-all-entries';
+                $event->rules['elasticsearch/get-all-elements'] = 'elasticsearch/site/get-all-elements';
                 $event->rules['elasticsearch/reindex-all'] = 'elasticsearch/site/reindex-all';
-                $event->rules['elasticsearch/reindex-entry'] = 'elasticsearch/site/reindex-entry';
+                $event->rules['elasticsearch/reindex-element'] = 'elasticsearch/site/reindex-element';
             }
         );
 

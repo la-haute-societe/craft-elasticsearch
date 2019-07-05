@@ -17,6 +17,7 @@ use craft\commerce\elements\Product;
 use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
 use craft\helpers\ArrayHelper;
+use craft\helpers\UrlHelper;
 use craft\records\Site;
 use craft\services\Sites;
 use craft\web\Application;
@@ -193,9 +194,8 @@ class Elasticsearch extends Component
      * @throws Exception If an error occurs while saving the record to the Elasticsearch server
      * @throws IndexElementException If an error occurs while getting the indexable content of the entry. Check the previous property of the exception for more details
      * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\db\Exception
-     * @throws \yii\db\StaleObjectException
+     * @throws \yii\base\InvalidRouteException
+     * @throws \yii\console\Exception
      */
     public function indexElement(Element $element)
     {
@@ -207,11 +207,10 @@ class Elasticsearch extends Component
         Craft::info("Indexing entry {$element->url}", __METHOD__);
 
         /** @var Entry $esRecord */
-        //Craft::debug(VarDumper::dumpAsString($element), __METHOD__);
         $esRecord = $this->getElasticRecordForElement($element);
         $esRecord->title = $element->title;
         $esRecord->url = $element->url;
-        if (($element instanceof craft\elements\Entry) || ($element instanceof craft\commerce\Product)) {
+        if (($element instanceof craft\elements\Entry) || ($element instanceof craft\commerce\elements\Product)) {
             $esRecord->postDate = $element->postDate ? $element->postDate->format('Y-m-d H:i:s') : null;
             $esRecord->noPostDate = $element->postDate ? false : true;
             $esRecord->expiryDate = $element->expiryDate ? $element->expiryDate->format('Y-m-d H:i:s') : null;
@@ -368,15 +367,25 @@ class Elasticsearch extends Component
     {
         Craft::debug('Getting element page content : ' . $element->url, __METHOD__);
 
-        // Request a shared url for entry in order to index unpublished ones
+        // Request a sharable url for element in order to get content for pending ones
+
+        // First generate a token for shared view
         if ($element instanceof Product) {
-            $response = Craft::$app->runAction('commerce/products-preview/share-product', ['productId' => $element->id, 'siteId' => $element->siteId]);
+            $token = Craft::$app->getTokens()->createToken([
+                'commerce/products-preview/view-shared-product',
+                ['productId' => $element->id, 'siteId' => $element->siteId]
+            ]);
         } else {
-            $response = Craft::$app->runAction('entries/share-entry', ['entryId' => $element->id, 'siteId' => $element->siteId]);
+            $token = Craft::$app->getTokens()->createToken([
+                'entries/view-shared-entry',
+                ['entryId' => $element->id, 'siteId' => $element->siteId]
+            ]);
         }
 
-        $url = $response->headers['location'] ?: $response->headers['x-redirect'];
+        // Generate the sharable url based on the previously generated token
+        $url = UrlHelper::urlWithToken($element->getUrl(), $token);
 
+        // Request the page content with Guzzle Client
         $client = new Client([
             'connect_timeout' => 10
         ]);
@@ -483,6 +492,8 @@ class Elasticsearch extends Component
             $siteIds = Craft::$app->getSites()->getAllSiteIds();
         }
 
+        $blacklistedEntryTypes = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
+
         $entries = [];
         foreach ($siteIds as $siteId) {
             $siteEntries = Entry::find()
@@ -490,6 +501,7 @@ class Elasticsearch extends Component
                 ->siteId($siteId)
                 ->anyStatus()
                 ->enabledForSite()
+                ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                 ->asArray(true)
                 ->all();
             $entries = ArrayHelper::merge($entries, $siteEntries);

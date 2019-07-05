@@ -284,8 +284,7 @@ can go to Utilities → Elasticsearch then click the **Reindex all** button.
 
 ## Elasticsearch plugin console commands
 
-The plugin provides an extension to the Craft console command that lets you reindex all entries or recreate empty 
-indexes.
+The plugin provides an extension to the Craft console command that lets you reindex all entries or recreate empty indexes.
 
 
 ### Recreate empty indexes
@@ -299,8 +298,10 @@ Remove index & create an empty one for all sites
 Reindex all sites 
 
 ````sh
-./craft elasticsearch/elasticsearch/reindex-all http://example.com
+./craft elasticsearch/elasticsearch/reindex-all
 ````
+
+>Note: Do not forget to set `allowedIPs` and/or `allowedHosts` in the configuration file prior to calling these command lines (see "Configuring the Elasticsearch plugin" section).
 
 ## Indexing of additional data
 

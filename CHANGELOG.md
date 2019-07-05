@@ -15,6 +15,7 @@ After plugin update, Elastisearch indexes will be rebuilt in order to take these
 - `postDate` and `expiryDate` are now available in search results
 - Default search query has been updated in order to filter live elements
 - All enabled entries and products are indexed now regardless of there live status. 
+- Console command `elasticsearch/elasticsearch/reindex-all` do not need additional parameter in order to run.
 
 ### Fixed
 - The search method now honor `postDate` and `expiryDate` to only show live elements

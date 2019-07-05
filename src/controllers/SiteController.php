@@ -12,10 +12,10 @@ namespace lhs\elasticsearch\controllers;
 
 
 use Craft;
-use craft\elements\Entry;
 use craft\web\Controller;
 use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\exceptions\IndexElementException;
+use yii\helpers\ArrayHelper;
 use yii\web\ForbiddenHttpException;
 
 /**
@@ -32,27 +32,30 @@ class SiteController extends Controller
      * @return \yii\web\Response
      * @throws ForbiddenHttpException If the requesting IP or hostname is not
      *                                whitelisted.
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function actionReindexEntry(): \yii\web\Response
+    public function actionReindexElement(): \yii\web\Response
     {
         if (!$this->checkAccess()) {
             throw new ForbiddenHttpException('You are not allowed to view this resource');
         }
 
         try {
-            $entryId = Craft::$app->getRequest()->getParam('entryId');
+            $elementId = Craft::$app->getRequest()->getParam('elementId');
             $siteId = Craft::$app->getRequest()->getParam('siteId');
-            $entry = Entry::find()->id($entryId)->siteId($siteId)->one();
+            $type = Craft::$app->getRequest()->getParam('type');
 
-            if ($entry === null) {
+            $element = $type === 'craft\\commerce\\elements\\Product' ? craft\commerce\Plugin::getInstance()->getProducts()->getProductById($elementId, $siteId) : Craft::$app->getEntries()->getEntryById($elementId, $siteId);
+
+            if ($element === null) {
                 throw new IndexElementException(Craft::t(
                     Elasticsearch::TRANSLATION_CATEGORY,
-                    'No such entry (entry #{entryId} / site #{siteId}',
-                    ['entryId' => $entryId, 'siteId' => $siteId]
+                    'No such element (element #{elementId} / site #{siteId}',
+                    ['elementId' => $elementId, 'siteId' => $siteId]
                 ));
             }
 
-            $reason = Elasticsearch::getInstance()->service->indexElement($entry);
+            $reason = Elasticsearch::getInstance()->service->indexElement($element);
 
             if ($reason !== null) {
                 return $this->asJson([
@@ -81,14 +84,19 @@ class SiteController extends Controller
      * @return \yii\web\Response
      * @throws ForbiddenHttpException If the requesting IP or hostname is not whitelisted.
      */
-    public function actionGetAllEntries(): \yii\web\Response
+    public function actionGetAllElements(): \yii\web\Response
     {
         if (!$this->checkAccess()) {
             throw new ForbiddenHttpException('You are not allowed to view this resource');
         }
 
-        $entries = Elasticsearch::getInstance()->service->getEnabledEntries();
+        $elasticsearch = Elasticsearch::getInstance();
 
+        $entries = $elasticsearch->service->getEnabledEntries();
+        if ($elasticsearch->isCommerceEnabled()) {
+            $products = $elasticsearch->service->getEnabledProducts();
+            $entries = ArrayHelper::merge($entries, $products);
+        }
         return $this->asJson(['entries' => $entries]);
     }
 
