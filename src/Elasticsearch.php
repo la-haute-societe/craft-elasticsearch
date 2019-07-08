@@ -95,7 +95,8 @@ class Elasticsearch extends Plugin
                     $entry = $event->sender;
                     // Handle drafts and revisions for Craft 3.2 and upper
                     $notDraftOrRevision = true;
-                    if ($entry->hasMethod('getIsDraft')) {
+                    $schemaVersion = Craft::$app->getInstalledSchemaVersion();
+                    if (version_compare($schemaVersion, '3.2.0', '>=')) {
                         $notDraftOrRevision = !$entry->getIsDraft() && !$entry->getIsRevision();
                     }
                     if ($notDraftOrRevision) {
@@ -123,7 +124,8 @@ class Elasticsearch extends Plugin
                         $product = $event->sender;
                         // Handle drafts and revisions for Craft 3.2 and upper
                         $notDraftOrRevision = true;
-                        if ($product->hasMethod('getIsDraft')) {
+                        $schemaVersion = Craft::$app->getInstalledSchemaVersion();
+                        if (version_compare($schemaVersion, '3.2.0', '>=')) {
                             $notDraftOrRevision = !$product->getIsDraft() && !$product->getIsRevision();
                         }
                         if ($notDraftOrRevision) {

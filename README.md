@@ -7,7 +7,6 @@ Bring the power of Elasticsearch to your Craft 3 CMS project.
 ![Plugin screenshot](resources/img/plugin-screenshot.png)
 
 
-
 ## Requirements
 
 This plugin requires **Craft CMS 3.0.0-RC1** or later.
@@ -28,7 +27,6 @@ Just install the plugin from the Craft Plugin Store.
   - In the Craft Control Panel, go to Settings → Plugins and click the **Install** button for Elasticsearch.
  
 
- 
 ## Elasticsearch plugin Overview
 
 Elasticsearch plugin will automatically index each entry and Craft Commerce product (if installed) on your site(s).
@@ -75,8 +73,6 @@ It will figure out the best Elasticsearch mapping for you based on your site(s)'
 | sv             | swedish                         |                                |
 | tr             | turkish                         |                                |
 | th             | thai                            |                                |
-
-
 
 
 ## Configuring the Elasticsearch plugin
@@ -261,25 +257,24 @@ Each entry consists of the following attributes:
   - `highlights`: array of highlighted content matching the query terms
   - `rawResult`: the ElasticsearchRecord raw result object
 
->   Note: 
+>   Notes: 
+> 
 >   * To add additional attributes, see [Index additional data](#indexing-of-additional-data) for more details.
 >   * To customize the Elasticsearch query, see [More complex way to get even more control](#more-complex-way-to-get-even-more-control)
+
 
 ## Auto indexing
 
 The plugin automatically indexes entries and Craft Commerce products (created, updated or removed), as long as they're not in a blacklisted entry types,
 or disabled.
 
-
 All entries are reindexed (in the background) when plugin settings are saved.
-
 
 
 ## Elasticsearch plugin utilities
 
 If your Elasticsearch index becomes out of sync with your sites contents, you 
 can go to Utilities → Elasticsearch then click the **Reindex all** button.
-
 
 
 ## Elasticsearch plugin console commands
@@ -301,7 +296,11 @@ Reindex all sites
 ./craft elasticsearch/elasticsearch/reindex-all
 ````
 
->Note: Do not forget to set `allowedIPs` and/or `allowedHosts` in the configuration file prior to calling these command lines (see "Configuring the Elasticsearch plugin" section).
+>Notes: 
+>
+>* Do not forget to set `allowedIPs` and/or `allowedHosts` in the configuration file prior to calling these command lines (see "Configuring the Elasticsearch plugin" section).
+>* The command will probably fail in case you don't affect a specific domain to a given site, for instance, avoid to use `@web` as a base URL.
+
 
 ## Indexing of additional data
 
@@ -499,7 +498,6 @@ This plugin is free to try in development environments, but requires payment to 
 ## Elasticsearch plugin Roadmap
 
 * Handle dependencies update 
-* Detect need for re-indexation
 * Switch form `la-haute-societe/yii2-elasticsearch` to official 2.1 `yiisoft/yii2-elasticsearch` library as soon as a stable version will be released
 * Easy setup for suggest 
 
