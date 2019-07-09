@@ -2,8 +2,8 @@
 
 ## 1.2.0 - 2019-06-04
 
-> {warning} This update introduce a way to honor post and expiry date for entries and products.
-The default search query has been updated in order to filter indexed elements based on that fields.
+> {warning} This update introduce a way to honor post and expiry dates for entries and products.
+The default search query has been updated in order to filter indexed elements based on those fields.
 If you used `ElasticsearchRecord::EVENT_BEFORE_SEARCH` event to alter the search query, please be sure to update to reflect these changes.
 See README for more infos.
 After plugin update, Elastisearch indexes will be rebuilt in order to take these changes in consideration.
