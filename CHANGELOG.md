@@ -10,6 +10,7 @@ After plugin update, Elastisearch indexes will be rebuilt in order to take these
 
 ### Added
 - Craft CMS 3.2 compatibility
+- Instructions to setup a DDEV environment
 
 ### Changed
 - `postDate` and `expiryDate` are now available in search results
