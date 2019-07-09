@@ -268,7 +268,7 @@ class Elasticsearch extends Component
      */
     public function search(string $query, $siteId = null): array
     {
-        if ($query === null) {
+        if ($query === '') {
             return [];
         }
 
