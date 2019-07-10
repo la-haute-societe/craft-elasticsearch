@@ -1,5 +1,10 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
+## 1.2.1 - 2019-06-10
+
+### Fixed
+- Entries indexing was broken in Craft CMS 3.2 due to a last minute change
+
 ## 1.2.0 - 2019-06-04
 
 > {warning} This update introduce a way to honor post and expiry dates for entries and products.

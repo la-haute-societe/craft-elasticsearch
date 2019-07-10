@@ -376,10 +376,24 @@ class Elasticsearch extends Component
                 ['productId' => $element->id, 'siteId' => $element->siteId]
             ]);
         } else {
-            $token = Craft::$app->getTokens()->createToken([
-                'entries/view-shared-entry',
-                ['entryId' => $element->id, 'siteId' => $element->siteId]
-            ]);
+            $schemaVersion = Craft::$app->getInstalledSchemaVersion();
+            if (version_compare($schemaVersion, '3.2.0', '>=')) {
+                $token = Craft::$app->getTokens()->createToken([
+                    'preview/preview',
+                    [
+                        'elementType' => get_class($element),
+                        'sourceId'    => $element->id,
+                        'siteId'      => $element->siteId,
+                        'draftId'     => null,
+                        'revisionId'  => null,
+                    ]
+                ]);
+            } else {
+                $token = Craft::$app->getTokens()->createToken([
+                    'entries/view-shared-entry',
+                    ['entryId' => $element->id, 'siteId' => $element->siteId]
+                ]);
+            }
         }
 
         // Generate the sharable url based on the previously generated token
