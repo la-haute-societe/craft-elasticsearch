@@ -85,18 +85,21 @@ class Elasticsearch extends Component
                 $blacklistedEntryTypes = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
 
                 $sites = Craft::$app->getSites();
+                $outOfSync = false;
                 foreach ($sites->getAllSites() as $site) {
                     $sites->setCurrentSite($site);
                     ElasticsearchRecord::$siteId = $site->id;
 
+                    Craft::debug('Checking Elasticsearch index for site #' . $site->id, __METHOD__);
+
                     $countEntries = (int)Entry::find()
-                        ->anyStatus()
+                        ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
                         ->enabledForSite()
                         ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                         ->count();
                     if (ElasticsearchPlugin::getInstance()->isCommerceEnabled()) {
                         $countEntries += (int)Product::find()
-                            ->anyStatus()
+                            ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
                             ->enabledForSite()
                             ->count();
                     }
@@ -106,9 +109,12 @@ class Elasticsearch extends Component
                     Craft::debug("Elasticsearch records count for site #{$site->id}: {$countEsRecords}", __METHOD__);
 
                     if ($countEntries !== $countEsRecords) {
-                        Craft::debug('Elasticsearch reindex needed!', __METHOD__);
-                        return false;
+                        $outOfSync = true;
                     }
+                }
+                if ($outOfSync === true) {
+                    Craft::debug('Elasticsearch reindex needed!', __METHOD__);
+                    return false;
                 }
 
                 return true;
@@ -513,7 +519,7 @@ class Elasticsearch extends Component
             $siteEntries = Entry::find()
                 ->select(['elements.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
-                ->anyStatus()
+                ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
                 ->enabledForSite()
                 ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                 ->asArray(true)
@@ -523,7 +529,6 @@ class Elasticsearch extends Component
         array_walk($entries, function (&$entry) {
             $entry['type'] = Entry::class;
         });
-
         return $entries;
     }
 
@@ -545,7 +550,7 @@ class Elasticsearch extends Component
             $siteEntries = Product::find()
                 ->select(['commerce_products.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
-                ->anyStatus()
+                ->status([Product::STATUS_PENDING, Product::STATUS_LIVE])
                 ->enabledForSite()
                 ->asArray(true)
                 ->all();

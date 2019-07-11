@@ -1,5 +1,10 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
+## 1.2.2 - 2019-06-11
+
+### Fixed
+- Fix a bug where disabled elements where indexed anyway
+
 ## 1.2.1 - 2019-06-10
 
 ### Fixed
