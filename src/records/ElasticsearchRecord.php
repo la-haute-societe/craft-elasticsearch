@@ -255,7 +255,16 @@ class ElasticsearchRecord extends ActiveRecord
         if (static::$siteId === null) {
             throw new InvalidConfigException('siteId was not set');
         }
-        return 'craft-entries_' . static::$siteId;
+
+        $elasticIndexNamePrefix = ElasticsearchPlugin::getInstance()->getSettings()->indexNamePrefix;
+
+        $indexName = 'craft-entries_' . static::$siteId;
+
+        if($elasticIndexNamePrefix !== null){
+            $indexName = $elasticIndexNamePrefix . '_' .  $indexName;
+        }
+
+        return $indexName;
     }
 
     /**

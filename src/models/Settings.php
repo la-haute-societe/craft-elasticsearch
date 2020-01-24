@@ -29,6 +29,11 @@ class Settings extends Model
     /** @var string [optional] The password used to connect to the Elasticsearch server */
     public $password = 'MagicWord';
 
+    /** @var string [optional] Prefix that could be used to customize index name to have
+     * possibility to use same elastic instance with several craft instances
+     */
+    public $indexNamePrefix;
+    
     /** @var bool A boolean indicating whether authentication to the Elasticsearch server is required */
     public $isAuthEnabled = false;
 
