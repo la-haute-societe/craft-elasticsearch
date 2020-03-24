@@ -2,7 +2,7 @@
     "name": "la-haute-societe/craft-elasticsearch",
     "description": "Bring the power of Elasticsearch to your Craft CMS projects.",
     "type": "craft-plugin",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "keywords": [
         "craft",
         "cms",
@@ -25,8 +25,7 @@
     ],
     "require": {
         "craftcms/cms": "^3.0.0-RC1",
-        "la-haute-societe/yii2-elasticsearch": "2.1.0",
-        "guzzlehttp/guzzle": "~6.3.3"
+        "la-haute-societe/yii2-elasticsearch": "2.1.0"
     },
     "autoload": {
         "psr-4": {
