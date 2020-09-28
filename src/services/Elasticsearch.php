@@ -94,13 +94,13 @@ class Elasticsearch extends Component
 
                     $countEntries = (int)Entry::find()
                         ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
-                        ->enabledForSite()
+                        ->siteId($site->id)
                         ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                         ->count();
                     if (ElasticsearchPlugin::getInstance()->isCommerceEnabled()) {
                         $countEntries += (int)Product::find()
                             ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
-                            ->enabledForSite()
+                            ->siteId($site->id)
                             ->count();
                     }
                     $countEsRecords = (int)ElasticsearchRecord::find()->count();
@@ -486,6 +486,12 @@ class Elasticsearch extends Component
             return $message;
         }
 
+        if (!$element->getUriFormat()) {
+            $message = "Not indexing entry #{$element->id} since it has no URL.";
+            Craft::debug($message, __METHOD__);
+            return $message;
+        }
+
         /** @noinspection NullPointerExceptionInspection NPE cannot happen here. */
         if ($element instanceof Entry) {
             $blacklist = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
@@ -520,7 +526,6 @@ class Elasticsearch extends Component
                 ->select(['elements.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
                 ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
-                ->enabledForSite()
                 ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                 ->asArray(true)
                 ->all();
@@ -551,7 +556,6 @@ class Elasticsearch extends Component
                 ->select(['commerce_products.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
                 ->status([Product::STATUS_PENDING, Product::STATUS_LIVE])
-                ->enabledForSite()
                 ->asArray(true)
                 ->all();
             $products = ArrayHelper::merge($products, $siteEntries);

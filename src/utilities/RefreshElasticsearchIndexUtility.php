@@ -97,7 +97,7 @@ class RefreshElasticsearchIndexUtility extends Utility
                 'notConnectedWarningMessage' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Could not connect to the elasticsearch instance. Please check the {pluginSettingsLink}.', [
                     'pluginSettingsLink' => sprintf(
                         '<a href="%s">%s</a>',
-                        UrlHelper::cpUrl('/settings/plugins/' . Elasticsearch::APP_COMPONENT_NAME),
+                        UrlHelper::cpUrl('settings/plugins/' . Elasticsearch::APP_COMPONENT_NAME),
                         Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'plugin\'s settings')
                     ),
                 ]),
