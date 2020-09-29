@@ -47,6 +47,11 @@ class ElasticsearchRecord extends ActiveRecord
     CONST EVENT_BEFORE_SAVE = 'beforeSave';
     CONST EVENT_BEFORE_SEARCH = 'beforeSearch';
 
+    public static function type()
+    {
+        return '_doc';
+    }
+
     /**
      * @inheritdoc
      */
@@ -213,7 +218,7 @@ class ElasticsearchRecord extends ActiveRecord
                     if (is_callable($fieldMapping)) {
                         $fieldMapping = $fieldMapping($this);
                     }
-                    $mapping[static::type()]['properties'][$fieldName] = $fieldMapping;
+                    $mapping['properties'][$fieldName] = $fieldMapping;
                 }
             }
         }
@@ -315,51 +320,49 @@ class ElasticsearchRecord extends ActiveRecord
     {
         $analyzer = self::siteAnalyzer();
         $mapping = [
-            static::type() => [
-                'properties' => [
-                    'title'         => [
-                        'type'     => 'text',
-                        'analyzer' => $analyzer,
-                        'store'    => true,
-                    ],
-                    'postDate'      => [
-                        'type'   => 'date',
-                        'format' => 'yyyy-MM-dd HH:mm:ss',
-                        'store'  => true
-                    ],
-                    'noPostDate'    => [
-                        'type'  => 'boolean',
-                        'store' => true
-                    ],
-                    'expiryDate'    => [
-                        'type'   => 'date',
-                        'format' => 'yyyy-MM-dd HH:mm:ss',
-                        'store'  => true
-                    ],
-                    'noExpiryDate'  => [
-                        'type'  => 'boolean',
-                        'store' => true
-                    ],
-                    'url'           => [
-                        'type'  => 'text',
-                        'store' => true,
-                    ],
-                    'content'       => [
-                        'type'     => 'text',
-                        'analyzer' => $analyzer,
-                        'store'    => true,
-                    ],
-                    'elementHandle' => [
-                        'type'  => 'keyword',
-                        'store' => true
-                    ],
-                    'attachment'    => [
-                        'properties' => [
-                            'content' => [
-                                'type'     => 'text',
-                                'analyzer' => $analyzer,
-                                'store'    => true,
-                            ],
+            'properties' => [
+                'title'         => [
+                    'type'     => 'text',
+                    'analyzer' => $analyzer,
+                    'store'    => true,
+                ],
+                'postDate'      => [
+                    'type'   => 'date',
+                    'format' => 'yyyy-MM-dd HH:mm:ss',
+                    'store'  => true
+                ],
+                'noPostDate'    => [
+                    'type'  => 'boolean',
+                    'store' => true
+                ],
+                'expiryDate'    => [
+                    'type'   => 'date',
+                    'format' => 'yyyy-MM-dd HH:mm:ss',
+                    'store'  => true
+                ],
+                'noExpiryDate'  => [
+                    'type'  => 'boolean',
+                    'store' => true
+                ],
+                'url'           => [
+                    'type'  => 'text',
+                    'store' => true,
+                ],
+                'content'       => [
+                    'type'     => 'text',
+                    'analyzer' => $analyzer,
+                    'store'    => true,
+                ],
+                'elementHandle' => [
+                    'type'  => 'keyword',
+                    'store' => true
+                ],
+                'attachment'    => [
+                    'properties' => [
+                        'content' => [
+                            'type'     => 'text',
+                            'analyzer' => $analyzer,
+                            'store'    => true,
                         ],
                     ],
                 ],
