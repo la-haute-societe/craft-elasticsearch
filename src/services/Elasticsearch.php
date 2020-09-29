@@ -74,51 +74,57 @@ class Elasticsearch extends Component
         $application = Craft::$app;
 
         try {
-            $inSync = $application->cache->getOrSet(self::getSyncCachekey(), function () {
-                Craft::debug('isIndexInSync cache miss', __METHOD__);
+            $inSync = $application->cache->getOrSet(
+                self::getSyncCachekey(),
+                function () {
+                    Craft::debug('isIndexInSync cache miss', __METHOD__);
 
-                if ($this->testConnection() === false) {
-                    return false;
-                }
+                    if ($this->testConnection() === false) {
+                        return false;
+                    }
 
-                /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
-                $blacklistedEntryTypes = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
+                    /** @noinspection NullPointerExceptionInspection NPE cannot happen here */
+                    $blacklistedEntryTypes = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
 
-                $sites = Craft::$app->getSites();
-                $outOfSync = false;
-                foreach ($sites->getAllSites() as $site) {
-                    $sites->setCurrentSite($site);
-                    ElasticsearchRecord::$siteId = $site->id;
+                    $sites = Craft::$app->getSites();
+                    $outOfSync = false;
+                    foreach ($sites->getAllSites() as $site) {
+                        $sites->setCurrentSite($site);
+                        ElasticsearchRecord::$siteId = $site->id;
 
-                    Craft::debug('Checking Elasticsearch index for site #' . $site->id, __METHOD__);
+                        Craft::debug('Checking Elasticsearch index for site #' . $site->id, __METHOD__);
 
-                    $countEntries = (int)Entry::find()
-                        ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
-                        ->siteId($site->id)
-                        ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
-                        ->count();
-                    if (ElasticsearchPlugin::getInstance()->isCommerceEnabled()) {
-                        $countEntries += (int)Product::find()
+                        $countEntries = (int)Entry::find()
                             ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
                             ->siteId($site->id)
+                            ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
+                            ->uri(['not', '']) // Filter out entries with no URL as they shouldn't be indexed
                             ->count();
+                        if (ElasticsearchPlugin::getInstance()->isCommerceEnabled()) {
+                            $countEntries += (int)Product::find()
+                                ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
+                                ->siteId($site->id)
+                                ->uri(['not', '']) // Filter out products with no URL as they shouldn't be indexed
+                                ->count();
+                        }
+                        $countEsRecords = (int)ElasticsearchRecord::find()->count();
+
+                        Craft::debug("Active elements count for site #{$site->id}: {$countEntries}", __METHOD__);
+                        Craft::debug("Elasticsearch records count for site #{$site->id}: {$countEsRecords}", __METHOD__);
+
+                        if ($countEntries !== $countEsRecords) {
+                            $outOfSync = true;
+                        }
                     }
-                    $countEsRecords = (int)ElasticsearchRecord::find()->count();
-
-                    Craft::debug("Active elements count for site #{$site->id}: {$countEntries}", __METHOD__);
-                    Craft::debug("Elasticsearch records count for site #{$site->id}: {$countEsRecords}", __METHOD__);
-
-                    if ($countEntries !== $countEsRecords) {
-                        $outOfSync = true;
+                    if ($outOfSync === true) {
+                        Craft::debug('Elasticsearch reindex needed!', __METHOD__);
+                        return false;
                     }
-                }
-                if ($outOfSync === true) {
-                    Craft::debug('Elasticsearch reindex needed!', __METHOD__);
-                    return false;
-                }
 
-                return true;
-            }, 300);
+                    return true;
+                },
+                300
+            );
 
             return $inSync;
         } /** @noinspection PhpRedundantCatchClauseInspection */ catch (Exception $e) {
@@ -129,11 +135,13 @@ class Elasticsearch extends Component
 
             if ($application instanceof Application) {
                 /** @noinspection PhpUnhandledExceptionInspection Cannot happen as craft\web\getSession() never throws */
-                $application->getSession()->setError(Craft::t(
-                    ElasticsearchPlugin::PLUGIN_HANDLE,
-                    'Could not connect to the Elasticsearch server at {elasticsearchEndpoint}. Please check the host and authentication settings.',
-                    ['elasticsearchEndpoint' => $elasticsearchEndpoint]
-                ));
+                $application->getSession()->setError(
+                    Craft::t(
+                        ElasticsearchPlugin::PLUGIN_HANDLE,
+                        'Could not connect to the Elasticsearch server at {elasticsearchEndpoint}. Please check the host and authentication settings.',
+                        ['elasticsearchEndpoint' => $elasticsearchEndpoint]
+                    )
+                );
             }
 
             return false;
@@ -266,7 +274,7 @@ class Elasticsearch extends Component
 
     /**
      * Execute the given `$query` in the Elasticsearch index
-     * @param string $query String to search for
+     * @param string   $query  String to search for
      * @param int|null $siteId Site id to make the search
      * @return ElasticsearchRecord[]
      * @throws IndexElementException
@@ -282,10 +290,12 @@ class Elasticsearch extends Component
             try {
                 $siteId = Craft::$app->getSites()->getCurrentSite()->id;
             } catch (SiteNotFoundException $e) {
-                throw new IndexElementException(Craft::t(
-                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                    'Cannot fetch the id of the current site. Please make sure at least one site is enabled.'
-                ), 0, $e);
+                throw new IndexElementException(
+                    Craft::t(
+                        ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                        'Cannot fetch the id of the current site. Please make sure at least one site is enabled.'
+                    ), 0, $e
+                );
             }
         }
 
@@ -310,7 +320,7 @@ class Elasticsearch extends Component
                     'elementHandle' => $result->elementHandle,
                     'score'         => $result->score,
                     'highlights'    => $result->highlight ? array_merge(...array_values($result->highlight)) : [],
-                    'rawResult'     => $result
+                    'rawResult'     => $result,
                 ];
 
                 // Add extra fields to the current result
@@ -328,12 +338,105 @@ class Elasticsearch extends Component
 
             return $output;
         } catch (\Exception $e) {
-            throw new IndexElementException(Craft::t(
-                ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'An error occurred while running the "{searchQuery}" search query on Elasticsearch instance: {previousExceptionMessage}',
-                ['previousExceptionMessage' => $e->getMessage(), 'searchQuery' => $query]
-            ), 0, $e);
+            throw new IndexElementException(
+                Craft::t(
+                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                    'An error occurred while running the "{searchQuery}" search query on Elasticsearch instance: {previousExceptionMessage}',
+                    ['previousExceptionMessage' => $e->getMessage(), 'searchQuery' => $query]
+                ), 0, $e
+            );
         }
+    }
+
+    /**
+     * Return a list of enabled entries an array of elements descriptors
+     * @param int[]|null $siteIds An array containing the ids of sites to be or
+     *                            reindexed, or `null` to reindex all sites.
+     * @return array An array of entry descriptors. An entry descriptor is an
+     *                            associative array with the `elementId` and `siteId` keys.
+     */
+    public function getEnabledEntries($siteIds = null): array
+    {
+        if ($siteIds === null) {
+            $siteIds = Craft::$app->getSites()->getAllSiteIds();
+        }
+
+        $blacklistedEntryTypes = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
+
+        $entries = [];
+        foreach ($siteIds as $siteId) {
+            $siteEntries = Entry::find()
+                ->select(['elements.id as elementId', 'elements_sites.siteId'])
+                ->siteId($siteId)
+                ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
+                ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
+                ->asArray(true)
+                ->all();
+            $entries = ArrayHelper::merge($entries, $siteEntries);
+        }
+        array_walk(
+            $entries,
+            function (&$entry) {
+                $entry['type'] = Entry::class;
+            }
+        );
+        return $entries;
+    }
+
+    /**
+     * Return a list of enabled products an array of elements descriptors
+     * @param int[]|null $siteIds An array containing the ids of sites to be or
+     *                            reindexed, or `null` to reindex all sites.
+     * @return array An array of elements descriptors. An entry descriptor is an
+     *                            associative array with the `elementId` and `siteId` keys.
+     */
+    public function getEnabledProducts($siteIds = null): array
+    {
+        if ($siteIds === null) {
+            $siteIds = Craft::$app->getSites()->getAllSiteIds();
+        }
+
+        $products = [];
+        foreach ($siteIds as $siteId) {
+            $siteEntries = Product::find()
+                ->select(['commerce_products.id as elementId', 'elements_sites.siteId'])
+                ->siteId($siteId)
+                ->status([Product::STATUS_PENDING, Product::STATUS_LIVE])
+                ->asArray(true)
+                ->all();
+            $products = ArrayHelper::merge($products, $siteEntries);
+        }
+        array_walk(
+            $products,
+            function (&$product) {
+                $product['type'] = Product::class;
+            }
+        );
+        return $products;
+    }
+
+    /**
+     * Create an empty Elasticsearch index for all sites. Existing indexes will be deleted and recreated.
+     * @throws IndexElementException If the Elasticsearch index of a site cannot be recreated
+     */
+    public function recreateIndexesForAllSites()
+    {
+        $siteIds = Site::find()->select('id')->column();
+
+        if (!empty($siteIds)) {
+            try {
+                $this->recreateSiteIndex(...$siteIds);
+            } catch (\Exception $e) {
+                throw new IndexElementException(
+                    Craft::t(
+                        ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                        'Cannot recreate empty indexes for all sites'
+                    ), 0, $e
+                );
+            }
+        }
+
+        Craft::$app->getCache()->delete(self::getSyncCachekey()); // Invalidate cache
     }
 
     protected static function getSyncCachekey(): string
@@ -359,7 +462,6 @@ class Elasticsearch extends Component
         return $esRecord;
     }
 
-
     /**
      * Get an element page content using Guzzle
      * @param Element $element
@@ -377,28 +479,34 @@ class Elasticsearch extends Component
 
         // First generate a token for shared view
         if ($element instanceof Product) {
-            $token = Craft::$app->getTokens()->createToken([
-                'commerce/products-preview/view-shared-product',
-                ['productId' => $element->id, 'siteId' => $element->siteId]
-            ]);
+            $token = Craft::$app->getTokens()->createToken(
+                [
+                    'commerce/products-preview/view-shared-product',
+                    ['productId' => $element->id, 'siteId' => $element->siteId],
+                ]
+            );
         } else {
             $schemaVersion = Craft::$app->getInstalledSchemaVersion();
             if (version_compare($schemaVersion, '3.2.0', '>=')) {
-                $token = Craft::$app->getTokens()->createToken([
-                    'preview/preview',
+                $token = Craft::$app->getTokens()->createToken(
                     [
-                        'elementType' => get_class($element),
-                        'sourceId'    => $element->id,
-                        'siteId'      => $element->siteId,
-                        'draftId'     => null,
-                        'revisionId'  => null,
+                        'preview/preview',
+                        [
+                            'elementType' => get_class($element),
+                            'sourceId'    => $element->id,
+                            'siteId'      => $element->siteId,
+                            'draftId'     => null,
+                            'revisionId'  => null,
+                        ],
                     ]
-                ]);
+                );
             } else {
-                $token = Craft::$app->getTokens()->createToken([
-                    'entries/view-shared-entry',
-                    ['entryId' => $element->id, 'siteId' => $element->siteId]
-                ]);
+                $token = Craft::$app->getTokens()->createToken(
+                    [
+                        'entries/view-shared-entry',
+                        ['entryId' => $element->id, 'siteId' => $element->siteId],
+                    ]
+                );
             }
         }
 
@@ -406,9 +514,11 @@ class Elasticsearch extends Component
         $url = UrlHelper::urlWithToken($element->getUrl(), $token);
 
         // Request the page content with Guzzle Client
-        $client = new Client([
-            'connect_timeout' => 10
-        ]);
+        $client = new Client(
+            [
+                'connect_timeout' => 10,
+            ]
+        );
         try {
             $res = $client->request('GET', $url);
             if ($res->getStatusCode() === 200) {
@@ -418,15 +528,16 @@ class Elasticsearch extends Component
             Craft::error('Could not get element content: ' . $e->getMessage(), __METHOD__);
             throw new IndexElementException($e->getMessage(), 0, $e);
         } catch (\Exception $e) {
-            throw new IndexElementException(Craft::t(
-                ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                'An error occurred while parsing the element page content: {previousExceptionMessage}',
-                ['previousExceptionMessage' => $e->getMessage()]
-            ), 0, $e);
+            throw new IndexElementException(
+                Craft::t(
+                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
+                    'An error occurred while parsing the element page content: {previousExceptionMessage}',
+                    ['previousExceptionMessage' => $e->getMessage()]
+                ), 0, $e
+            );
         }
         return false;
     }
-
 
     /**
      * @param $html
@@ -503,89 +614,6 @@ class Elasticsearch extends Component
         }
 
         return null;
-    }
-
-    /**
-     * Return a list of enabled entries an array of elements descriptors
-     * @param int[]|null $siteIds An array containing the ids of sites to be or
-     *                            reindexed, or `null` to reindex all sites.
-     * @return array An array of entry descriptors. An entry descriptor is an
-     *                            associative array with the `elementId` and `siteId` keys.
-     */
-    public function getEnabledEntries($siteIds = null): array
-    {
-        if ($siteIds === null) {
-            $siteIds = Craft::$app->getSites()->getAllSiteIds();
-        }
-
-        $blacklistedEntryTypes = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
-
-        $entries = [];
-        foreach ($siteIds as $siteId) {
-            $siteEntries = Entry::find()
-                ->select(['elements.id as elementId', 'elements_sites.siteId'])
-                ->siteId($siteId)
-                ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
-                ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
-                ->asArray(true)
-                ->all();
-            $entries = ArrayHelper::merge($entries, $siteEntries);
-        }
-        array_walk($entries, function (&$entry) {
-            $entry['type'] = Entry::class;
-        });
-        return $entries;
-    }
-
-    /**
-     * Return a list of enabled products an array of elements descriptors
-     * @param int[]|null $siteIds An array containing the ids of sites to be or
-     *                            reindexed, or `null` to reindex all sites.
-     * @return array An array of elements descriptors. An entry descriptor is an
-     *                            associative array with the `elementId` and `siteId` keys.
-     */
-    public function getEnabledProducts($siteIds = null): array
-    {
-        if ($siteIds === null) {
-            $siteIds = Craft::$app->getSites()->getAllSiteIds();
-        }
-
-        $products = [];
-        foreach ($siteIds as $siteId) {
-            $siteEntries = Product::find()
-                ->select(['commerce_products.id as elementId', 'elements_sites.siteId'])
-                ->siteId($siteId)
-                ->status([Product::STATUS_PENDING, Product::STATUS_LIVE])
-                ->asArray(true)
-                ->all();
-            $products = ArrayHelper::merge($products, $siteEntries);
-        }
-        array_walk($products, function (&$product) {
-            $product['type'] = Product::class;
-        });
-        return $products;
-    }
-
-    /**
-     * Create an empty Elasticsearch index for all sites. Existing indexes will be deleted and recreated.
-     * @throws IndexElementException If the Elasticsearch index of a site cannot be recreated
-     */
-    public function recreateIndexesForAllSites()
-    {
-        $siteIds = Site::find()->select('id')->column();
-
-        if (!empty($siteIds)) {
-            try {
-                $this->recreateSiteIndex(...$siteIds);
-            } catch (\Exception $e) {
-                throw new IndexElementException(Craft::t(
-                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                    'Cannot recreate empty indexes for all sites'
-                ), 0, $e);
-            }
-        }
-
-        Craft::$app->getCache()->delete(self::getSyncCachekey()); // Invalidate cache
     }
 
     protected function triggerErrorEvent(Exception $e)

@@ -19,6 +19,7 @@ use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\helpers\ArrayHelper;
+use craft\models\Section;
 use craft\queue\Queue;
 use craft\services\Plugins;
 use craft\services\Utilities;
@@ -38,10 +39,10 @@ use yii\elasticsearch\Exception;
 use yii\queue\ExecEvent;
 
 /**
- * @property  services\Elasticsearch service
+ * @property  services\Elasticsearch          service
  * @property  services\ReindexQueueManagement reindexQueueManagementService
- * @property  Settings settings
- * @property  Connection elasticsearch
+ * @property  Settings                        settings
+ * @property  Connection                      elasticsearch
  */
 class Elasticsearch extends Plugin
 {
@@ -58,10 +59,12 @@ class Elasticsearch extends Plugin
 
         $isCommerceEnabled = $this->isCommerceEnabled();
 
-        $this->setComponents([
-            'service'                       => ElasticsearchService::class,
-            'reindexQueueManagementService' => ReindexQueueManagement::class,
-        ]);
+        $this->setComponents(
+            [
+                'service'                       => ElasticsearchService::class,
+                'reindexQueueManagementService' => ReindexQueueManagement::class,
+            ]
+        );
 
         $this->initializeElasticConnector();
 
@@ -190,14 +193,15 @@ class Elasticsearch extends Plugin
                 function () {
                     $application = Craft::$app;
                     if ($application instanceof \yii\web\Application) {
-                        $application->getSession()->setError(Craft::t(
-                            self::TRANSLATION_CATEGORY,
-                            'The ingest-attachment plugin seems to be missing on your Elasticsearch instance.'
-                        ));
+                        $application->getSession()->setError(
+                            Craft::t(
+                                self::TRANSLATION_CATEGORY,
+                                'The ingest-attachment plugin seems to be missing on your Elasticsearch instance.'
+                            )
+                        );
                     }
                 }
             );
-
         }
 
         if (YII_DEBUG) {
@@ -239,6 +243,75 @@ class Elasticsearch extends Plugin
     }
 
     /** @noinspection PhpDocMissingThrowsInspection */
+
+    /**
+     * Creates and returns the model used to store the plugin’s settings.
+     *
+     * @return Settings
+     */
+    protected function createSettingsModel(): Settings
+    {
+        $settings = new Settings();
+        return $settings;
+    }
+
+    /**
+     * Returns the rendered settings HTML, which will be inserted into the content
+     * block on the settings page.
+     *
+     * @return string The rendered settings HTML
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
+     */
+    protected function settingsHtml(): string
+    {
+        $sections = ArrayHelper::map(
+            Craft::$app->sections->getAllSections(),
+            'id',
+            function (Section $section) {
+                return [
+                    'label' => Craft::t('site', $section->name),
+                    'types' => ArrayHelper::map(
+                        $section->getEntryTypes(),
+                        'id',
+                        function ($section) {
+                            return ['label' => Craft::t('site', $section->name)];
+                        }
+                    ),
+                ];
+            }
+        );
+
+        return Craft::$app->view->renderTemplate(
+            'elasticsearch/cp/settings',
+            [
+                'settings' => $this->getSettings(),
+                'sections' => $sections,
+            ]
+        );
+    }
+
+    public function beforeSaveSettings(): bool
+    {
+        /** @var Settings $settings */
+        $settings = $this->getSettings();
+        $settings->elasticsearchComponentConfig = null;
+        return parent::beforeSaveSettings();
+    }
+
+    //    public function setSettings(array $settings)
+    //    {
+    //        // Ensure all sites have a blacklist (at least an empty one)
+    //        $siteIds = Craft::$app->sites->getAllSiteIds();
+    //        if (!isset($settings['blacklistedSections'])) {
+    //            $settings['blacklistedSections'] = [];
+    //        }
+    //        $settings['blacklistedSections'] = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedEntryTypes']);
+    //
+    //        parent::setSettings($settings);
+    //    }
+
     /**
      * @return Connection
      */
@@ -251,7 +324,6 @@ class Elasticsearch extends Plugin
 
         return $connection;
     }
-
 
     /**
      * Initialize the Elasticsearch connector
@@ -294,75 +366,34 @@ class Elasticsearch extends Plugin
         $definition['class'] = Connection::class;
 
         // Fix nodes. When cluster auto detection is disabled, the Elasticsearch component crashes when closing connections…
-        array_walk($definition['nodes'], function (&$node) {
-            if (!isset($node['http'])) {
-                $node['http'] = [];
-            }
+        array_walk(
+            $definition['nodes'],
+            function (&$node) {
+                if (!isset($node['http'])) {
+                    $node['http'] = [];
+                }
 
-            if (!isset($node['http']['publish_address'])) {
-                $node['http']['publish_address'] = sprintf(
-                    '%s://%s',
-                    $node['protocol'] ?? 'http',
-                    $node['http_address']
-                );
+                if (!isset($node['http']['publish_address'])) {
+                    $node['http']['publish_address'] = sprintf(
+                        '%s://%s',
+                        $node['protocol'] ?? 'http',
+                        $node['http_address']
+                    );
+                }
             }
-        });
+        );
 
         /** @noinspection PhpUnhandledExceptionInspection Can't happen since a valid config array is passed */
         Craft::$app->set(self::APP_COMPONENT_NAME, $definition);
     }
 
-
     /**
-     * Creates and returns the model used to store the plugin’s settings.
-     *
-     * @return Settings
+     * Check for presence of Craft Commerce Plugin
+     * @return bool
      */
-    protected function createSettingsModel(): Settings
+    public function isCommerceEnabled(): bool
     {
-        $settings = new Settings();
-        return $settings;
-    }
-
-    //    public function setSettings(array $settings)
-    //    {
-    //        // Ensure all sites have a blacklist (at least an empty one)
-    //        $siteIds = Craft::$app->sites->getAllSiteIds();
-    //        if (!isset($settings['blacklistedSections'])) {
-    //            $settings['blacklistedSections'] = [];
-    //        }
-    //        $settings['blacklistedSections'] = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedEntryTypes']);
-    //
-    //        parent::setSettings($settings);
-    //    }
-
-
-    /**
-     * Returns the rendered settings HTML, which will be inserted into the content
-     * block on the settings page.
-     *
-     * @return string The rendered settings HTML
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
-     */
-    protected function settingsHtml(): string
-    {
-        $sections = ArrayHelper::map(Craft::$app->sections->getAllSections(), 'id', function ($data) {
-            $output = ['label' => Craft::t('site', $data->name)];
-            $output['types'] = ArrayHelper::map($data->getEntryTypes(), 'id', function ($data) {
-                return ['label' => Craft::t('site', $data->name)];
-            });
-            return $output;
-        });
-
-        return Craft::$app->view->renderTemplate(
-            'elasticsearch/cp/settings',
-            [
-                'settings' => $this->getSettings(),
-                'sections' => $sections,
-            ]
-        );
+        return class_exists(\craft\commerce\Plugin::class);
     }
 
     protected function onPluginSettingsSaved()
@@ -384,22 +415,5 @@ class Elasticsearch extends Plugin
             /** @noinspection PhpUnhandledExceptionInspection This method should only be called in a web context so Craft::$app->getSession() will never throw */
             Craft::$app->getSession()->setError($e->getMessage());
         }
-    }
-
-    public function beforeSaveSettings(): bool
-    {
-        /** @var Settings $settings */
-        $settings = $this->getSettings();
-        $settings->elasticsearchComponentConfig = null;
-        return parent::beforeSaveSettings();
-    }
-
-    /**
-     * Check for presence of Craft Commerce Plugin
-     * @return bool
-     */
-    public function isCommerceEnabled(): bool
-    {
-        return class_exists(\craft\commerce\Plugin::class);
     }
 }
