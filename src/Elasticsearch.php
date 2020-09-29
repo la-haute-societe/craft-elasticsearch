@@ -37,6 +37,7 @@ use yii\elasticsearch\Connection;
 use yii\elasticsearch\DebugPanel;
 use yii\elasticsearch\Exception;
 use yii\queue\ExecEvent;
+use yii\debug\Module as DebugModule;
 
 /**
  * @property  services\Elasticsearch          service
@@ -204,18 +205,21 @@ class Elasticsearch extends Plugin
             );
         }
 
-        if (YII_DEBUG) {
-            // Add the Elasticsearch panel to the Yii debug bar
-            Event::on(
-                Application::class,
-                Application::EVENT_BEFORE_REQUEST,
-                function () {
-                    /** @var \yii\debug\Module $debugModule */
-                    $debugModule = Craft::$app->getModule('debug');
-                    $debugModule->panels['elasticsearch'] = new DebugPanel(['module' => $debugModule]);
+        // Add the Elasticsearch panel to the Yii debug bar
+        Event::on(
+            Application::class,
+            Application::EVENT_BEFORE_REQUEST,
+            function () {
+                /** @var DebugModule|null $debugModule */
+                $debugModule = Craft::$app->getModule('debug');
+                if ($debugModule) {
+                    $debugModule->panels['elasticsearch'] = new DebugPanel([
+                        'id'     => 'elasticsearch',
+                        'module' => $debugModule,
+                    ]);
                 }
-            );
-        }
+            }
+        );
 
         // Register variables
         Event::on(
