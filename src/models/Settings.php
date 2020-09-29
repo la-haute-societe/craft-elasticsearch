@@ -73,7 +73,7 @@ class Settings extends Model
     public $elasticsearchComponentConfig;
 
     /**
-     * @var array An associative array defining additional fields to be index along with the defaults one.
+     * @var array An associative array defining additional fields to be indexed along with the defaults one.
      * Each additional field should be declared as the name of the attribute as the key and an associative array for the value
      * in which the keys can be:
      * - `mapping`: an array providing the elasticsearch mapping definition for the field. For example:
