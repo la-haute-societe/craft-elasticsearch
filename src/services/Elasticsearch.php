@@ -97,7 +97,7 @@ class Elasticsearch extends Component
                         $countEntries = (int)Entry::find()
                             ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
                             ->siteId($site->id)
-                            ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
+                            ->type(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                             ->uri(['not', '']) // Filter out entries with no URL as they shouldn't be indexed
                             ->count();
                         if (ElasticsearchPlugin::getInstance()->isCommerceEnabled()) {
@@ -369,7 +369,7 @@ class Elasticsearch extends Component
                 ->select(['elements.id as elementId', 'elements_sites.siteId'])
                 ->siteId($siteId)
                 ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
-                ->typeId(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
+                ->type(ArrayHelper::merge(['not'], $blacklistedEntryTypes))
                 ->asArray(true)
                 ->all();
             $entries = ArrayHelper::merge($entries, $siteEntries);
@@ -606,7 +606,7 @@ class Elasticsearch extends Component
         /** @noinspection NullPointerExceptionInspection NPE cannot happen here. */
         if ($element instanceof Entry) {
             $blacklist = ElasticsearchPlugin::getInstance()->getSettings()->blacklistedEntryTypes;
-            if (in_array($element->typeId, $blacklist)) {
+            if (in_array($element->type->handle, $blacklist)) {
                 $message = "Not indexing entry #{$element->id} since it's in a blacklisted entry types.";
                 Craft::debug($message, __METHOD__);
                 return $message;

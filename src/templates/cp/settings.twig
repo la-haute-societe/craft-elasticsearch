@@ -141,12 +141,12 @@
                         <td>{{ section.name }}</td>
                         <td>{{ entryType.name }}</td>
                         <td>
-                            {% if entryType.id in settings['blacklistedEntryTypes'] %}
-                                {% set switchState = 1 %}
-                            {% else %}
-                                {% set switchState = 0 %}
-                            {% endif %}
-                            {{ forms.lightswitch({"name": "blacklistedEntryTypes[]", "value": entryType.id, "on": switchState, "small": true}) }}
+                            {{ forms.lightswitch({
+                                name:  "blacklistedEntryTypes[]",
+                                value: entryType.handle,
+                                on:    entryType.handle in settings['blacklistedEntryTypes'],
+                                small: true,
+                            }) }}
                         </td>
                     </tr>
                 {% endfor %}

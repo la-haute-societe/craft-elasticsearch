@@ -1,4 +1,4 @@
-[![Elastic](resources/img/elastic-logo.png)][elastic-site]  
+[![Elastic](resources/img/elastic-logo.png)][elastic-site]
 
 # Elasticsearch plugin for Craft CMS 3.x
 
@@ -11,7 +11,7 @@ Bring the power of Elasticsearch to your Craft 3 CMS project.
 
 This plugin requires **Craft CMS 3.0.0-RC1** or later.
 
-In order to index data, you will need an **Elasticsearch 6.0** (or later) 
+In order to index data, you will need an **Elasticsearch 6.0** (or later)
 instance, with the **Ingest attachment processor** plugin activated.
 
 
@@ -25,13 +25,13 @@ Just install the plugin from the Craft Plugin Store.
 
   - Install with Composer from your project directory: `composer require la-haute-societe/craft-elasticsearch`
   - In the Craft Control Panel, go to Settings → Plugins and click the **Install** button for Elasticsearch.
- 
+
 
 ## Elasticsearch plugin Overview
 
 Elasticsearch plugin will automatically index each entry and Craft Commerce product (if installed) on your site(s).
 
-It will figure out the best Elasticsearch mapping for you based on your site(s)' language. 
+It will figure out the best Elasticsearch mapping for you based on your site(s)' language.
 
 ## Supported languages
 
@@ -77,7 +77,7 @@ It will figure out the best Elasticsearch mapping for you based on your site(s)'
 
 ## Configuring the Elasticsearch plugin
 
-You can configure the Elasticsearch plugin from the Craft Control Panel (some settings only), of from the 
+You can configure the Elasticsearch plugin from the Craft Control Panel (some settings only), of from the
 _config/elasticsearch.php_ file in your Craft installation (all settings). If a setting is defined both in the CP and in
 the configuration file, the latter takes precedence.
 
@@ -89,46 +89,46 @@ The [src/config.php](./src/config.php), file is a configuration template to be c
 
 #### `elasticsearchEndpoint`
 Type: _string_
- 
+
 The Elasticsearch instance endpoint URL (with protocol, host and port).
 Ignored if `elasticsearchComponentConfig` is set.
 
 
 #### `isAuthEnabled`
 Type: _bool_
- 
-A boolean indicating whether authentication is required on the Elasticsearch instance.  
+
+A boolean indicating whether authentication is required on the Elasticsearch instance.
 Ignored if `elasticsearchComponentConfig` is set.
 
 
 #### `username`
 Type: _string_
- 
-The username used to authenticate on the Elasticsearch instance if it's protected by 
-X-Pack Security.  
+
+The username used to authenticate on the Elasticsearch instance if it's protected by
+X-Pack Security.
 Ignored if `isAuthEnabled` is set to `false` or `elasticsearchComponentConfig` is set.
 
 
 #### `password`
 Type: _string_
- 
+
 The password used to authenticate on the Elasticsearch instance if it's protected by
-X-Pack Security.  
+X-Pack Security.
 Ignored if `isAuthEnabled` is set to `false` or `elasticsearchComponentConfig` is set.
 
 
 #### `highlight`
 Type: _array_
- 
-The elasticsearch configuration used to highlight query results. Only `pre_tags` and 
-`post_tags` are configurable in the CP, advanced config must be done in the file.  
+
+The elasticsearch configuration used to highlight query results. Only `pre_tags` and
+`post_tags` are configurable in the CP, advanced config must be done in the file.
 For more options, refer to the [elasticsearch documentation][].
 
 
 #### `blacklistedEntryTypes`
-Type: _int[]_
+Type: _string[]_
 
-An array of entry type ids of which entries should not be indexed.
+An array of entry type handle of which entries should not be indexed.
 
 
 ### Only in the configuration file
@@ -149,9 +149,9 @@ An array of hostnames allowed to use the Elasticsearch console commands.
 Type: _callable_
 
 A callback function (`function(string $entryContent): string`) used to extract the
-content to be indexed from the full HTML source of the entry's page. 
+content to be indexed from the full HTML source of the entry's page.
 
-The default is to extract the HTML code between those 2 comments: 
+The default is to extract the HTML code between those 2 comments:
 `<!-- BEGIN elasticsearch indexed content -->` and `<!-- END elasticsearch indexed content -->`.
 
 
@@ -160,7 +160,7 @@ Type: _callable_
 
 A callback function (`function (\craft\base\ElementInterface $element): string`) used to get the HTML content for the given element to index.
 
->   Note: 
+>   Note:
 >   * If this parameter is not set or null, the default Guzzle client implementation will be used to get the HTML content of the element.
 >   If set, you will have to handle that part yourself.
 >   * Content should be returned as HTML content in order to be correctly indexed.
@@ -174,10 +174,10 @@ format the Elasticsearch result object in order to be used by the results twig v
 #### `elasticsearchComponentConfig`
 Type: _array_
 
-An associative array passed to the yii2-elasticsearch component Connection class constructor.  
-All public properties of the [yii2-elasticsearch component Connection class][yii2-elasticsearch] 
-can be set.  
-If this is set, the `elasticsearchEndpoint`, `username`, `password` and `isAuthEnabled` settings 
+An associative array passed to the yii2-elasticsearch component Connection class constructor.
+All public properties of the [yii2-elasticsearch component Connection class][yii2-elasticsearch]
+can be set.
+If this is set, the `elasticsearchEndpoint`, `username`, `password` and `isAuthEnabled` settings
 will be ignored.
 
 #### `extraFields`
@@ -185,26 +185,26 @@ Type: _array_
 
 An associative array allowing to declare additional fields to be indexed along with the defaults ones.
 See [Index additional data](#indexing-of-additional-data) for more details.
-     
-     
+
+
 [elasticsearch documentation]: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/search-request-highlighting.html
 [yii2-elasticsearch]: https://www.yiiframework.com/extension/yiisoft/yii2-elasticsearch/doc/api/2.1/yii-elasticsearch-connection#properties
 
 
 ## Indexable content
 
-By default, the content indexed in each entry is between the `<!-- BEGIN elasticsearch indexed content -->` 
+By default, the content indexed in each entry is between the `<!-- BEGIN elasticsearch indexed content -->`
 and `<!-- END elasticsearch indexed content -->` HTML comments in the source of the entry page.
 
-If you're using semantic HTML in your templates, then putting your `<main>` or `<article>` element between 
-those comments should be ideal. 
+If you're using semantic HTML in your templates, then putting your `<main>` or `<article>` element between
+those comments should be ideal.
 
 If you need more control over what is indexed, you'll have to set up a custom `contentExtractorCallback`.
 
 
 ## Running a search
 
-The search feature can be used from a frontend template file by calling the 
+The search feature can be used from a frontend template file by calling the
 `craft.elasticsearch.search('Something to search')` variable.
 For instance, in a template `search/index.twig`:
 
@@ -251,14 +251,14 @@ Each entry consists of the following attributes:
   - `title`: page title
   - `url`: full url to the page
   - `postDate` : date of element publication start date
-  - `expiryDate` : date of element expiration date 
+  - `expiryDate` : date of element expiration date
   - `elementHandle`: the element handle name. Can be either `entry` or `product`
   - `score`: entry result score
   - `highlights`: array of highlighted content matching the query terms
   - `rawResult`: the ElasticsearchRecord raw result object
 
->   Notes: 
-> 
+>   Notes:
+>
 >   * To add additional attributes, see [Index additional data](#indexing-of-additional-data) for more details.
 >   * To customize the Elasticsearch query, see [More complex way to get even more control](#more-complex-way-to-get-even-more-control)
 
@@ -273,7 +273,7 @@ All entries are reindexed (in the background) when plugin settings are saved.
 
 ## Elasticsearch plugin utilities
 
-If your Elasticsearch index becomes out of sync with your sites contents, you 
+If your Elasticsearch index becomes out of sync with your sites contents, you
 can go to Utilities → Elasticsearch then click the **Reindex all** button.
 
 
@@ -290,13 +290,13 @@ Remove index & create an empty one for all sites
 ./craft elasticsearch/elasticsearch/recreate-empty-indexes
 ````
 
-Reindex all sites 
+Reindex all sites
 
 ````sh
 ./craft elasticsearch/elasticsearch/reindex-all
 ````
 
->Notes: 
+>Notes:
 >
 >* Do not forget to set `allowedIPs` and/or `allowedHosts` in the configuration file prior to calling these command lines (see "Configuring the Elasticsearch plugin" section).
 >* The command will probably fail in case you don't affect a specific domain to a given site, for instance, avoid to use `@web` as a base URL.
@@ -312,9 +312,9 @@ Each field should be declared by using associative array with keys representing 
 to configure the field behavior:
 
 *   `mapping` (optional): an associative array providing the elasticsearch mapping definition for the field.
-    For more complex mapping, you can also use a callback (`function (\lhs\elasticsearch\records\ElasticsearchRecord $esRecord)`) to return the associative array. 
+    For more complex mapping, you can also use a callback (`function (\lhs\elasticsearch\records\ElasticsearchRecord $esRecord)`) to return the associative array.
     For example:
-    
+
     ```php
     ...
     'mapping' => function (\lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
@@ -328,7 +328,7 @@ to configure the field behavior:
     ```
 *   `highlighter` (optional): an object defining the elasticsearch highlighter behavior for the field.
     To know more about that configuration, refer to the documentation [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.7/search-request-highlighting.html).
-*   `value`: either a string or a callable function taking one argument of `craft\base\Element` type and returning the value of the field. 
+*   `value`: either a string or a callable function taking one argument of `craft\base\Element` type and returning the value of the field.
     Second argument can be used to access the related `lhs\elasticsearch\records\ElasticsearchRecord` instance.
 
 For example, to declare a `color` field in the configuration file, one could do:
@@ -354,13 +354,13 @@ For example, to declare a `color` field in the configuration file, one could do:
 
 You can get even more control over your additional data by listening to the following events in some project module:
 
-*   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX`: That event is triggered before the Elasticsearch index is created. 
-    Once you get a reference to the Elasticsearch Record instance, the following methods can be used to customise the schema as needed: 
+*   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX`: That event is triggered before the Elasticsearch index is created.
+    Once you get a reference to the Elasticsearch Record instance, the following methods can be used to customise the schema as needed:
     * `getSchema()` method can be used to get the current default Elasticsearch schema.
     * `setSchema(array $schema)` method can be used to set the customized schema
-    
+
     For example, if you want to add a 'color' field, you could do something like:
-    
+
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_CREATE_INDEX, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
@@ -379,7 +379,7 @@ You can get even more control over your additional data by listening to the foll
     You can use the `addAttributes(array $additionalAttributes)` to add the list of additional attributes.
     This is mandatory in order to get or set any additional fields you declared in your schema in the previous step.
     For example, if you wish to declare the 'color' field, you could do:
-    
+
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_INIT, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
@@ -390,7 +390,7 @@ You can get even more control over your additional data by listening to the foll
 *   `lhs\elasticsearch\record\ElasticsearchRecord::EVENT_BEFORE_SAVE`: By listening to that event, you get a chance to set the value of your additional fields declared in the previous step.
     You can access the related Craft `Element` by using the `getElement()` method.
     For example, if you wish to set the value the 'color' attribute to be indexed, given that 'color' attribute corresponds to a Craft color field type, you could do:
-    
+
     ```php
     Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SAVE, function (Event $event) {
         /** @var ElasticsearchRecord $esRecord */
@@ -405,7 +405,7 @@ You can get even more control over your additional data by listening to the foll
     * `getQueryParams($query)` and `setQueryParams($queryParams)` can be used to alter the default Elasticsearch query parameters (see example below)
     * `getHighlightParams()` and `setHighlightParams($highlightParams)` can be used to alter the default Elasticsearch highlighter parameters (see example below)
     For example, if you wish to add the 'color' field to your query, given that 'color' attribute is a Craft color field type, you could do:
-    
+
         ```php
         Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SEARCH, function (SearchEvent $event) {
             /** @var ElasticsearchRecord $esRecord */
@@ -421,8 +421,8 @@ You can get even more control over your additional data by listening to the foll
             $esRecord->setHighlightParams($highlightParams);
         });
         ```
-    >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results. 
-    > 
+    >Note: By using the `resultFormatterCallback` configuration callback property, you can also add the related results accessible to your Twig page search results.
+    >
     >For example, to add the 'color' field result you could do:
     >
     >```php
@@ -462,14 +462,14 @@ To simplify the installation process, a `la-haute-societe/yii2-elasticsearch` fo
 ## Troubleshooting
 
 - When saving the settings, if you get a `Could not connect to the Elasticsearch instance at http://somedomain:9200.` `Please check the endpoint URL and authentication settings.` error :
-	- If you are using an external Elasticsearch instance, check: 
-		- that the instance is running 
+	- If you are using an external Elasticsearch instance, check:
+		- that the instance is running
 		- the domain name/IP address and ports are correct
 		- your firewall settings allow access to the server and port
 	- If you are using a docker-compose setup, check:
 		- that your containers are running correctly once the `docker-compose up` has been executed. Execute a `docker ps` command to see if the containers appear in the list. If they are not, chances are there are some issues preventing the containers from starting and you should check those errors in the first place.
-		- that you can access the instance by going to `http://localhost:9200`. You should see some default json payload like the following: 
-		  
+		- that you can access the instance by going to `http://localhost:9200`. You should see some default json payload like the following:
+
 		  ```
 		  {
 			  "name" : "szLA31y",
@@ -497,9 +497,7 @@ This plugin is free to try in development environments, but requires payment to 
 
 ## Elasticsearch plugin Roadmap
 
-* Handle dependencies update 
-* Switch form `la-haute-societe/yii2-elasticsearch` to official 2.1 `yiisoft/yii2-elasticsearch` library as soon as a stable version will be released
-* Easy setup for suggest 
+* Easy setup for suggest
 
 Brought to you by [![Logo](resources/img/lhs.png)][lhs-site] La Haute Société
 
