@@ -266,6 +266,13 @@ class Elasticsearch extends Plugin
      */
     protected function settingsHtml(): string
     {
+        // Get and pre-validate the settings
+        $settings = $this->getSettings();
+        //$settings->validate();
+
+        // Get the settings that are being defined by the config file
+        $overrides = Craft::$app->getConfig()->getConfigFromFile(strtolower($this->handle));
+
         $sections = ArrayHelper::map(
             Craft::$app->sections->getAllSections(),
             'id',
@@ -286,8 +293,9 @@ class Elasticsearch extends Plugin
         return Craft::$app->view->renderTemplate(
             'elasticsearch/cp/settings',
             [
-                'settings' => $this->getSettings(),
-                'sections' => $sections,
+                'settings'  => $settings,
+                'overrides' => array_keys($overrides),
+                'sections'  => $sections,
             ]
         );
     }

@@ -29,11 +29,12 @@ class Settings extends Model
     /** @var string [optional] The password used to connect to the Elasticsearch server */
     public $password = 'MagicWord';
 
-    /** @var string [optional] Prefix that could be used to customize index name to have
-     * possibility to use same elastic instance with several craft instances
+    /** @var string [optional] Index name prefix used to avoid index name collision when using a single Elasticsearch
+     *                         instance with several Craft instances.
+     *                         Up to 5 characters, all lowercase.
      */
     public $indexNamePrefix;
-    
+
     /** @var bool A boolean indicating whether authentication to the Elasticsearch server is required */
     public $isAuthEnabled = false;
 
@@ -111,7 +112,9 @@ class Settings extends Model
             ['isAuthEnabled', 'boolean'],
             [['username', 'password'], 'string'],
             [['username', 'password'], 'trim'],
-            [['blacklistedEntryTypes', 'highlight'], 'safe']
+            [['blacklistedEntryTypes', 'highlight'], 'safe'],
+            ['indexNamePrefix', 'string', 'max' => 5],
+            ['indexNamePrefix', 'match', 'pattern' => '/^[a-z]+$/', 'message' => Craft::t('elasticsearch', 'Only lowercase letters are allowed.')],
         ];
     }
 

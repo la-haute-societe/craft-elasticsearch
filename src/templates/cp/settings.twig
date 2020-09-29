@@ -12,6 +12,7 @@
 
 {% do view.registerAssetBundle("lhs\\elasticsearch\\resources\\CpAssetBundle") %}
 {% import "_includes/forms" as forms %}
+{% import "elasticsearch/cp/macros" as macros %}
 <style>
     table.editable tbody tr td {
         text-align: left;
@@ -29,7 +30,7 @@
     <h2>{{ 'Elasticsearch connection'|t('elasticsearch') }}</h2>
 
     {% if settings['elasticsearchComponentConfig'] is not null %}
-        <p class="light">{{ 'These settings will be ignored since <code>elasticsearchComponentConfig</code> is present in the configuration file.'|t('elasticsearch')|raw }}</p>
+        <p class="warning with-icon">{{ 'These settings will be ignored since <code>elasticsearchComponentConfig</code> is present in the configuration file.'|t('elasticsearch')|raw }}</p>
     {% endif %}
 
     {% if settings.hasErrors('global') %}
@@ -45,16 +46,18 @@
         name:         'elasticsearchEndpoint',
         value:        settings['elasticsearchEndpoint'],
         errors:       settings.getErrors('elasticsearchEndpoint'),
-        disabled:     settings['elasticsearchComponentConfig'] is not null,
+        warning:      'elasticsearchEndpoint' in overrides ? macros.configWarning('elasticsearchEndpoint'),
+        disabled:     'elasticsearchEndpoint' in overrides or 'elasticsearchComponentConfig' in overrides,
     }) }}
 
     {{ forms.lightswitchField({
-        label:  'Authentication required'|t('elasticsearch'),
-        id:     'isAuthEnabled',
-        name:   'isAuthEnabled',
-        on:     settings['isAuthEnabled'],
-        toggle: 'auth_settings',
-        disabled:     settings['elasticsearchComponentConfig'] is not null,
+        label:    'Authentication required'|t('elasticsearch'),
+        id:       'isAuthEnabled',
+        name:     'isAuthEnabled',
+        on:       settings['isAuthEnabled'],
+        toggle:   'auth_settings',
+        warning:  'isAuthEnabled' in overrides ? macros.configWarning('isAuthEnabled'),
+        disabled: 'isAuthEnabled' in overrides or 'elasticsearchComponentConfig' in overrides,
     }) }}
 
     <div id="auth_settings"{% if not settings['isAuthEnabled'] %} class="hidden" {% endif %}>
@@ -64,7 +67,8 @@
             name:     'username',
             value:    settings['username'],
             errors:   settings.getErrors('username'),
-            disabled: settings['elasticsearchComponentConfig'] is not null,
+            warning:  'username' in overrides ? macros.configWarning('username'),
+            disabled: 'username' in overrides or 'elasticsearchComponentConfig' in overrides,
         }) }}
 
         {{ forms.passwordField({
@@ -73,28 +77,46 @@
             name:     'password',
             value:    settings['password'],
             errors:   settings.getErrors('password'),
-            disabled: settings['elasticsearchComponentConfig'] is not null,
+            warning:  'password' in overrides ? macros.configWarning('password'),
+            disabled: 'password' in overrides or 'elasticsearchComponentConfig' in overrides,
         }) }}
     </div>
+
+    <hr>
+
+    <h2>{{ 'Elasticsearch indices naming'|t }}</h2>
+    {{ forms.textField({
+        label:    'Index name prefix'|t('elasticsearch'),
+        id:       'indexNamePrefix',
+        name:     'indexNamePrefix',
+        value:    settings['indexNamePrefix'],
+        errors:   settings.getErrors('indexNamePrefix'),
+        warning:  'indexNamePrefix' in overrides ? macros.configWarning('indexNamePrefix'),
+        disabled: 'indexNamePrefix' in overrides,
+    }) }}
 
     <hr>
 
     <h2>{{ 'Search term highlight'|t('elasticsearch') }}</h2>
     <p>{{ 'HTML tags used to wrap the search term in order to highlight it in  the search results'|t('elasticsearch') }}</p>
     {{ forms.textField({
-        label:  'Before'|t('elasticsearch'),
-        id:     'highlight_pre_tags',
-        name:   'highlight[pre_tags]',
-        value:  settings['highlight']['pre_tags'],
-        errors: settings.getErrors('highlight_pre_tags'),
+        label:    'Before'|t('elasticsearch'),
+        id:       'highlight_pre_tags',
+        name:     'highlight[pre_tags]',
+        value:    settings['highlight']['pre_tags'],
+        errors:   settings.getErrors('highlight_pre_tags'),
+        warning:  'highlight' in overrides ? macros.configWarning('highlight'),
+        disabled: 'highlight' in overrides,
     }) }}
 
     {{ forms.textField({
-        label:  'After'|t('elasticsearch'),
-        id:     'highlight_post_tags',
-        name:   'highlight[post_tags]',
-        value:  settings['highlight']['post_tags'],
-        errors: settings.getErrors('highlight_post_tags'),
+        label:    'After'|t('elasticsearch'),
+        id:       'highlight_post_tags',
+        name:     'highlight[post_tags]',
+        value:    settings['highlight']['post_tags'],
+        errors:   settings.getErrors('highlight_post_tags'),
+        warning:  'highlight' in overrides ? macros.configWarning('highlight'),
+        disabled: 'highlight' in overrides,
     }) }}
 
     <hr>

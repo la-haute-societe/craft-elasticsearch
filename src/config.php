@@ -26,6 +26,8 @@ return [
     'allowedIPs'   => ['::1', '127.0.0.1'],
     'allowedHosts' => ['localhost'],
 
+    'indexNamePrefix' => '',
+
     'highlight' => [
         'pre_tags'  => '<strong>',
         'post_tags' => '</strong>',

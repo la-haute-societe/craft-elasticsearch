@@ -23,29 +23,27 @@ use yii\helpers\Json;
 use yii\helpers\VarDumper;
 
 /**
- * @property string $title
- * @property string $url
- * @property string $elementHandle
+ * @property string       $title
+ * @property string       $url
+ * @property string       $elementHandle
  * @property object|array $content
- * @property string $postDate
- * @property boolean $noPostDate
- * @property string $expiryDate
- * @property boolean $noExpiryDate
+ * @property string       $postDate
+ * @property boolean      $noPostDate
+ * @property string       $expiryDate
+ * @property boolean      $noExpiryDate
  */
 class ElasticsearchRecord extends ActiveRecord
 {
+    const EVENT_BEFORE_CREATE_INDEX = 'beforeCreateIndex';
+    const EVENT_BEFORE_SAVE = 'beforeSave';
+    const EVENT_BEFORE_SEARCH = 'beforeSearch';
     public static $siteId;
-
     private $_schema;
     private $_attributes = ['title', 'url', 'elementHandle', 'content', 'postDate', 'expiryDate', 'noPostDate', 'noExpiryDate'];
     private $_element;
     private $_queryParams;
     private $_highlightParams;
     private $_searchFields = ['attachment.content', 'title'];
-
-    CONST EVENT_BEFORE_CREATE_INDEX = 'beforeCreateIndex';
-    CONST EVENT_BEFORE_SAVE = 'beforeSave';
-    CONST EVENT_BEFORE_SEARCH = 'beforeSearch';
 
     public static function type()
     {
@@ -69,6 +67,72 @@ class ElasticsearchRecord extends ActiveRecord
         if (!empty($extraFields)) {
             $this->addAttributes(array_keys($extraFields));
         }
+    }
+
+    /**
+     * @param bool $runValidation
+     * @param null $attributeNames
+     * @return bool
+     * @throws InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
+     * @throws \yii\elasticsearch\Exception
+     */
+    public function save($runValidation = true, $attributeNames = null): bool
+    {
+        if (!self::indexExists()) {
+            $this->createESIndex();
+        }
+
+        // Get the value of each extra field
+        $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
+        if (!empty($extraFields)) {
+            foreach ($extraFields as $fieldName => $fieldParams) {
+                $fieldValue = ArrayHelper::getValue($fieldParams, 'value');
+                if (!empty($fieldValue)) {
+                    if (is_callable($fieldValue)) {
+                        $this->$fieldName = $fieldValue($this->getElement(), $this);
+                    } else {
+                        $this->$fieldName = $fieldValue;
+                    }
+                }
+            }
+        }
+
+        $this->trigger(self::EVENT_BEFORE_SAVE, new Event());
+        if (!$this->getIsNewRecord()) {
+            $this->delete(); // pipeline in not supported by Document Update API :(
+        }
+        return $this->insert($runValidation, $attributeNames, ['pipeline' => 'attachment']);
+    }
+
+    /**
+     * @return mixed|\yii\elasticsearch\Connection
+     */
+    public static function getDb()
+    {
+        return ElasticsearchPlugin::getConnection();
+    }
+
+    /**
+     * @return string
+     * @throws InvalidConfigException If the `$siteId` isn't set
+     */
+    public static function index(): string
+    {
+        if (static::$siteId === null) {
+            throw new InvalidConfigException('siteId was not set');
+        }
+
+        $elasticIndexNamePrefix = ElasticsearchPlugin::getInstance()->getSettings()->indexNamePrefix;
+
+        $indexName = 'craft-entries_' . static::$siteId;
+
+        if (!empty($elasticIndexNamePrefix)) {
+            $indexName = $elasticIndexNamePrefix . '_' . $indexName;
+        }
+
+        return $indexName;
     }
 
     /**
@@ -169,43 +233,6 @@ class ElasticsearchRecord extends ActiveRecord
         return $analyzer;
     }
 
-    /**
-     * @param bool $runValidation
-     * @param null $attributeNames
-     * @return bool
-     * @throws InvalidConfigException
-     * @throws \yii\db\Exception
-     * @throws \yii\db\StaleObjectException
-     * @throws \yii\elasticsearch\Exception
-     */
-    public function save($runValidation = true, $attributeNames = null): bool
-    {
-        if (!self::indexExists()) {
-            $this->createESIndex();
-        }
-
-        // Get the value of each extra field
-        $extraFields = ElasticsearchPlugin::getInstance()->getSettings()->extraFields;
-        if (!empty($extraFields)) {
-            foreach ($extraFields as $fieldName => $fieldParams) {
-                $fieldValue = ArrayHelper::getValue($fieldParams, 'value');
-                if (!empty($fieldValue)) {
-                    if (is_callable($fieldValue)) {
-                        $this->$fieldName = $fieldValue($this->getElement(), $this);
-                    } else {
-                        $this->$fieldName = $fieldValue;
-                    }
-                }
-            }
-        }
-
-        $this->trigger(self::EVENT_BEFORE_SAVE, new Event());
-        if (!$this->getIsNewRecord()) {
-            $this->delete(); // pipeline in not supported by Document Update API :(
-        }
-        return $this->insert($runValidation, $attributeNames, ['pipeline' => 'attachment']);
-    }
-
     public function createESIndex()
     {
         $mapping = static::mapping();
@@ -223,59 +250,20 @@ class ElasticsearchRecord extends ActiveRecord
             }
         }
         // Set the schema
-        $this->setSchema([
-            'mappings' => $mapping,
-        ]);
+        $this->setSchema(
+            [
+                'mappings' => $mapping,
+            ]
+        );
         $this->trigger(self::EVENT_BEFORE_CREATE_INDEX, new Event());
         Craft::debug('Before create event - site: ' . self::$siteId . ' schema: ' . VarDumper::dumpAsString($this->getSchema()), __METHOD__);
         self::createIndex($this->getSchema());
     }
 
     /**
-     * Return if the Elasticsearch index already exists or not
-     * @return bool
-     * @throws InvalidConfigException If the `$siteId` isn't set*
-     */
-    protected static function indexExists(): bool
-    {
-        $db = static::getDb();
-        $command = $db->createCommand();
-        return (bool)$command->indexExists(static::index());
-    }
-
-    /**
-     * @return mixed|\yii\elasticsearch\Connection
-     */
-    public static function getDb()
-    {
-        return ElasticsearchPlugin::getConnection();
-    }
-
-    /**
-     * @return string
-     * @throws InvalidConfigException If the `$siteId` isn't set
-     */
-    public static function index(): string
-    {
-        if (static::$siteId === null) {
-            throw new InvalidConfigException('siteId was not set');
-        }
-
-        $elasticIndexNamePrefix = ElasticsearchPlugin::getInstance()->getSettings()->indexNamePrefix;
-
-        $indexName = 'craft-entries_' . static::$siteId;
-
-        if($elasticIndexNamePrefix !== null){
-            $indexName = $elasticIndexNamePrefix . '_' .  $indexName;
-        }
-
-        return $indexName;
-    }
-
-    /**
      * Create this model's index in Elasticsearch
      * @param array $schema The Elascticsearch index definition schema
-     * @param bool $force
+     * @param bool  $force
      * @throws InvalidConfigException If the `$siteId` isn't set
      * @throws \yii\elasticsearch\Exception If an error occurs while communicating with the Elasticsearch server
      */
@@ -289,22 +277,28 @@ class ElasticsearchRecord extends ActiveRecord
         }
 
         $db->delete('_ingest/pipeline/attachment');
-        $db->put('_ingest/pipeline/attachment', [], Json::encode([
-            'description' => 'Extract attachment information',
-            'processors'  => [
+        $db->put(
+            '_ingest/pipeline/attachment',
+            [],
+            Json::encode(
                 [
-                    'attachment' => [
-                        'field'          => 'content',
-                        'target_field'   => 'attachment',
-                        'indexed_chars'  => -1,
-                        'ignore_missing' => true,
+                    'description' => 'Extract attachment information',
+                    'processors'  => [
+                        [
+                            'attachment' => [
+                                'field'          => 'content',
+                                'target_field'   => 'attachment',
+                                'indexed_chars'  => -1,
+                                'ignore_missing' => true,
+                            ],
+                            'remove'     => [
+                                'field' => 'content',
+                            ],
+                        ],
                     ],
-                    'remove'     => [
-                        'field' => 'content',
-                    ],
-                ],
-            ],
-        ]));
+                ]
+            )
+        );
         $command->createIndex(static::index(), $schema);
     }
 
@@ -338,20 +332,20 @@ class ElasticsearchRecord extends ActiveRecord
                 'postDate'      => [
                     'type'   => 'date',
                     'format' => 'yyyy-MM-dd HH:mm:ss',
-                    'store'  => true
+                    'store'  => true,
                 ],
                 'noPostDate'    => [
                     'type'  => 'boolean',
-                    'store' => true
+                    'store' => true,
                 ],
                 'expiryDate'    => [
                     'type'   => 'date',
                     'format' => 'yyyy-MM-dd HH:mm:ss',
-                    'store'  => true
+                    'store'  => true,
                 ],
                 'noExpiryDate'  => [
                     'type'  => 'boolean',
-                    'store' => true
+                    'store' => true,
                 ],
                 'url'           => [
                     'type'  => 'text',
@@ -364,7 +358,7 @@ class ElasticsearchRecord extends ActiveRecord
                 ],
                 'elementHandle' => [
                     'type'  => 'keyword',
-                    'store' => true
+                    'store' => true,
                 ],
                 'attachment'    => [
                     'properties' => [
@@ -436,8 +430,8 @@ class ElasticsearchRecord extends ActiveRecord
                                 'query'    => $query,
                                 'analyzer' => self::siteAnalyzer(),
                                 'operator' => 'and',
-                            ]
-                        ]
+                            ],
+                        ],
                     ],
                     'filter' => [
                         'bool' => [
@@ -445,8 +439,8 @@ class ElasticsearchRecord extends ActiveRecord
                                 [
                                     'range' => [
                                         'postDate' => [
-                                            'lte' => $currentTimeDb
-                                        ]
+                                            'lte' => $currentTimeDb,
+                                        ],
                                     ],
                                 ],
                                 [
@@ -455,23 +449,23 @@ class ElasticsearchRecord extends ActiveRecord
                                             [
                                                 'range' => [
                                                     'expiryDate' => [
-                                                        'gt' => $currentTimeDb
-                                                    ]
-                                                ]
+                                                        'gt' => $currentTimeDb,
+                                                    ],
+                                                ],
                                             ],
                                             [
                                                 'term' => [
-                                                    'noExpiryDate' => true
-                                                ]
-                                            ]
-                                        ]
-                                    ]
-                                ]
+                                                    'noExpiryDate' => true,
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
 
-                            ]
-                        ]
-                    ]
-                ]
+                            ],
+                        ],
+                    ],
+                ],
             ];
         }
         return $this->_queryParams;
@@ -491,11 +485,14 @@ class ElasticsearchRecord extends ActiveRecord
     public function getHighlightParams()
     {
         if (is_null($this->_highlightParams)) {
-            $this->_highlightParams = ArrayHelper::merge(ElasticsearchPlugin::getInstance()->settings->highlight, [
-                'fields' => [
-                    'attachment.content' => (object)[],
-                ],
-            ]);
+            $this->_highlightParams = ArrayHelper::merge(
+                ElasticsearchPlugin::getInstance()->settings->highlight,
+                [
+                    'fields' => [
+                        'attachment.content' => (object)[],
+                    ],
+                ]
+            );
         }
         return $this->_highlightParams;
     }
@@ -522,5 +519,17 @@ class ElasticsearchRecord extends ActiveRecord
     public function setSearchFields(array $searchFields)
     {
         $this->_searchFields = $searchFields;
+    }
+
+    /**
+     * Return if the Elasticsearch index already exists or not
+     * @return bool
+     * @throws InvalidConfigException If the `$siteId` isn't set*
+     */
+    protected static function indexExists(): bool
+    {
+        $db = static::getDb();
+        $command = $db->createCommand();
+        return (bool)$command->indexExists(static::index());
     }
 }
