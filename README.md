@@ -499,7 +499,7 @@ This plugin is free to try in development environments, but requires payment to 
 
 * Easy setup for suggest
 
-Brought to you by [![Logo](resources/img/lhs.png)][lhs-site] La Haute Société
+[![La Haute Société](resources/img/lhs.png)][lhs-site]
 
 Elasticsearch is a trademark of Elasticsearch BV, registered in the U.S. and in
 other countries.
