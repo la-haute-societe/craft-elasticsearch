@@ -18,7 +18,7 @@ use yii\base\InvalidConfigException;
 /**
  * Define the plugin's settings.
  */
-class Settings extends Model
+class SettingsModel extends Model
 {
     /** @var string The Elasticsearch instance endpoint URL (with protocol, host and port) */
     public $elasticsearchEndpoint = 'elasticsearch:9200';
@@ -62,8 +62,11 @@ class Settings extends Model
         'post_tags' => null,
     ];
 
-    /** @var array The list of IDs of which entries types should not be indexed */
+    /** @var array A list of handles of entries types that should not be indexed */
     public $blacklistedEntryTypes = [];
+
+    /** @var array A list of handles of asset volumes that should not be indexed */
+    public $blacklistedAssetVolumes = [];
 
     /** @var array The list of hosts that are allowed to access this module. */
     public $allowedHosts = ['localhost'];
@@ -106,7 +109,7 @@ class Settings extends Model
     public function rules(): array
     {
         return [
-            ['elasticsearchEndpoint', 'required', 'message' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Endpoint URL is required')],
+            ['elasticsearchEndpoint', 'required', 'message' => Craft::t(Elasticsearch::PLUGIN_HANDLE, 'Endpoint URL is required')],
             ['elasticsearchEndpoint', 'url', 'defaultScheme' => 'http', 'pattern' => '/^{schemes}:\/\/(([A-Z0-9][A-Z0-9_-]*)(\.?[A-Z0-9][A-Z0-9_-]*)+)(?::\d{1,5})?(?:$|[?\/#])/i'],
             ['elasticsearchEndpoint', 'default', 'value' => 'elasticsearch.example.com:9200'],
             ['isAuthEnabled', 'boolean'],
@@ -126,7 +129,7 @@ class Settings extends Model
         }
 
         // Save the current Elasticsearch connector
-        $previousElasticConnector = Craft::$app->get(Elasticsearch::APP_COMPONENT_NAME);
+        $previousElasticConnector = Craft::$app->get(Elasticsearch::PLUGIN_HANDLE);
 
         // Create a new instance of the Elasticsearch connector with the freshly-submitted url and auth settings
         $elasticsearchPlugin = Elasticsearch::getInstance();
@@ -140,21 +143,27 @@ class Settings extends Model
                 throw new InvalidConfigException('Could not connect to the Elasticsearch server.');
             }
         } catch (InvalidConfigException $e) {
-            $this->addError('global', Craft::t(
-                Elasticsearch::TRANSLATION_CATEGORY,
-                'Could not connect to the Elasticsearch instance at {elasticsearchEndpoint}. Please check the endpoint URL and authentication settings.',
-                ['elasticsearchEndpoint' => $this->elasticsearchEndpoint]
-            ));
+            $this->addError(
+                'global',
+                Craft::t(
+                    Elasticsearch::PLUGIN_HANDLE,
+                    'Could not connect to the Elasticsearch instance at {elasticsearchEndpoint}. Please check the endpoint URL and authentication settings.',
+                    ['elasticsearchEndpoint' => $this->elasticsearchEndpoint]
+                )
+            );
         } finally {
             // Clean up the mess we made to run the validation
             /** @noinspection PhpUnhandledExceptionInspection Shouldn't happen as the component to set is already initialized */
-            Craft::$app->set(Elasticsearch::APP_COMPONENT_NAME, $previousElasticConnector);
+            Craft::$app->set(Elasticsearch::PLUGIN_HANDLE, $previousElasticConnector);
         }
 
         // Cleanup blacklistedEntryTypes to remove empty values
-        $this->blacklistedEntryTypes = array_filter($this->blacklistedEntryTypes, function ($value) {
-            return !empty($value);
-        });
+        $this->blacklistedEntryTypes = array_filter(
+            $this->blacklistedEntryTypes,
+            function ($value) {
+                return !empty($value);
+            }
+        );
 
         parent::afterValidate();
     }

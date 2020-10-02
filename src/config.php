@@ -33,6 +33,10 @@ return [
         'post_tags' => '</strong>',
     ],
 
+    'blacklistedSections' => [],
+    'blacklistedAssetVolumes' => [],
+
+
     'contentExtractorCallback' => function (string $entryContent) {
         if (preg_match('/<!-- BEGIN elasticsearch indexed content -->(.*)<!-- END elasticsearch indexed content -->/s', $entryContent, $body)) {
             $entryContent = '<!DOCTYPE html>' . trim($body[1]);

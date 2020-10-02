@@ -11,10 +11,13 @@
 namespace lhs\elasticsearch;
 
 use Craft;
+use craft\base\Element;
 use craft\base\Plugin;
 use craft\commerce\elements\Product;
 use craft\console\Application as ConsoleApplication;
+use craft\elements\Asset;
 use craft\elements\Entry;
+use craft\events\ModelEvent;
 use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
@@ -27,43 +30,47 @@ use craft\web\Application;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use lhs\elasticsearch\exceptions\IndexElementException;
-use lhs\elasticsearch\models\Settings;
-use lhs\elasticsearch\services\Elasticsearch as ElasticsearchService;
-use lhs\elasticsearch\services\ReindexQueueManagement;
+use lhs\elasticsearch\models\SettingsModel;
+use lhs\elasticsearch\services\ElasticsearchService;
+use lhs\elasticsearch\services\ElementIndexerService;
+use lhs\elasticsearch\services\IndexManagementService;
+use lhs\elasticsearch\services\ReindexQueueManagementService;
 use lhs\elasticsearch\utilities\RefreshElasticsearchIndexUtility;
 use lhs\elasticsearch\variables\ElasticsearchVariable;
 use yii\base\Event;
+use yii\debug\Module as DebugModule;
 use yii\elasticsearch\Connection;
 use yii\elasticsearch\DebugPanel;
 use yii\elasticsearch\Exception;
 use yii\queue\ExecEvent;
-use yii\debug\Module as DebugModule;
 
 /**
- * @property  services\Elasticsearch          service
- * @property  services\ReindexQueueManagement reindexQueueManagementService
- * @property  Settings                        settings
- * @property  Connection                      elasticsearch
+ * @property  services\ElasticsearchService          service
+ * @property  services\ReindexQueueManagementService reindexQueueManagementService
+ * @property  services\ElementIndexerService         $elementIndexerService
+ * @property  services\IndexManagementService        $indexManagementService
+ * @property  SettingsModel                          settings
+ * @property  Connection                             elasticsearch
+ * @method    SettingsModel                          getSettings()
  */
 class Elasticsearch extends Plugin
 {
-    const EVENT_ERROR_NO_ATTACHMENT_PROCESSOR = 'errorNoAttachmentProcessor';
-    const PLUGIN_HANDLE = 'elasticsearch';
-    const APP_COMPONENT_NAME = self::PLUGIN_HANDLE;
-    const TRANSLATION_CATEGORY = self::PLUGIN_HANDLE;
+    public const EVENT_ERROR_NO_ATTACHMENT_PROCESSOR = 'errorNoAttachmentProcessor';
+    public const PLUGIN_HANDLE = 'elasticsearch';
 
     public $hasCpSettings = true;
 
-    public function init()
+    public function init(): void
     {
         parent::init();
-
         $isCommerceEnabled = $this->isCommerceEnabled();
 
         $this->setComponents(
             [
                 'service'                       => ElasticsearchService::class,
-                'reindexQueueManagementService' => ReindexQueueManagement::class,
+                'reindexQueueManagementService' => ReindexQueueManagementService::class,
+                'elementIndexerService'         => ElementIndexerService::class,
+                'indexManagementService'        => IndexManagementService::class,
             ]
         );
 
@@ -83,69 +90,18 @@ class Elasticsearch extends Plugin
                     /** @var entry $entry */
                     $entry = $event->sender;
                     try {
-                        $this->service->deleteElement($entry);
+                        $this->elementIndexerService->deleteElement($entry);
                     } catch (Exception $e) {
                         // Noop, the element must have already been deleted
                     }
                 }
             );
 
-            // Index entry upon save (creation or update)
-            Event::on(
-                Entry::class,
-                Entry::EVENT_AFTER_SAVE,
-                function (Event $event) {
-                    /** @var Entry $entry */
-                    $entry = $event->sender;
-                    // Handle drafts and revisions for Craft 3.2 and upper
-                    $notDraftOrRevision = true;
-                    $schemaVersion = Craft::$app->getInstalledSchemaVersion();
-                    if (version_compare($schemaVersion, '3.2.0', '>=')) {
-                        $notDraftOrRevision = !$entry->getIsDraft() && !$entry->getIsRevision();
-                    }
-                    if ($notDraftOrRevision) {
-                        if ($entry->enabled) {
-                            $this->reindexQueueManagementService->enqueueJob($entry->id, $entry->siteId, Entry::class);
-                            //$this->service->indexElement($entry);
-                        } else {
-                            try {
-                                $this->service->deleteElement($entry);
-                            } catch (Exception $e) {
-                                // Noop, the element must have already been deleted
-                            }
-                        }
-                    }
-                }
-            );
-
+            // Index entry, asset & products upon save (creation or update)
+            Event::on(Entry::class, Entry::EVENT_AFTER_SAVE, [$this, 'onElementSaved']);
+            Event::on(Asset::class, Asset::EVENT_AFTER_SAVE, [$this, 'onElementSaved']);
             if ($isCommerceEnabled) {
-                // Index product upon save (creation or update)
-                Event::on(
-                    Product::class,
-                    Product::EVENT_AFTER_SAVE,
-                    function (Event $event) {
-                        /** @var Product $product */
-                        $product = $event->sender;
-                        // Handle drafts and revisions for Craft 3.2 and upper
-                        $notDraftOrRevision = true;
-                        $schemaVersion = Craft::$app->getInstalledSchemaVersion();
-                        if (version_compare($schemaVersion, '3.2.0', '>=')) {
-                            $notDraftOrRevision = !$product->getIsDraft() && !$product->getIsRevision();
-                        }
-                        if ($notDraftOrRevision) {
-                            if ($product->enabled) {
-                                $this->reindexQueueManagementService->enqueueJob($product->id, $product->siteId, Product::class);
-                                //$this->service->indexElement($product);
-                            } else {
-                                try {
-                                    $this->service->deleteElement($product);
-                                } catch (Exception $e) {
-                                    // Noop, the element must have already been deleted
-                                }
-                            }
-                        }
-                    }
-                );
+                Event::on(Product::class, Product::EVENT_AFTER_SAVE, [$this, 'onElementSaved']);
             }
 
             // Re-index all entries when plugin settings are saved
@@ -194,12 +150,7 @@ class Elasticsearch extends Plugin
                 function () {
                     $application = Craft::$app;
                     if ($application instanceof \yii\web\Application) {
-                        $application->getSession()->setError(
-                            Craft::t(
-                                self::TRANSLATION_CATEGORY,
-                                'The ingest-attachment plugin seems to be missing on your Elasticsearch instance.'
-                            )
-                        );
+                        $application->getSession()->setError('The ingest-attachment plugin seems to be missing on your Elasticsearch instance.');
                     }
                 }
             );
@@ -213,10 +164,12 @@ class Elasticsearch extends Plugin
                 /** @var DebugModule|null $debugModule */
                 $debugModule = Craft::$app->getModule('debug');
                 if ($debugModule) {
-                    $debugModule->panels['elasticsearch'] = new DebugPanel([
-                        'id'     => 'elasticsearch',
-                        'module' => $debugModule,
-                    ]);
+                    $debugModule->panels['elasticsearch'] = new DebugPanel(
+                        [
+                            'id'     => 'elasticsearch',
+                            'module' => $debugModule,
+                        ]
+                    );
                 }
             }
         );
@@ -246,17 +199,15 @@ class Elasticsearch extends Plugin
         Craft::info("{$this->name} plugin loaded", __METHOD__);
     }
 
-    /** @noinspection PhpDocMissingThrowsInspection */
 
     /**
      * Creates and returns the model used to store the plugin’s settings.
      *
-     * @return Settings
+     * @return SettingsModel
      */
-    protected function createSettingsModel(): Settings
+    protected function createSettingsModel(): SettingsModel
     {
-        $settings = new Settings();
-        return $settings;
+        return new SettingsModel();
     }
 
     /**
@@ -267,6 +218,7 @@ class Elasticsearch extends Plugin
      * @throws \Twig\Error\LoaderError
      * @throws \Twig\Error\RuntimeError
      * @throws \Twig\Error\SyntaxError
+     * @throws \yii\base\Exception
      */
     protected function settingsHtml(): string
     {
@@ -280,13 +232,13 @@ class Elasticsearch extends Plugin
         $sections = ArrayHelper::map(
             Craft::$app->sections->getAllSections(),
             'id',
-            function (Section $section) {
+            function (Section $section): array {
                 return [
                     'label' => Craft::t('site', $section->name),
                     'types' => ArrayHelper::map(
                         $section->getEntryTypes(),
                         'id',
-                        function ($section) {
+                        function ($section): array {
                             return ['label' => Craft::t('site', $section->name)];
                         }
                     ),
@@ -306,44 +258,30 @@ class Elasticsearch extends Plugin
 
     public function beforeSaveSettings(): bool
     {
-        /** @var Settings $settings */
         $settings = $this->getSettings();
         $settings->elasticsearchComponentConfig = null;
         return parent::beforeSaveSettings();
     }
 
-    //    public function setSettings(array $settings)
-    //    {
-    //        // Ensure all sites have a blacklist (at least an empty one)
-    //        $siteIds = Craft::$app->sites->getAllSiteIds();
-    //        if (!isset($settings['blacklistedSections'])) {
-    //            $settings['blacklistedSections'] = [];
-    //        }
-    //        $settings['blacklistedSections'] = array_replace(array_fill_keys($siteIds, []), $settings['blacklistedEntryTypes']);
-    //
-    //        parent::setSettings($settings);
-    //    }
-
     /**
      * @return Connection
+     * @throws \yii\base\InvalidConfigException
      */
     public static function getConnection(): Connection
     {
         /** @noinspection PhpUnhandledExceptionInspection */
-        /** @noinspection OneTimeUseVariablesInspection */
         /** @var Connection $connection */
-        $connection = Craft::$app->get(self::APP_COMPONENT_NAME);
+        $connection = Craft::$app->get(self::PLUGIN_HANDLE);
 
         return $connection;
     }
 
     /**
      * Initialize the Elasticsearch connector
-     * @noinspection PhpDocMissingThrowsInspection Can't happen since a valid config array is passed
-     * @param Settings $settings
+     * @param SettingsModel|null $settings
      * @throws \yii\base\InvalidConfigException If the configuration passed to the yii2-elasticsearch module is invalid
      */
-    public function initializeElasticConnector($settings = null)
+    public function initializeElasticConnector($settings = null): void
     {
         if ($settings === null) {
             $settings = $this->getSettings();
@@ -380,7 +318,7 @@ class Elasticsearch extends Plugin
         // Fix nodes. When cluster auto detection is disabled, the Elasticsearch component crashes when closing connections…
         array_walk(
             $definition['nodes'],
-            function (&$node) {
+            static function (&$node) {
                 if (!isset($node['http'])) {
                     $node['http'] = [];
                 }
@@ -396,7 +334,7 @@ class Elasticsearch extends Plugin
         );
 
         /** @noinspection PhpUnhandledExceptionInspection Can't happen since a valid config array is passed */
-        Craft::$app->set(self::APP_COMPONENT_NAME, $definition);
+        Craft::$app->set(self::PLUGIN_HANDLE, $definition);
     }
 
     /**
@@ -408,21 +346,46 @@ class Elasticsearch extends Plugin
         return class_exists(\craft\commerce\Plugin::class);
     }
 
-    protected function onPluginSettingsSaved()
+    /**
+     * @param ModelEvent $event
+     */
+    public function onElementSaved(ModelEvent $event): void
+    {
+        /** @var Element $element */
+        $element = $event->sender;
+
+        // Handle drafts and revisions for Craft 3.2 and upper
+        $notDraftOrRevision = true;
+        $schemaVersion = Craft::$app->getInstalledSchemaVersion();
+        if (version_compare($schemaVersion, '3.2.0', '>=')) {
+            $notDraftOrRevision = !$element->getIsDraft() && !$element->getIsRevision();
+        }
+
+        if ($notDraftOrRevision) {
+            if ($element->enabled) {
+                $this->reindexQueueManagementService->enqueueJob($element->id, $element->siteId, get_class($element));
+            } else {
+                try {
+                    $this->elementIndexerService->deleteElement($element);
+                } catch (Exception $e) {
+                    // Noop, the element must have already been deleted
+                }
+            }
+        }
+    }
+
+    protected function onPluginSettingsSaved(): void
     {
         /** @noinspection PhpUnhandledExceptionInspection If there was an error in the configuration, it would have prevented validation */
         $this->initializeElasticConnector(); //FIXME: Check if this is needed
 
-        Craft::debug('Elasticsearch plugin settings saved => re-index all entries', __METHOD__);
+        Craft::debug('Elasticsearch plugin settings saved => re-index all elements', __METHOD__);
         try {
-            $this->service->recreateIndexesForAllSites();
+            $this->indexManagementService->recreateIndexesForAllSites();
 
-            // Remove previous reindexing jobs as all entries will be reindexed anyway
+            // Remove previous reindexing jobs as all elements will be reindexed anyway
             $this->reindexQueueManagementService->clearJobs();
-            $this->reindexQueueManagementService->enqueueReindexJobs($this->service->getEnabledEntries());
-            if ($this->isCommerceEnabled()) {
-                $this->reindexQueueManagementService->enqueueReindexJobs($this->service->getEnabledProducts());
-            }
+            $this->reindexQueueManagementService->enqueueReindexJobs($this->service->getIndexableElementModels());
         } catch (IndexElementException $e) {
             /** @noinspection PhpUnhandledExceptionInspection This method should only be called in a web context so Craft::$app->getSession() will never throw */
             Craft::$app->getSession()->setError($e->getMessage());

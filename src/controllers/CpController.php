@@ -12,13 +12,13 @@ namespace lhs\elasticsearch\controllers;
 
 use Craft;
 use craft\commerce\elements\Product;
-use craft\elements\Entry;
 use craft\helpers\UrlHelper;
 use craft\records\Site;
 use craft\web\Controller;
 use craft\web\Request;
 use lhs\elasticsearch\Elasticsearch;
-use yii\helpers\ArrayHelper;
+use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
+use lhs\elasticsearch\models\IndexableElementModel;
 use yii\helpers\VarDumper;
 use yii\web\Response;
 
@@ -27,7 +27,16 @@ use yii\web\Response;
  */
 class CpController extends Controller
 {
+    /** @var ElasticsearchPlugin */
+    public $plugin;
     public $allowAnonymous = ['testConnection', 'reindexPerformAction'];
+
+    public function init(): void
+    {
+        parent::init();
+
+        $this->plugin = ElasticsearchPlugin::getInstance();
+    }
 
     /**
      * Test the elasticsearch connection
@@ -45,17 +54,21 @@ class CpController extends Controller
         $settings = $elasticsearchPlugin->getSettings();
 
         if ($elasticsearchPlugin->service->testConnection() === true) {
-            Craft::$app->session->setNotice(Craft::t(
-                Elasticsearch::TRANSLATION_CATEGORY,
-                'Successfully connected to {elasticsearchEndpoint}',
-                ['elasticsearchEndpoint' => $settings->elasticsearchEndpoint]
-            ));
+            Craft::$app->session->setNotice(
+                Craft::t(
+                    Elasticsearch::PLUGIN_HANDLE,
+                    'Successfully connected to {elasticsearchEndpoint}',
+                    ['elasticsearchEndpoint' => $settings->elasticsearchEndpoint]
+                )
+            );
         } else {
-            Craft::$app->session->setError(Craft::t(
-                Elasticsearch::TRANSLATION_CATEGORY,
-                'Could not establish connection with {elasticsearchEndpoint}',
-                ['elasticsearchEndpoint' => $settings->elasticsearchEndpoint]
-            ));
+            Craft::$app->session->setError(
+                Craft::t(
+                    Elasticsearch::PLUGIN_HANDLE,
+                    'Could not establish connection with {elasticsearchEndpoint}',
+                    ['elasticsearchEndpoint' => $settings->elasticsearchEndpoint]
+                )
+            );
         }
 
         return $this->redirect(UrlHelper::cpUrl('utilities/elasticsearch-utilities'));
@@ -78,10 +91,9 @@ class CpController extends Controller
 
         // Return the ids of entries to process
         if (!empty($params['start'])) {
-
             try {
                 $siteIds = $this->getSiteIds($request);
-                Elasticsearch::getInstance()->service->recreateSiteIndex(...$siteIds);
+                Elasticsearch::getInstance()->indexManagementService->recreateSiteIndex(...$siteIds);
             } catch (\Exception $e) {
                 return $this->asErrorJson($e->getMessage());
             }
@@ -93,11 +105,13 @@ class CpController extends Controller
         $reason = $this->reindexElement();
 
         if ($reason !== null) {
-            return $this->asJson([
-                'success' => true,
-                'skipped' => true,
-                'reason'  => $reason,
-            ]);
+            return $this->asJson(
+                [
+                    'success' => true,
+                    'skipped' => true,
+                    'reason'  => $reason,
+                ]
+            );
         }
 
         return $this->asJson(['success' => true]);
@@ -110,18 +124,24 @@ class CpController extends Controller
      */
     protected function getReindexQueue(array $siteIds): Response
     {
-        $elements = Elasticsearch::getInstance()->service->getEnabledEntries($siteIds);
-        if (Elasticsearch::getInstance()->isCommerceEnabled()) {
-            $elements = ArrayHelper::merge($elements, Elasticsearch::getInstance()->service->getEnabledProducts());
-        }
-        // Re-format elements to keep the JS part as close as possible to Craft SearchIndexUtility's
-        array_walk($elements, function (&$element) {
-            $element = ['params' => $element];
-        });
+        /** @var Elasticsearch $plugin */
+        $plugin = Elasticsearch::getInstance();
 
-        return $this->asJson([
-            'entries' => [$elements],
-        ]);
+        $indexableElementModels = $plugin->service->getIndexableElementModels($siteIds);
+
+        // Re-format $indexableElementModels to keep the JS part as close as possible to Craft SearchIndexUtility's
+        array_walk(
+            $indexableElementModels,
+            static function (&$element) {
+                $element = ['params' => $element->toArray()];
+            }
+        );
+
+        return $this->asJson(
+            [
+                'entries' => [$indexableElementModels],
+            ]
+        );
     }
 
     /**
@@ -154,18 +174,14 @@ class CpController extends Controller
     {
         $request = Craft::$app->getRequest();
 
-        $elementId = $request->getRequiredBodyParam('params.elementId');
-        $siteId = $request->getRequiredBodyParam('params.siteId');
-        $type = $request->getRequiredBodyParam('params.type');
-        switch ($type) {
-            case Product::class:
-                $element = Product::find()->id($elementId)->siteId($siteId)->one();
-                break;
-            default:
-                $element = Entry::find()->id($elementId)->siteId($siteId)->one();
-        }
+        $model = new IndexableElementModel();
+        $model->elementId = $request->getRequiredBodyParam('params.elementId');
+        $model->siteId = $request->getRequiredBodyParam('params.siteId');
+        $model->type = $request->getRequiredBodyParam('params.type');
+        $element = $model->getElement();
+
         try {
-            return Elasticsearch::getInstance()->service->indexElement($element);
+            return Elasticsearch::getInstance()->elementIndexerService->indexElement($element);
         } catch (\Exception $e) {
             Craft::error("Error while re-indexing element {$element->url}: {$e->getMessage()}", __METHOD__);
             Craft::error(VarDumper::dumpAsString($e), __METHOD__);

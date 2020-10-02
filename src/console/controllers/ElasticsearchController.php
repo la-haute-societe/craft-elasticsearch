@@ -10,12 +10,11 @@
 
 namespace lhs\elasticsearch\console\controllers;
 
-use Craft;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\exceptions\IndexElementException;
+use lhs\elasticsearch\models\IndexableElementModel;
 use yii\console\Controller;
 use yii\console\ExitCode;
-use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
 
 /**
@@ -23,27 +22,131 @@ use yii\helpers\Console;
  */
 class ElasticsearchController extends Controller
 {
+    /** @var ElasticsearchPlugin */
+    public $plugin;
+
+    public function init(): void
+    {
+        parent::init();
+
+        $this->plugin = ElasticsearchPlugin::getInstance();
+    }
+
     /**
-     * Reindex Craft entries into the Elasticsearch instance
-     *
-     * @return int A shell exit code. 0 indicated success, anything else indicates an error
-     * @throws IndexElementException If an error occurs while reindexing the entries
+     * Reindex entries, assets & products in Elasticsearch
+     * @return int A shell exit code. 0 indicates success, anything else indicates an error
+     * @throws IndexElementException
      * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \yii\base\InvalidRouteException
-     * @throws \yii\console\Exception
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
      * @throws \yii\elasticsearch\Exception
      */
     public function actionReindexAll(): int
     {
-        $this->stdout(PHP_EOL);
-        $this->stdout('Craft Elasticsearch plugin | Reindex all elements', Console::FG_GREEN);
-        $this->stdout(PHP_EOL);
+        $indexableElementModels = $this->plugin->service->getIndexableElementModels();
 
-        // Get elements
-        $elements = $this->getElementsToReindex();
+        return $this->reindexElements($indexableElementModels, 'everything');
+    }
+
+    /**
+     * Reindex entries in Elasticsearch
+     * @return int A shell exit code. 0 indicates success, anything else indicates an error
+     * @throws IndexElementException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
+     * @throws \yii\elasticsearch\Exception
+     */
+    public function actionReindexEntries(): int
+    {
+        $elementDescriptors = $this->plugin->service->getIndexableEntryModels();
+
+        return $this->reindexElements($elementDescriptors, 'entries');
+    }
+
+    /**
+     * Reindex assets in Elasticsearch
+     * @return int A shell exit code. 0 indicates success, anything else indicates an error
+     * @throws IndexElementException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
+     * @throws \yii\elasticsearch\Exception
+     */
+    public function actionReindexAssets(): int
+    {
+        $elementDescriptors = $this->plugin->service->getIndexableAssetModels();
+
+        return $this->reindexElements($elementDescriptors, 'assets');
+    }
+
+    /**
+     * Reindex products in Elasticsearch
+     * @return int A shell exit code. 0 indicates success, anything else indicates an error
+     * @throws IndexElementException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
+     * @throws \yii\elasticsearch\Exception
+     */
+    public function actionReindexProducts(): int
+    {
+        $elementDescriptors = $this->plugin->service->getIndexableProductModels();
+
+        return $this->reindexElements($elementDescriptors, 'products');
+    }
+
+    /**
+     * Remove index & create an empty one for all sites
+     *
+     * @throws IndexElementException If an error occurs while recreating the indices on the Elasticsearch instance
+     */
+    public function actionRecreateEmptyIndexes(): void
+    {
+        ElasticsearchPlugin::getInstance()->indexManagementService->recreateIndexesForAllSites();
+    }
+
+    /**
+     * @param IndexableElementModel[] $indexableElementModels
+     * @param string                  $type
+     * @return int A shell exit code
+     * @throws IndexElementException If an error occurs while reindexing the entries
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
+     * @throws \yii\elasticsearch\Exception
+     */
+    protected function reindexElements(array $indexableElementModels, string $type): int
+    {
+        $this->stdout(PHP_EOL);
+        $this->stdout("Craft Elasticsearch plugin | Reindex $type", Console::FG_GREEN);
+        $this->stdout(PHP_EOL);
 
         // Reindex elements
-        $exitCode = $this->reindexElements($elements);
+        $elementCount = count($indexableElementModels);
+        $processedElementCount = 0;
+        $errorCount = 0;
+        Console::startProgress(0, $elementCount);
+
+        foreach ($indexableElementModels as $indexableElementModel) {
+            $errorMessage = $this->reindexElement($indexableElementModel);
+
+            if ($errorMessage === null) {
+                Console::updateProgress(++$processedElementCount, $elementCount);
+            } else {
+                $errorCount++;
+                Console::updateProgress(++$processedElementCount, $elementCount);
+                $this->stderr($errorMessage);
+            }
+        }
+
+        Console::endProgress();
+        $exitCode = $errorCount === 0 ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;
 
         // Print summary message
         $this->stdout(PHP_EOL);
@@ -58,73 +161,23 @@ class ElasticsearchController extends Controller
     }
 
     /**
-     * Remove index & create an empty one for all sites
-     *
-     * @throws IndexElementException If an error occurs while recreating the indices on the Elasticsearch instance
-     */
-    public function actionRecreateEmptyIndexes()
-    {
-        ElasticsearchPlugin::getInstance()->service->recreateIndexesForAllSites();
-    }
-
-    /**
-     * Get an array of associative arrays representing the elements to reindex
-     *
-     * @return array An associative arrays representing the entries to reindex
-     */
-    protected function getElementsToReindex(): array
-    {
-        $elasticsearch = ElasticsearchPlugin::getInstance();
-        $elements = $elasticsearch->service->getEnabledEntries();
-        if ($elasticsearch->isCommerceEnabled()) {
-            $elements = ArrayHelper::merge($elements, $elasticsearch->service->getEnabledProducts());
-        }
-        return $elements;
-    }
-
-    /**
-     * Reindex the given $entries and show a progress bar.
-     *
-     * @param array $elements
-     *
-     * @return int A shell exit code. 0 indicated success, anything else indicates an error
+     * @param IndexableElementModel $indexableElementModel
+     * @return string|null `null` if the element was successfully reindexed, an error message explaining why it wasn't otherwise
      * @throws IndexElementException
      * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \yii\base\InvalidRouteException
-     * @throws \yii\console\Exception
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
      * @throws \yii\elasticsearch\Exception
      */
-    protected function reindexElements(array $elements): int
+    protected function reindexElement(IndexableElementModel $indexableElementModel): ?string
     {
-        $elementCount = count($elements);
-        $processedElementCount = 0;
-        $errorCount = 0;
-        Console::startProgress(0, $elementCount);
-
-        foreach ($elements as $index => $elementParams) {
-            $element = $elementParams['type'] === 'craft\\commerce\\elements\\Product' ? craft\commerce\Plugin::getInstance()->getProducts()->getProductById($elementParams['elementId'], $elementParams['siteId']) : Craft::$app->getEntries()->getEntryById($elementParams['elementId'], $elementParams['siteId']);
-
-            if ($element === null) {
-                throw new IndexElementException(Craft::t(
-                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                    'No such element (element #{elementId} / site #{siteId}',
-                    ['elementId' => $elementParams->elementId, 'siteId' => $elementParams->siteId]
-                ));
-            }
-
-            $result = ElasticsearchPlugin::getInstance()->service->indexElement($element);
-
-            if ($result === null) {
-                Console::updateProgress(++$processedElementCount, $elementCount);
-            } else {
-                $errorCount++;
-                Console::updateProgress(++$processedElementCount, $elementCount);
-                $this->stderr($result);
-            }
+        try {
+            $element = $indexableElementModel->getElement();
+        } catch (\Exception $e) {
+            return $e->getMessage();
         }
 
-        Console::endProgress();
-
-        return $errorCount === 0 ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;
+        return ElasticsearchPlugin::getInstance()->elementIndexerService->indexElement($element);
     }
 }

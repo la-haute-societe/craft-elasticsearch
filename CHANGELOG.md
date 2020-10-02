@@ -1,5 +1,17 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
+## 1.4.0 - 2020-10-02
+### Added
+- Ability to index assets
+- Console commands to reindex only entries, assets or products
+### Changes
+- Code refactoring
+### Removed
+- `SiteController`: it was originally used as a part of the reindexation process
+  when called from the Craft CLI, but this was changed in 1.2.0 and it was
+  useless since then.
+
+
 ## 1.3.0 - 2020-09-29
 ### Added
 - Compatibility with Elasticsearch 7

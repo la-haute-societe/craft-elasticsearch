@@ -12,12 +12,9 @@ namespace lhs\elasticsearch\utilities;
 
 use Craft;
 use craft\base\Utility;
-use craft\elements\Entry;
 use craft\helpers\ArrayHelper;
 use craft\helpers\UrlHelper;
 use lhs\elasticsearch\Elasticsearch;
-use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
-use lhs\elasticsearch\records\ElasticsearchRecord;
 use lhs\elasticsearch\resources\CpAssetBundle;
 
 /**
@@ -31,7 +28,7 @@ class RefreshElasticsearchIndexUtility extends Utility
      */
     public static function displayName(): string
     {
-        return Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Refresh Elasticsearch index');
+        return Craft::t(Elasticsearch::PLUGIN_HANDLE, 'Refresh Elasticsearch index');
     }
 
     /**
@@ -92,13 +89,17 @@ class RefreshElasticsearchIndexUtility extends Utility
                 'isConnected'                => Elasticsearch::getInstance()->service->testConnection(),
                 'inSync'                     => Elasticsearch::getInstance()->service->isIndexInSync(),
                 'sites'                      => ArrayHelper::map(Craft::$app->sites->getAllSites(), 'id', 'name'),
-                'notConnectedWarningMessage' => Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'Could not connect to the elasticsearch instance. Please check the {pluginSettingsLink}.', [
-                    'pluginSettingsLink' => sprintf(
-                        '<a href="%s">%s</a>',
-                        UrlHelper::cpUrl('settings/plugins/' . Elasticsearch::APP_COMPONENT_NAME),
-                        Craft::t(Elasticsearch::TRANSLATION_CATEGORY, 'plugin\'s settings')
-                    ),
-                ]),
+                'notConnectedWarningMessage' => Craft::t(
+                    Elasticsearch::PLUGIN_HANDLE,
+                    'Could not connect to the elasticsearch instance. Please check the {pluginSettingsLink}.',
+                    [
+                        'pluginSettingsLink' => sprintf(
+                            '<a href="%s">%s</a>',
+                            UrlHelper::cpUrl('settings/plugins/' . Elasticsearch::PLUGIN_HANDLE),
+                            Craft::t(Elasticsearch::PLUGIN_HANDLE, 'plugin\'s settings')
+                        ),
+                    ]
+                ),
             ]
         );
     }

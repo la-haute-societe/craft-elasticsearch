@@ -13,31 +13,27 @@ namespace lhs\elasticsearch\services;
 use Craft;
 use craft\base\Component;
 use lhs\elasticsearch\Elasticsearch;
-use lhs\elasticsearch\jobs\IndexElement as IndexElementJob;
+use lhs\elasticsearch\jobs\IndexElementJob;
+use lhs\elasticsearch\models\IndexableElementModel;
 
 /**
  * Service used to manage the reindex job queue.
  * It allows clearing failed reindexing jobs before reindexing all entries.
  * @property array $cache
  */
-class ReindexQueueManagement extends Component
+class ReindexQueueManagementService extends Component
 {
     const CACHE_KEY = Elasticsearch::PLUGIN_HANDLE . '_reindex_jobs';
 
     /**
      * Add reindex job for the given entries
-     * @param array $elements An array of elements. Each entry is an associative array having, at least, the `siteId`
-     *                       `elementId` and `elementType` keys
+     * @param IndexableElementModel[] $indexableElementModels
      */
-    public function enqueueReindexJobs(array $elements)
+    public function enqueueReindexJobs(array $indexableElementModels)
     {
         $jobIds = [];
-        foreach ($elements as $element) {
-            $jobIds[] = Craft::$app->getQueue()->push(new IndexElementJob([
-                'siteId'    => $element['siteId'],
-                'elementId' => $element['elementId'],
-                'type'      => $element['type']
-            ]));
+        foreach ($indexableElementModels as $model) {
+            $jobIds[] = Craft::$app->getQueue()->push(new IndexElementJob($model->toArray()));
         }
 
         $jobIds = array_unique(array_merge($jobIds, $this->getCache()));
@@ -72,11 +68,15 @@ class ReindexQueueManagement extends Component
 
     public function enqueueJob(int $entryId, int $siteId, string $type)
     {
-        $jobId = Craft::$app->queue->push(new IndexElementJob([
-            'siteId'    => $siteId,
-            'elementId' => $entryId,
-            'type'      => $type
-        ]));
+        $job = new IndexElementJob(
+            [
+                'siteId'    => $siteId,
+                'elementId' => $entryId,
+                'type'      => $type,
+            ]
+        );
+
+        $jobId = Craft::$app->queue->push($job);
 
         $this->addJobIdToCache($jobId);
     }

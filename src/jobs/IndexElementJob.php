@@ -14,11 +14,12 @@ use Craft;
 use craft\commerce\elements\Product;
 use craft\queue\BaseJob;
 use lhs\elasticsearch\Elasticsearch;
+use lhs\elasticsearch\models\IndexableElementModel;
 
 /**
  * Reindex a single entry
  */
-class IndexElement extends BaseJob
+class IndexElementJob extends BaseJob
 {
     /** @var int Id of the site */
     public $siteId;
@@ -38,13 +39,11 @@ class IndexElement extends BaseJob
         $site = $sites->getSiteById($this->siteId);
         $sites->setCurrentSite($site);
 
-        $element = $this->type === Product::class ? craft\commerce\Plugin::getInstance()->getProducts()->getProductById($this->elementId, $this->siteId) : Craft::$app->getEntries()->getEntryById($this->elementId, $this->siteId);
-
-        if ($element) {
-            Elasticsearch::getInstance()->service->indexElement($element);
-        } else {
-            Craft::warning('Not indexing ' . $this->type . ' ID #' . $this->elementId . ' because it was not found.', __METHOD__);
-        }
+        $model = new IndexableElementModel();
+        $model->elementId = $this->elementId;
+        $model->siteId = $this->siteId;
+        $model->type = $this->type;
+        Elasticsearch::getInstance()->elementIndexerService->indexElement($model->getElement());
     }
 
     /**
@@ -53,9 +52,16 @@ class IndexElement extends BaseJob
      */
     protected function defaultDescription(): string
     {
+        $type = ($pos = strrpos($this->type, '\\')) ? substr($this->type, $pos + 1) : $this->type;
+
         return Craft::t(
-            Elasticsearch::TRANSLATION_CATEGORY,
-            'Index a page in Elasticsearch'
+            Elasticsearch::PLUGIN_HANDLE,
+            sprintf(
+                'Index %s #%d (site #%d) in Elasticsearch',
+                $type,
+                $this->elementId,
+                $this->siteId
+            )
         );
     }
 }

@@ -19,6 +19,7 @@ use lhs\elasticsearch\events\SearchEvent;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\elasticsearch\ActiveRecord;
+use yii\elasticsearch\Exception;
 use yii\helpers\Json;
 use yii\helpers\VarDumper;
 
@@ -76,7 +77,7 @@ class ElasticsearchRecord extends ActiveRecord
      * @throws InvalidConfigException
      * @throws \yii\db\Exception
      * @throws \yii\db\StaleObjectException
-     * @throws \yii\elasticsearch\Exception
+     * @throws Exception
      */
     public function save($runValidation = true, $attributeNames = null): bool
     {
@@ -140,7 +141,7 @@ class ElasticsearchRecord extends ActiveRecord
      * @param string $query
      * @return ElasticsearchRecord[]
      * @throws InvalidConfigException
-     * @throws \yii\elasticsearch\Exception
+     * @throws Exception
      */
     public function search(string $query)
     {
@@ -265,7 +266,7 @@ class ElasticsearchRecord extends ActiveRecord
      * @param array $schema The Elascticsearch index definition schema
      * @param bool  $force
      * @throws InvalidConfigException If the `$siteId` isn't set
-     * @throws \yii\elasticsearch\Exception If an error occurs while communicating with the Elasticsearch server
+     * @throws Exception If an error occurs while communicating with the Elasticsearch server
      */
     public static function createIndex(array $schema, $force = false)
     {
