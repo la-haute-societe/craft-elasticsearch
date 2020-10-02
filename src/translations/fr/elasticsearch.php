@@ -47,7 +47,7 @@ return [
     // Connection test
     'Successfully connected to {elasticsearchEndpoint}'                                                                                      => 'Connecté à {elasticsearchEndpoint} avec succès',
     'Could not establish connection with {elasticsearchEndpoint}'                                                                            => "Impossible d'établir la connexion avec {elasticsearchEndpoint}",
-
+    'Could not connect to the Elasticsearch server at {elasticsearchEndpoint}. Please check the host and authentication settings.'           => 'Impossible de se connecter au serveur Elasticsearch {elasticsearchEndpoint}. Vérifiez la configuration du plugin.',
 
     // Jobs
     'Index a page in Elasticsearch'                                                                                                          => "Indexation d'une page dans Elasticsearch",
