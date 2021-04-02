@@ -5,6 +5,7 @@ namespace lhs\elasticsearch\models;
 use Craft;
 use craft\base\Element;
 use craft\commerce\elements\Product;
+use craft\digitalproducts\elements\Product as DigitalProduct;
 use craft\elements\Asset;
 use craft\elements\Entry;
 use lhs\elasticsearch\exceptions\IndexableElementModelException;
@@ -33,6 +34,13 @@ class IndexableElementModel extends \craft\base\Model implements \JsonSerializab
                 }
                 $element = $commercePlugin->getProducts()->getProductById($this->elementId, $this->siteId);
                 break;
+			case DigitalProduct::class:
+				$digitalProductsPlugin = craft\digitalproducts\Plugin::getInstance();
+				if (!$digitalProductsPlugin) {
+					throw new IndexableElementModelException($this, IndexableElementModelException::DIGITAL_PRODUCTS_NOT_INSTALLED);
+				}
+				$element = Craft::$app->getElements()->getElementById($this->elementId, DigitalProduct::class, $this->siteId);
+				break;
             case Entry::class:
                 $element = Craft::$app->getEntries()->getEntryById($this->elementId, $this->siteId);
                 break;

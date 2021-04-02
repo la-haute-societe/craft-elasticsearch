@@ -11,7 +11,6 @@
 namespace lhs\elasticsearch\jobs;
 
 use Craft;
-use craft\commerce\elements\Product;
 use craft\queue\BaseJob;
 use lhs\elasticsearch\Elasticsearch;
 use lhs\elasticsearch\models\IndexableElementModel;
