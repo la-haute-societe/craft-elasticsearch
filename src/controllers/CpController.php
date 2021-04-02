@@ -11,7 +11,6 @@
 namespace lhs\elasticsearch\controllers;
 
 use Craft;
-use craft\commerce\elements\Product;
 use craft\helpers\UrlHelper;
 use craft\records\Site;
 use craft\web\Controller;

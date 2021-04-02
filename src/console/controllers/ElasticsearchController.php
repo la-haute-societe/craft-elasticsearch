@@ -33,7 +33,7 @@ class ElasticsearchController extends Controller
     }
 
     /**
-     * Reindex entries, assets & products in Elasticsearch
+     * Reindex entries, assets, products & digital products in Elasticsearch
      * @return int A shell exit code. 0 indicates success, anything else indicates an error
      * @throws IndexElementException
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -99,6 +99,24 @@ class ElasticsearchController extends Controller
 
         return $this->reindexElements($elementDescriptors, 'products');
     }
+
+    /**
+     * Reindex digital products in Elasticsearch
+     * @return int A shell exit code. 0 indicates success, anything else indicates an error
+     * @throws IndexElementException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
+     * @throws \yii\elasticsearch\Exception
+     */
+    public function actionReindexDigitalProducts(): int
+    {
+        $elementDescriptors = $this->plugin->service->getIndexableDigitalProductModels();
+
+        return $this->reindexElements($elementDescriptors, 'digitalProducts');
+    }
+
 
     /**
      * Remove index & create an empty one for all sites
