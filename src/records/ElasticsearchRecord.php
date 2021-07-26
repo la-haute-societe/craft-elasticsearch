@@ -224,7 +224,7 @@ class ElasticsearchRecord extends ActiveRecord
         if (array_key_exists($siteLanguage, $availableAnalyzers)) {
             $analyzer = $availableAnalyzers[$siteLanguage];
         } else {
-            $localParts = explode('-', Craft::$app->language);
+            $localParts = explode('-', $siteLanguage);
             $siteLanguage = $localParts[0];
             if (array_key_exists($siteLanguage, $availableAnalyzers)) {
                 $analyzer = $availableAnalyzers[$siteLanguage];

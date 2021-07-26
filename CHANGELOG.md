@@ -1,5 +1,10 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
+## Unreleased
+### Fixed
+- Fix index analyzer detection for sites having a "complex" locale (ie. language + country code)
+
+
 ## 1.4.0 - 2020-10-02
 ### Added
 - Ability to index assets
