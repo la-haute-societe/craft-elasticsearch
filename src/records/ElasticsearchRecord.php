@@ -300,7 +300,8 @@ class ElasticsearchRecord extends ActiveRecord
                 ]
             )
         );
-        $command->createIndex(static::index(), $schema);
+
+        $db->put(static::index(), ['include_type_name' => 'false'], Json::encode($schema));
     }
 
     /**

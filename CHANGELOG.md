@@ -4,7 +4,9 @@
 ### Added
 - Ability to index digital products (thanks [@aloco](https://github.com/aloco))
 ### Fixed
-- Fix index analyzer detection for sites having a "complex" locale (ie. language + country code)
+- Fix index analyzer detection for sites having a "complex" locale (ie. language
+  \+ country code)
+- Fix Elasticsearch 6 compatibility (fixes [#17][])
 
 
 ## 1.4.0 - 2020-10-02
@@ -88,3 +90,6 @@ If your entries are not indexed anymore after upgrade, please check you network 
 ## 1.0.0 - 2018-12-12
 ### Added
 - Initial release
+
+
+[#17]: https://github.com/la-haute-societe/craft-elasticsearch/issues/17
