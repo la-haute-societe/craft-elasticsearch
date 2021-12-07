@@ -23,6 +23,10 @@
  */
 
 return [
+    'elasticsearchEndpoint'        => 'https://long-hash.eu-central-1.aws.cloud.example.com:9243',
+    'isAuthEnabled'                => true,
+    'username'                     => 'elastic',
+    'password'                     => 'password',
     'indexNamePrefix' => '',
 
     'highlight' => [
@@ -33,7 +37,6 @@ return [
     'blacklistedEntryTypes' => [],
     'blacklistedAssetVolumes' => [],
 
-
     'contentExtractorCallback' => function (string $entryContent) {
         if (preg_match('/<!-- BEGIN elasticsearch indexed content -->(.*)<!-- END elasticsearch indexed content -->/s', $entryContent, $body)) {
             $entryContent = '<!DOCTYPE html>' . trim($body[1]);
@@ -42,13 +45,16 @@ return [
         return $entryContent;
     },
 
-    'elasticsearchEndpoint'        => 'https://long-hash.eu-central-1.aws.cloud.example.com:9243',
-    'username'                     => 'elastic',
-    'password'                     => 'password',
-    'isAuthEnabled'                => true,
+    // 'elementContentCallback' => function (\craft\base\ElementInterface $element) {
+    //     return '<span>Some HTML element content to index</span>';
+    // },
+
+    // 'resultFormatterCallback'  => function (array $formattedResult, $result) {
+    //         // Do something
+    // },
 
 
-    // elasticsearchEndpoint, username, password and isAuthEnabled are ignore if this is set
+    // The `elasticsearchEndpoint`, `username`, `password` and `isAuthEnabled` settings are ignored if this is set
     'elasticsearchComponentConfig' => [
         'autodetectCluster' => false,
         'defaultProtocol'   => 'http',
@@ -67,24 +73,19 @@ return [
 
         'connectionTimeout' => 10,
         'dataTimeout'       => 30,
-        //        'resultFormatterCallback'  => function (array $formattedResult, $result) {
-        //                // Do something
-        //        },
-        //        'elementContentCallback' => function (\craft\base\ElementInterface $element) {
-        //            return '<span>Some HTML element content to index</span>';
-        //        },
-        //        'extraFields'              => [
-        //            'fieldOne' => [
-        //                'mapping'     => [
-        //                    'type'  => 'text',
-        //                    'analyzer' => 'standard',
-        //                    'store' => true
-        //                ],
-        //                'highlighter' => (object)['type' => 'plain'],
-        //                'value'       => function (\craft\base\ElementInterface $element, \lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
-        //                        // Return something
-        //                }
-        //            ]
-        //        ]
     ],
+
+   // 'extraFields'              => [
+   //     'fieldOne' => [
+   //         'mapping'     => [
+   //             'type'  => 'text',
+   //             'analyzer' => 'standard',
+   //             'store' => true
+   //         ],
+   //         'highlighter' => (object)['type' => 'plain'],
+   //         'value'       => function (\craft\base\ElementInterface $element, \lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
+   //                 // Return something
+   //         }
+   //     ]
+   // ]
 ];

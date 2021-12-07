@@ -117,6 +117,14 @@ X-Pack Security.
 Ignored if `isAuthEnabled` is set to `false` or `elasticsearchComponentConfig` is set.
 
 
+#### `indexNamePrefix`
+Type: _string_
+
+Index name prefix used to avoid index name collision when using a single
+Elasticsearch instance with several Craft instances.<br>
+Up to 5 characters, all lowercase.
+
+
 #### `highlight`
 Type: _array_
 
@@ -128,7 +136,15 @@ For more options, refer to the [elasticsearch documentation][].
 #### `blacklistedEntryTypes`
 Type: _string[]_
 
-An array of entry type handle of which entries should not be indexed.
+An array of entry type handles. Entries of those types won't be indexed.
+
+
+### Only in the configuration file
+
+#### `blacklistedAssetVolumes`
+Type: _string[]_
+
+An array of asset volume handles. Assets in those volumes won't be indexed.
 
 
 #### `contentExtractorCallback`

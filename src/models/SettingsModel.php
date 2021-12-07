@@ -23,6 +23,9 @@ class SettingsModel extends Model
     /** @var string The Elasticsearch instance endpoint URL (with protocol, host and port) */
     public $elasticsearchEndpoint = 'elasticsearch:9200';
 
+    /** @var bool A boolean indicating whether authentication to the Elasticsearch server is required */
+    public $isAuthEnabled = false;
+
     /** @var string [optional] The username used to connect to the Elasticsearch server */
     public $username = 'elastic';
 
@@ -35,8 +38,11 @@ class SettingsModel extends Model
      */
     public $indexNamePrefix;
 
-    /** @var bool A boolean indicating whether authentication to the Elasticsearch server is required */
-    public $isAuthEnabled = false;
+    /** @var array A list of handles of entries types that should not be indexed */
+    public $blacklistedEntryTypes = [];
+
+    /** @var array A list of handles of asset volumes that should not be indexed */
+    public $blacklistedAssetVolumes = [];
 
     /**
      * @var callable A callback used to extract the indexable content from a page source code.
@@ -61,12 +67,6 @@ class SettingsModel extends Model
         'pre_tags'  => null,
         'post_tags' => null,
     ];
-
-    /** @var array A list of handles of entries types that should not be indexed */
-    public $blacklistedEntryTypes = [];
-
-    /** @var array A list of handles of asset volumes that should not be indexed */
-    public $blacklistedAssetVolumes = [];
 
     /**
      * @var array An associative array passed to the yii2-elasticsearch component Connection class constructor.
