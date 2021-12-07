@@ -121,10 +121,11 @@
 
     <hr>
 
-    <h2>{{ 'Blacklisted entries types'|t('elasticsearch') }}</h2>
+    <h2>{{ 'Blacklisted entry types'|t('elasticsearch') }}</h2>
+    <p class="warning with-icon">{{ macros.configWarning('blacklistedEntryTypes') }}</p>
     <p class="light">{{ 'Never index:'|t('elasticsearch') }}</p>
     <div class="field">
-        <table id="sites" class="shadow-box editable">
+        <table id="entryTypes" class="shadow-box editable">
             <thead>
             <tr>
                 <th scope="col" class="thin">{{ 'Type'|t('elasticsearch') }}</th>
@@ -150,6 +151,43 @@
                         </td>
                     </tr>
                 {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <hr>
+
+    <h2>{{ 'Blacklisted asset volumes'|t('elasticsearch') }}</h2>
+    {% if 'blacklistedAssetVolumes' in overrides %}
+        <p class="warning with-icon">{{ macros.configWarning('blacklistedAssetVolumes') }}</p>
+    {% endif %}
+
+    <p class="light">{{ 'Never index:'|t('elasticsearch') }}</p>
+    <div class="field">
+        <table id="volumes" class="shadow-box editable">
+            <thead>
+            <tr>
+                <th scope="col" class="thin">{{ 'Handle'|t('elasticsearch') }}</th>
+                <th scope="col">{{ 'Name'|t('elasticsearch') }}</th>
+                <th scope="col" class="thin"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for volume in craft.app.volumes.getAllVolumes() %}
+                <tr data-id="default">
+                    <th><code>{{ volume.handle }}</code></th>
+                    <td>{{ volume.name }}</td>
+                    <td>
+                        {{ forms.lightswitch({
+                            name:  "blacklistedAssetVolumes[]",
+                            value: volume.handle,
+                            on:    volume.handle in settings['blacklistedAssetVolumes'],
+                            small: true,
+                            disabled: 'blacklistedAssetVolumes' in overrides,
+                        }) }}
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>

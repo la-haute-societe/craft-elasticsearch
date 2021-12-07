@@ -139,13 +139,13 @@ Type: _string[]_
 An array of entry type handles. Entries of those types won't be indexed.
 
 
-### Only in the configuration file
-
 #### `blacklistedAssetVolumes`
 Type: _string[]_
 
 An array of asset volume handles. Assets in those volumes won't be indexed.
 
+
+### Only in the configuration file
 
 #### `contentExtractorCallback`
 Type: _callable_
