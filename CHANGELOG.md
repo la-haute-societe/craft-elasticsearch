@@ -1,6 +1,8 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
 ## Unreleased
+### Added
+- Ability to index digital products (thanks [@aloco](https://github.com/aloco))
 ### Fixed
 - Fix index analyzer detection for sites having a "complex" locale (ie. language + country code)
 

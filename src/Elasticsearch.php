@@ -14,6 +14,7 @@ use Craft;
 use craft\base\Element;
 use craft\base\Plugin;
 use craft\commerce\elements\Product;
+use craft\digitalproducts\elements\Product as DigitalProduct;
 use craft\console\Application as ConsoleApplication;
 use craft\elements\Asset;
 use craft\elements\Entry;
@@ -65,6 +66,7 @@ class Elasticsearch extends Plugin
     {
         parent::init();
         $isCommerceEnabled = $this->isCommerceEnabled();
+        $isDigitalProductsEnabled = $this->isDigitalProductsEnabled();
 
         $this->setComponents(
             [
@@ -103,6 +105,10 @@ class Elasticsearch extends Plugin
             Event::on(Asset::class, Asset::EVENT_AFTER_SAVE, [$this, 'onElementSaved']);
             if ($isCommerceEnabled) {
                 Event::on(Product::class, Product::EVENT_AFTER_SAVE, [$this, 'onElementSaved']);
+
+                if ($isDigitalProductsEnabled) {
+                    Event::on(DigitalProduct::class, DigitalProduct::EVENT_AFTER_SAVE, [$this, 'onElementSaved']);
+                }
             }
 
             // Re-index all entries when plugin settings are saved
@@ -345,6 +351,15 @@ class Elasticsearch extends Plugin
     public function isCommerceEnabled(): bool
     {
         return class_exists(\craft\commerce\Plugin::class);
+    }
+
+    /**
+     * Check for presence of Craft Digital Products Plugin
+     * @return bool
+     */
+    public function isDigitalProductsEnabled(): bool
+    {
+        return class_exists(\craft\digitalproducts\Plugin::class);
     }
 
     /**

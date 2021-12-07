@@ -10,6 +10,8 @@ class IndexableElementModelException extends Exception
     public const ELEMENT_NOT_FOUND = 0;
     public const CRAFT_COMMERCE_NOT_INSTALLED = 1;
     public const UNEXPECTED_TYPE = 2;
+    public const DIGITAL_PRODUCTS_NOT_INSTALLED = 3;
+
 
     public function __construct(IndexableElementModel $model, $code, Throwable $previous = null)
     {
@@ -17,6 +19,13 @@ class IndexableElementModelException extends Exception
             case self::CRAFT_COMMERCE_NOT_INSTALLED:
                 $message = sprintf(
                     "Element #%d (site #%d) is a product but the Craft Commerce plugin isn't installed.",
+                    $model->elementId,
+                    $model->siteId
+                );
+                break;
+            case self::DIGITAL_PRODUCTS_NOT_INSTALLED:
+                $message = sprintf(
+                    "Element #%d (site #%d) is a digital product but the Digital Products plugin isn't installed.",
                     $model->elementId,
                     $model->siteId
                 );

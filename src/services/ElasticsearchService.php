@@ -17,6 +17,7 @@ namespace lhs\elasticsearch\services;
 use Craft;
 use craft\base\Component;
 use craft\commerce\elements\Product;
+use craft\digitalproducts\elements\Product as DigitalProduct;
 use craft\elements\Asset;
 use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
@@ -235,6 +236,10 @@ class ElasticsearchService extends Component
         $models = \yii\helpers\ArrayHelper::merge($models, $this->getIndexableAssetModels($siteIds));
         if ($this->plugin->isCommerceEnabled()) {
             $models = ArrayHelper::merge($models, $this->getIndexableProductModels($siteIds));
+
+            if ($this->plugin->isDigitalProductsEnabled()) {
+                $models = ArrayHelper::merge($models, $this->getIndexableDigitalProductModels($siteIds));
+            }
         }
 
         return $models;
@@ -307,6 +312,40 @@ class ElasticsearchService extends Component
     }
 
     /**
+     * Return a list of enabled digital products an array of elements descriptors
+     * @param int[]|null $siteIds An array containing the ids of sites to be or
+     *                            reindexed, or `null` to reindex all sites.
+     * @return array An array of elements descriptors. An entry descriptor is an
+     *                            associative array with the `elementId` and `siteId` keys.
+     */
+    public function getIndexableDigitalProductModels($siteIds = null): array
+    {
+        if ($siteIds === null) {
+            $siteIds = Craft::$app->getSites()->getAllSiteIds();
+        }
+
+        $digitalProducts = [];
+        foreach ($siteIds as $siteId) {
+            $siteEntries = $this->getIndexableDigitalProductsQuery($siteId)
+                ->select(['digitalproducts_products.id as elementId', 'elements_sites.siteId'])
+                ->asArray(true)
+                ->all();
+            $digitalProducts = ArrayHelper::merge($digitalProducts, $siteEntries);
+        }
+
+        return array_map(
+            static function ($entry): IndexableElementModel {
+                $model = new IndexableElementModel();
+                $model->elementId = $entry['elementId'];
+                $model->siteId = $entry['siteId'];
+                $model->type = DigitalProduct::class;
+                return $model;
+            },
+            $digitalProducts
+        );
+    }
+
+    /**
      * Return a list of enabled assets as an array of elements descriptors
      * @param int[]|null $siteIds An array containing the ids of sites to be or reindexed, or `null` to reindex all sites.
      * @return array An array of asset descriptors. An asset descriptor is an associative array with the `elementId`, `siteId` and `type` keys.
@@ -364,6 +403,14 @@ class ElasticsearchService extends Component
             ->uri(['not', '']);
     }
 
+    public function getIndexableDigitalProductsQuery($siteId)
+    {
+        return DigitalProduct::find()
+            ->status([Entry::STATUS_PENDING, Entry::STATUS_LIVE])
+            ->siteId($siteId)
+            ->uri(['not', '']);
+    }
+
     public static function getSyncCachekey(): string
     {
         return self::class . '_isSync';
@@ -393,7 +440,12 @@ class ElasticsearchService extends Component
         $countAssets = (int)$this->getIndexableAssetsQuery($siteId)->count();
         if ($this->plugin->isCommerceEnabled()) {
             $countProducts = (int)$this->getIndexableProductsQuery($siteId)->count();
+
+            if ($this->plugin->isDigitalProductsEnabled()) {
+                $countDigitalProducts = (int)$this->getIndexableDigitalProductsQuery($siteId)->count();
+            }
         }
-        return $countEntries + $countAssets + ($countProducts ?? 0);
+
+        return $countEntries + $countAssets + ($countProducts ?? 0) + ($countDigitalProducts ?? 0);
     }
 }

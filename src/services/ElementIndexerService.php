@@ -14,6 +14,7 @@ use Craft;
 use craft\base\Component;
 use craft\base\Element;
 use craft\commerce\elements\Product;
+use craft\digitalproducts\elements\Product as DigitalProduct;
 use craft\elements\Asset;
 use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
@@ -116,9 +117,10 @@ class ElementIndexerService extends Component
         if (!(
             $element instanceof Entry
             || $element instanceof Product
+            || $element instanceof DigitalProduct
             || $element instanceof Asset
         )) {
-            $message = "Not indexing entry #{$element->id} since it is not an entry, an asset or a product.";
+            $message = "Not indexing entry #{$element->id} since it is not an entry, an asset, a product or a digital product.";
             Craft::debug($message, __METHOD__);
             return $message;
         }
