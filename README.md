@@ -485,15 +485,6 @@ Event::on(ElasticsearchRecord::class, ElasticsearchRecord::EVENT_BEFORE_SEARCH, 
 		- that all the containers are running on the same shared network (see the networks parameter in the `docker-compose.yml` file, in our example, it is named `app_tier`).
 
 
-## Licensing
-
-This plugin is free to try in development environments, but requires payment to be used in production environments. The license fee for this plugin is $99 (license + one year of updates) via the Craft Plugin Store, then $29 per year for updates (optional).
-
-
-## Elasticsearch plugin Roadmap
-
-* Easy setup for suggest
-
 [![La Haute Société](resources/img/lhs.png)][lhs-site]
 
 Elasticsearch is a trademark of Elasticsearch BV, registered in the U.S. and in
