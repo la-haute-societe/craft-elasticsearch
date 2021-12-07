@@ -22,6 +22,7 @@ use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\helpers\ArrayHelper;
+use craft\helpers\ElementHelper;
 use craft\models\Section;
 use craft\queue\Queue;
 use craft\services\Plugins;
@@ -358,7 +359,7 @@ class Elasticsearch extends Plugin
         $notDraftOrRevision = true;
         $schemaVersion = Craft::$app->getInstalledSchemaVersion();
         if (version_compare($schemaVersion, '3.2.0', '>=')) {
-            $notDraftOrRevision = !$element->getIsDraft() && !$element->getIsRevision();
+            $notDraftOrRevision = !ElementHelper::isDraftOrRevision($element);
         }
 
         if ($notDraftOrRevision) {
