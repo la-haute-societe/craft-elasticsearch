@@ -68,12 +68,6 @@ class SettingsModel extends Model
     /** @var array A list of handles of asset volumes that should not be indexed */
     public $blacklistedAssetVolumes = [];
 
-    /** @var array The list of hosts that are allowed to access this module. */
-    public $allowedHosts = ['localhost'];
-
-    /** @var array The list of IPs that are allowed to access this module. */
-    public $allowedIPs = ['::1', '127.0.0.1'];
-
     /**
      * @var array An associative array passed to the yii2-elasticsearch component Connection class constructor.
      * @note If this is set, the $elasticsearchEndpoint, $username, $password and $isAuthEnabled properties will be ignored.

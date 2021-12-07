@@ -23,9 +23,6 @@
  */
 
 return [
-    'allowedIPs'   => ['::1', '127.0.0.1'],
-    'allowedHosts' => ['localhost'],
-
     'indexNamePrefix' => '',
 
     'highlight' => [
@@ -33,7 +30,7 @@ return [
         'post_tags' => '</strong>',
     ],
 
-    'blacklistedSections' => [],
+    'blacklistedEntryTypes' => [],
     'blacklistedAssetVolumes' => [],
 
 

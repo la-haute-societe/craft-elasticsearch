@@ -131,20 +131,6 @@ Type: _string[]_
 An array of entry type handle of which entries should not be indexed.
 
 
-### Only in the configuration file
-
-#### `allowedIPs`
-Type: _string[]_
-
-An array of IP addresses allowed to use the Elasticsearch console commands.
-
-
-#### `allowedHosts`
-Type: _string[]_
-
-An array of hostnames allowed to use the Elasticsearch console commands.
-
-
 #### `contentExtractorCallback`
 Type: _callable_
 
@@ -298,7 +284,6 @@ Reindex all sites
 
 >Notes:
 >
->* Do not forget to set `allowedIPs` and/or `allowedHosts` in the configuration file prior to calling these command lines (see "Configuring the Elasticsearch plugin" section).
 >* The command will probably fail in case you don't affect a specific domain to a given site, for instance, avoid to use `@web` as a base URL.
 
 
