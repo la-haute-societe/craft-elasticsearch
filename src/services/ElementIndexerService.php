@@ -18,6 +18,7 @@ use craft\digitalproducts\elements\Product as DigitalProduct;
 use craft\elements\Asset;
 use craft\elements\Entry;
 use craft\errors\SiteNotFoundException;
+use craft\helpers\Db;
 use craft\helpers\UrlHelper;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\exceptions\IndexElementException;
@@ -65,9 +66,9 @@ class ElementIndexerService extends Component
         //@formatter:off
         $esRecord->title         = $element->title;
         $esRecord->url           = $element->url;
-        $esRecord->postDate      = $postDate ? $postDate->format('Y-m-d H:i:s') : null;
+        $esRecord->postDate      = $postDate ? Db::prepareDateForDb($postDate) : null;
         $esRecord->noPostDate    = $postDate ? false : true;
-        $esRecord->expiryDate    = $expiryDate ? $expiryDate->format('Y-m-d H:i:s') : null;
+        $esRecord->expiryDate    = $expiryDate ? Db::prepareDateForDb($expiryDate) : null;
         $esRecord->noExpiryDate  = $expiryDate ? false : true;
         $esRecord->elementHandle = $element->refHandle();
         //@formatter:on

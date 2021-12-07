@@ -7,6 +7,8 @@
 - Fix index analyzer detection for sites having a "complex" locale (ie. language
   \+ country code)
 - Fix Elasticsearch 6 compatibility (fixes [#17][])
+- Fix a timezone-related bug affecting the `postDate` & `expiryDate` fields
+  ([#16][])
 
 
 ## 1.4.0 - 2020-10-02
@@ -92,4 +94,5 @@ If your entries are not indexed anymore after upgrade, please check you network 
 - Initial release
 
 
+[#16]: https://github.com/la-haute-societe/craft-elasticsearch/issues/16
 [#17]: https://github.com/la-haute-societe/craft-elasticsearch/issues/17
