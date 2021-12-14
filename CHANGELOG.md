@@ -1,6 +1,9 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
 ## Unreleased
+
+
+## 1.5.0 – 2021-12-14
 ### Added
 - Ability to index digital products (thanks [@aloco](https://github.com/aloco))
 ### Fixed

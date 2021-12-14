@@ -2,7 +2,6 @@
     "name": "la-haute-societe/craft-elasticsearch",
     "description": "Bring the power of Elasticsearch to your Craft CMS projects.",
     "type": "craft-plugin",
-    "version": "1.4.0",
     "keywords": [
         "craft",
         "cms",
