@@ -190,7 +190,7 @@ class ElasticsearchRecord extends ActiveRecord
             'cs'    => 'czech',
             'da'    => 'danish',
             'nl'    => 'dutch',
-            'pl'    => 'stempel', // analysis-stempel plugin needed
+            'pl'    => 'polish', // analysis-stempel plugin needed
             'en'    => 'english',
             'fi'    => 'finnish',
             'fr'    => 'french',
