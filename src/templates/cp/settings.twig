@@ -122,7 +122,9 @@
     <hr>
 
     <h2>{{ 'Blacklisted entry types'|t('elasticsearch') }}</h2>
-    <p class="warning with-icon">{{ macros.configWarning('blacklistedEntryTypes') }}</p>
+    {% if 'blacklistedEntryTypes' in overrides %}
+        <p class="warning with-icon">{{ macros.configWarning('blacklistedEntryTypes') }}</p>
+    {% endif %}
     <p class="light">{{ 'Never index:'|t('elasticsearch') }}</p>
     <div class="field">
         <table id="entryTypes" class="shadow-box editable">

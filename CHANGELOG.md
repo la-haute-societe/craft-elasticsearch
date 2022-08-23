@@ -5,6 +5,8 @@
 - Fix an incorrect default value for the `highlight.pre_tags` & 
   `highlight.post_tags` settings, that could lead to an exception when running a
   search
+- Fix a overridden setting warning shown even when the `blacklistedEntryTypes` 
+  setting isn't overriden
 
 
 ## 1.5.0 – 2021-12-14
