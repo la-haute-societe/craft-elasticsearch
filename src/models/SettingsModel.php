@@ -64,8 +64,8 @@ class SettingsModel extends Model
 
     /** @var array The tags inserted before and after the search term to highlight in search results */
     public $highlight = [
-        'pre_tags'  => null,
-        'post_tags' => null,
+        'pre_tags'  => '',
+        'post_tags' => '',
     ];
 
     /**

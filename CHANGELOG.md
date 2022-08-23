@@ -1,6 +1,10 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
 ## Unreleased
+### Fixed
+- Fix an incorrect default value for the `highlight.pre_tags` & 
+  `highlight.post_tags` settings, that could lead to an exception when running a
+  search
 
 
 ## 1.5.0 – 2021-12-14
