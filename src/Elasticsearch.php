@@ -60,7 +60,7 @@ class Elasticsearch extends Plugin
     public const EVENT_ERROR_NO_ATTACHMENT_PROCESSOR = 'errorNoAttachmentProcessor';
     public const PLUGIN_HANDLE = 'elasticsearch';
 
-    public $hasCpSettings = true;
+    public bool $hasCpSettings = true;
 
     public function init(): void
     {

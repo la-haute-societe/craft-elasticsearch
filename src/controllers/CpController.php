@@ -28,7 +28,8 @@ class CpController extends Controller
 {
     /** @var ElasticsearchPlugin */
     public $plugin;
-    public $allowAnonymous = ['testConnection', 'reindexPerformAction'];
+
+    protected array|bool|int $allowAnonymous = ['testConnection', 'reindexPerformAction'];
 
     public function init(): void
     {
@@ -169,7 +170,7 @@ class CpController extends Controller
      * @throws \Exception If reindexing the entry fails for some reason.
      * @throws \yii\web\BadRequestHttpException if the request body is missing a `params` property
      */
-    protected function reindexElement()
+    protected function reindexElement(): ?string
     {
         $request = Craft::$app->getRequest();
 

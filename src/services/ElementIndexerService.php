@@ -218,6 +218,7 @@ class ElementIndexerService extends Component
                         'preview/preview',
                         [
                             'elementType' => get_class($element),
+                            'canonicalId' => $element->canonicalId,
                             'sourceId'    => $element->id,
                             'siteId'      => $element->siteId,
                             'draftId'     => null,

@@ -32,7 +32,7 @@ class IndexElementJob extends BaseJob
     /**
      * @inheritdoc
      */
-    public function execute($queue)
+    public function execute($queue): void
     {
         $sites = Craft::$app->getSites();
         $site = $sites->getSiteById($this->siteId);

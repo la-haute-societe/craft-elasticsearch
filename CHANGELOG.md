@@ -3,6 +3,11 @@
 ## Unreleased
 
 
+## 2.0.0-beta.1 - 2022-08-23
+### Added
+- Support for Craft 4
+
+
 ## 1.5.1 – 2022-08-23
 ### Fixed
 - Fix an incorrect default value for the `highlight.pre_tags` & 
