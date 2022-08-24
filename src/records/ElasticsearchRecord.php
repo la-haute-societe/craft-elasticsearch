@@ -211,6 +211,7 @@ class ElasticsearchRecord extends ActiveRecord
             'pt'    => 'portuguese',
             'ro'    => 'romanian',
             'ru'    => 'russian',
+            'uk'    => 'ukrainian', // analysis-ukrainian plugin needed
             //sorani, Kurdish language is not part of the Craft locals...
             // 'sk' no analyzer available at this time
             'es'    => 'spanish',
