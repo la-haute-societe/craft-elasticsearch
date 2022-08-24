@@ -3,11 +3,13 @@
 ## Unreleased
 ### Added
 - Support for ukrainian language (thanks [@sfsmfc][], closes [#27][])
+### Fixed
+- Fix polish analyzer (thanks [@sfsmfc][], closes [#26][])
 
 
 ## 2.0.0 - 2022-08-23
 ### Added
-- Support for Craft 4
+- Support for Craft 4 (closes [#23][])
 
 
 ## 1.5.1 – 2022-08-23
@@ -115,5 +117,7 @@ If your entries are not indexed anymore after upgrade, please check you network 
 
 [#16]: https://github.com/la-haute-societe/craft-elasticsearch/issues/16
 [#17]: https://github.com/la-haute-societe/craft-elasticsearch/issues/17
+[#23]: https://github.com/la-haute-societe/craft-elasticsearch/issues/23
+[#26]: https://github.com/la-haute-societe/craft-elasticsearch/issues/26
 [#27]: https://github.com/la-haute-societe/craft-elasticsearch/issues/27
 [@sfsmfc]: https://github.com/sfsmfc
