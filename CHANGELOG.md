@@ -3,7 +3,7 @@
 ## Unreleased
 
 
-## 2.0.0-beta.1 - 2022-08-23
+## 2.0.0 - 2022-08-23
 ### Added
 - Support for Craft 4
 
