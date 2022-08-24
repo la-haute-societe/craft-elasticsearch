@@ -1,15 +1,15 @@
 [![Elastic](resources/img/elastic-logo.png)][elastic-site]
 
-# Elasticsearch plugin for Craft CMS 3.x
+# Elasticsearch plugin for Craft CMS
 
-Bring the power of Elasticsearch to your Craft 3 CMS project.
+Bring the power of Elasticsearch to your Craft CMS projects.
 
 ![Plugin screenshot](resources/img/plugin-screenshot.png)
 
 
 ## Requirements
 
-This plugin requires **Craft CMS 3.0.0-RC1** or later.
+This plugin works with **Craft CMS 3 or 4**.
 
 In order to index data, you will need an **Elasticsearch 6.0** (or later)
 instance, with the **Ingest attachment processor** plugin activated.
@@ -35,45 +35,45 @@ It will figure out the best Elasticsearch mapping for you based on your site(s)'
 
 ## Supported languages
 
-| Craft language | Elastic analyzer                | Notes                          |
-| -------------- | ------------------------------- | ------------------------------ |
-| ar             | arabic                          |                                |
-| hy             | armenian                        |                                |
-| eu             | basque                          |                                |
-| bn             | bengali                         |                                |
-| pt-BR          | brazilian                       |                                |
-| bg             | bulgarian                       |                                |
-| ca             | catalan                         |                                |
-| zh             | cjk                             |                                |
-| ja             | cjk                             |                                |
-| ko             | cjk                             |                                |
-| cs             | czech                           |                                |
-| da             | danish                          |                                |
-| nl             | dutch                           |                                |
-| en             | english                         |                                |
-| fi             | finnish                         |                                |
-| fr             | french                          |                                |
-| gl             | galician                        |                                |
-| de             | german                          |                                |
-| el             | greek                           |                                |
-| hi             | hindi                           |                                |
-| hu             | hungarian                       |                                |
-| id             | indonesian                      |                                |
-| ga             | irish                           |                                |
-| it             | italian                         |                                |
-| lv             | latvian                         |                                |
-| lt             | lithuanian                      |                                |
-| nb             | norwegian                       |                                |
-| fa             | persian                         |                                |
-| pt             | portuguese                      |                                |
-| ro             | romanian                        |                                |
-| ru             | russian                         |                                |
-| uk             | ukrainian                       | analysis-ukrainian plugin needed |
-| es             | spanish                         |                                |
-| pl             | stempel                         | analysis-stempel plugin needed |
-| sv             | swedish                         |                                |
-| tr             | turkish                         |                                |
-| th             | thai                            |                                |
+| Craft language | Elastic analyzer | Notes                            |
+|----------------|------------------|----------------------------------|
+| ar             | arabic           |                                  |
+| hy             | armenian         |                                  |
+| eu             | basque           |                                  |
+| bn             | bengali          |                                  |
+| pt-BR          | brazilian        |                                  |
+| bg             | bulgarian        |                                  |
+| ca             | catalan          |                                  |
+| zh             | cjk              |                                  |
+| ja             | cjk              |                                  |
+| ko             | cjk              |                                  |
+| cs             | czech            |                                  |
+| da             | danish           |                                  |
+| nl             | dutch            |                                  |
+| en             | english          |                                  |
+| fi             | finnish          |                                  |
+| fr             | french           |                                  |
+| gl             | galician         |                                  |
+| de             | german           |                                  |
+| el             | greek            |                                  |
+| hi             | hindi            |                                  |
+| hu             | hungarian        |                                  |
+| id             | indonesian       |                                  |
+| ga             | irish            |                                  |
+| it             | italian          |                                  |
+| lv             | latvian          |                                  |
+| lt             | lithuanian       |                                  |
+| nb             | norwegian        |                                  |
+| fa             | persian          |                                  |
+| pt             | portuguese       |                                  |
+| ro             | romanian         |                                  |
+| ru             | russian          |                                  |
+| uk             | ukrainian        | analysis-ukrainian plugin needed |
+| es             | spanish          |                                  |
+| pl             | polish           | analysis-stempel plugin needed   |
+| sv             | swedish          |                                  |
+| tr             | turkish          |                                  |
+| th             | thai             |                                  |
 
 
 ## Configuring the Elasticsearch plugin
