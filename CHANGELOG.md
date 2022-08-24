@@ -20,7 +20,7 @@
 
 ## 2.0.0 - 2022-08-23
 ### Added
-- Support for Craft 4 (closes [#23][])
+- [BREAKING]: Make the plugin compatible with Craft 4 (closes [#23][])
 
 
 ## 1.5.1 – 2022-08-23
