@@ -74,7 +74,7 @@ class ElasticsearchService extends Component
     }
 
     /**
-     * Check whether or not Elasticsearch is in sync with Craft
+     * Check whether Elasticsearch is in sync with Craft
      * @return bool `true` if Elasticsearch is in sync with Craft, `false` otherwise.
      * @noinspection PhpRedundantCatchClauseInspection \yii\elasticsearch\Exception may be thrown by \yii\elasticsearch\Connection::get()
      */
@@ -85,7 +85,7 @@ class ElasticsearchService extends Component
         try {
             return $application->cache->getOrSet(
                 self::getSyncCachekey(),
-                function (): bool {
+                function (): int {
                     Craft::debug('isIndexInSync cache miss', __METHOD__);
 
                     if ($this->testConnection() === false) {
