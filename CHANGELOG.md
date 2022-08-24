@@ -1,11 +1,16 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
 ## Unreleased
+
+
+## 1.6.0 - 2022-09-08
 ### Added
 - Support for ukrainian language (thanks [@sfsmfc][], closes [#27][])
+### Changed
+- Change plugin icon
 ### Fixed
 - Fix polish analyzer (thanks [@sfsmfc][], closes [#26][])
-- `isIndexInSync` will always result in a cache miss if index is not in sync 
+- `isIndexInSync` will always result in a cache miss if index is not in sync
   (thanks [@aloco][], closes [#22][])
 
 
