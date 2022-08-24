@@ -68,6 +68,7 @@ It will figure out the best Elasticsearch mapping for you based on your site(s)'
 | pt             | portuguese                      |                                |
 | ro             | romanian                        |                                |
 | ru             | russian                         |                                |
+| uk             | ukrainian                       | analysis-ukrainian plugin needed |
 | es             | spanish                         |                                |
 | pl             | stempel                         | analysis-stempel plugin needed |
 | sv             | swedish                         |                                |
