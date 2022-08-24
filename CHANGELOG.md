@@ -3,6 +3,12 @@
 ## Unreleased
 
 
+## 2.1.1 - 2022-08-24
+### Changed
+- Change plugin icon
+- Update Readme
+
+
 ## 2.1.0 - 2022-08-24
 ### Added
 - Support for ukrainian language (thanks [@sfsmfc][], closes [#27][])
