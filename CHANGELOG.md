@@ -1,6 +1,9 @@
 # Elasticsearch plugin for Craft CMS 3.x Changelog
 
 ## Unreleased
+
+
+## 2.1.0 - 2022-08-24
 ### Added
 - Support for ukrainian language (thanks [@sfsmfc][], closes [#27][])
 ### Fixed
