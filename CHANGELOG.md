@@ -3,14 +3,16 @@
 ## Unreleased
 ### Added
 - Support for ukrainian language (thanks [@sfsmfc][], closes [#27][])
+### Fixed
+- Fix polish analyzer (thanks [@sfsmfc][], closes [#26][])
 
 
 ## 1.5.1 – 2022-08-23
 ### Fixed
-- Fix an incorrect default value for the `highlight.pre_tags` & 
+- Fix an incorrect default value for the `highlight.pre_tags` &
   `highlight.post_tags` settings, that could lead to an exception when running a
   search
-- Fix a overridden setting warning shown even when the `blacklistedEntryTypes` 
+- Fix a overridden setting warning shown even when the `blacklistedEntryTypes`
   setting isn't overriden
 
 
@@ -110,5 +112,7 @@ If your entries are not indexed anymore after upgrade, please check you network 
 
 [#16]: https://github.com/la-haute-societe/craft-elasticsearch/issues/16
 [#17]: https://github.com/la-haute-societe/craft-elasticsearch/issues/17
+[#23]: https://github.com/la-haute-societe/craft-elasticsearch/issues/23
+[#26]: https://github.com/la-haute-societe/craft-elasticsearch/issues/26
 [#27]: https://github.com/la-haute-societe/craft-elasticsearch/issues/27
 [@sfsmfc]: https://github.com/sfsmfc
