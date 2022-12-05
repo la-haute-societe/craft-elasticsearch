@@ -344,7 +344,7 @@ For example, to declare a `color` field in the configuration file, one could do:
             'store' => true
         ],
         'highlighter' => (object)[],
-        'value'       => function (\craft\base\ElementInterface $element, \lhs\elasticsearch\record\ElasticsearchRecord $esRecord) {
+        'value'       => function (\craft\base\ElementInterface $element, \lhs\elasticsearch\records\ElasticsearchRecord $esRecord) {
             // $esRecord->whatEverMethod();
             return ArrayHelper::getValue($element, 'color.hex');
         }
