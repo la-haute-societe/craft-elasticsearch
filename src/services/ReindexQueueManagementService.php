@@ -78,7 +78,9 @@ class ReindexQueueManagementService extends Component
 
         $jobId = Craft::$app->queue->push($job);
 
-        $this->addJobIdToCache($jobId);
+        if ($jobId > 0) {
+            $this->addJobIdToCache($jobId);
+        }
     }
 
     /**
