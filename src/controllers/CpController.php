@@ -93,7 +93,12 @@ class CpController extends Controller
         if (!empty($params['start'])) {
             try {
                 $siteIds = $this->getSiteIds($request);
-                Elasticsearch::getInstance()->indexManagementService->recreateSiteIndex(...$siteIds);
+
+                // Don't match exactly. On false we receive an empty string, on true we
+                // receive a string '1'. We only recreate the indexes when requested.
+                if ($params['recreate'] == true) {
+                    Elasticsearch::getInstance()->indexManagementService->recreateSiteIndex(...$siteIds);
+                }
             } catch (\Exception $e) {
                 return $this->asErrorJson($e->getMessage());
             }
