@@ -100,6 +100,21 @@ class Elasticsearch extends Plugin
                 }
             );
 
+            // Remove asset from the index upon deletion
+            Event::on(
+                Asset::class,
+                Asset::EVENT_AFTER_DELETE,
+                function (Event $event) {
+                    /** @var Asset $asset */
+                    $asset = $event->sender;
+                    try {
+                        $this->elementIndexerService->deleteElement($asset);
+                    } catch (Exception $e) {
+                        // Noop, the element must have already been deleted
+                    }
+                }
+            );
+
             // Index entry, asset & products upon save (creation or update)
             Event::on(Entry::class, Entry::EVENT_AFTER_SAVE, [$this, 'onElementSaved']);
             Event::on(Asset::class, Asset::EVENT_AFTER_SAVE, [$this, 'onElementSaved']);
