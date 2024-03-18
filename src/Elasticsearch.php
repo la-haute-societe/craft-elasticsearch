@@ -393,7 +393,7 @@ class Elasticsearch extends Plugin
         }
 
         if ($notDraftOrRevision) {
-            if ($element->enabled) {
+            if ($element->enabled && $element->getEnabledForSite()) {
                 $this->reindexQueueManagementService->enqueueJob($element->id, $element->siteId, get_class($element));
             } else {
                 try {
