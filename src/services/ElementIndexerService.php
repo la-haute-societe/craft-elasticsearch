@@ -129,10 +129,8 @@ class ElementIndexerService extends Component
         );
 
         $queueService = Craft::$app->getQueue();
-        $queueClass = get_class($queueService);
-
         $entries = (new Query())
-            ->from($queueClass::TABLE)
+            ->from($queueService->tableName)
             ->where([
                 'job' => Craft::$app->getQueue()->serializer->serialize($job)
             ])->all();
@@ -198,7 +196,7 @@ class ElementIndexerService extends Component
                 return $message;
             }
         }
-        
+
         if ($element instanceof Asset) {
             $blacklist = $this->plugin->getSettings()->blacklistedAssetVolumes;
             if (in_array($element->getVolume()->handle, $blacklist, true)) {
