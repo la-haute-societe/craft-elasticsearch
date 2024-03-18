@@ -160,6 +160,15 @@ class ElementIndexerService extends Component
                 return $message;
             }
         }
+        
+        if ($element instanceof Asset) {
+            $blacklist = $this->plugin->getSettings()->blacklistedAssetVolumes;
+            if (in_array($element->getVolume()->handle, $blacklist, true)) {
+                $message = "Not indexing asset #{$element->id} since it's in a blacklisted asset volume.";
+                Craft::debug($message, __METHOD__);
+                return $message;
+            }
+        }
 
         return null;
     }
