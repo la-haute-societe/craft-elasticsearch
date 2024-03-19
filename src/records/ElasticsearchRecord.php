@@ -302,7 +302,12 @@ class ElasticsearchRecord extends ActiveRecord
             )
         );
 
-        $db->put(static::index(), ['include_type_name' => 'false'], Json::encode($schema));
+        // https://www.elastic.co/blog/moving-from-types-to-typeless-apis-in-elasticsearch-7-0
+        if ($db->dslVersion >= 7) {
+            $db->put(static::index(), [], Json::encode($schema));
+        } else {
+            $db->put(static::index(), ['include_type_name' => 'false'], Json::encode($schema));
+        }
     }
 
     /**

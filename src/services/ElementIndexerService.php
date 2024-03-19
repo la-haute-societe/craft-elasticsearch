@@ -22,7 +22,9 @@ use craft\helpers\Db;
 use craft\helpers\UrlHelper;
 use lhs\elasticsearch\Elasticsearch as ElasticsearchPlugin;
 use lhs\elasticsearch\exceptions\IndexElementException;
+use lhs\elasticsearch\jobs\IndexElementJob;
 use lhs\elasticsearch\records\ElasticsearchRecord;
+use yii\db\Query;
 
 /**
  */
@@ -94,6 +96,7 @@ class ElementIndexerService extends Component
 
     /**
      * Removes an entry from  the Elasticsearch index
+     *
      * @param Element $element The entry to delete
      * @return int The number of rows deleted
      * @throws \yii\elasticsearch\Exception If the entry to be deleted cannot be found
@@ -102,9 +105,42 @@ class ElementIndexerService extends Component
     {
         Craft::info("Deleting entry #{$element->id}: {$element->url}", __METHOD__);
 
+        $this->deleteElementFromQueue($element);
+
         ElasticsearchRecord::$siteId = $element->siteId;
 
         return ElasticsearchRecord::deleteAll(['_id' => $element->id]);
+    }
+
+    /**
+     * Removes all entries for an element from queue
+     * @param Element $element
+     * @return void
+     * @throws \yii\base\InvalidConfigException
+     */
+    protected function deleteElementFromQueue(Element $element): void
+    {
+        $job = new IndexElementJob(
+            [
+                'siteId' => $element->getSite()->id,
+                'elementId' => $element->id,
+                'type' => get_class($element),
+            ]
+        );
+
+        $queueService = Craft::$app->getQueue();
+        $entries = (new Query())
+            ->from($queueService->tableName)
+            ->where([
+                'job' => Craft::$app->getQueue()->serializer->serialize($job)
+            ])->all();
+
+        foreach ($entries as $entry) {
+            if (isset($entry['id'])) {
+                $methodName = $queueService instanceof \yii\queue\db\Queue ? 'remove' : 'release';
+                $queueService->$methodName($entry['id']);
+            }
+        }
     }
 
     /**
@@ -156,6 +192,15 @@ class ElementIndexerService extends Component
             $blacklist = $this->plugin->getSettings()->blacklistedEntryTypes;
             if (in_array($element->type->handle, $blacklist, true)) {
                 $message = "Not indexing entry #{$element->id} since it's in a blacklisted entry types.";
+                Craft::debug($message, __METHOD__);
+                return $message;
+            }
+        }
+
+        if ($element instanceof Asset) {
+            $blacklist = $this->plugin->getSettings()->blacklistedAssetVolumes;
+            if (in_array($element->getVolume()->handle, $blacklist, true)) {
+                $message = "Not indexing asset #{$element->id} since it's in a blacklisted asset volume.";
                 Craft::debug($message, __METHOD__);
                 return $message;
             }

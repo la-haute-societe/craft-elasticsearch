@@ -32,6 +32,16 @@
     >
         {{ csrfInput() }}
 
+        <h2>{{ 'Index'|t('elasticsearch') }}</h2>
+
+        <fieldset class="checkbox-select">
+          {{ forms.checkbox({
+              name: 'recreate',
+              label: 'Recreate the index'|t('elasticsearch'),
+              info: 'Recreating the index removes all existing data, it may take a while before all content is available again.'|t('elasticsearch'),
+          }) }}
+        </fieldset>
+
         <h2>{{ 'Sites'|t('elasticsearch') }}</h2>
         {{ forms.checkboxSelect({
             name: 'sites',

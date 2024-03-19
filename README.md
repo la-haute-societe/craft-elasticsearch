@@ -14,6 +14,10 @@ This plugin works with **Craft CMS 3 or 4**.
 In order to index data, you will need an **Elasticsearch 6.0** (or later)
 instance, with the **Ingest attachment processor** plugin activated.
 
+In order to use **Elasticsearch 8.0** (or later) you will need to set the 
+[yii2-elasticsearch][yii2-elasticsearch] dslVersion to 8. The default 
+dslVersion is set at 5. Setting the dslVersion can be done inside the 
+elasticsearchComponentConfig.
 
 ## Installation
 
